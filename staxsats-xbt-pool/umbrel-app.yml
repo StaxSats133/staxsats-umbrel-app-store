@@ -1,0 +1,24 @@
+manifestVersion: 1
+id: staxsats-xbt-pool
+name: XBT Pool
+tagline: RATUM mining pool dashboard
+category: bitcoin
+version: "0.1.0"
+port: 8081
+description: >-
+  Local dashboard for the XBT RATUM mining pool running on this Umbrel.
+  Shows miner connections, hashrate, accepted and rejected shares,
+  payout window, and blocks found.
+developer: Local
+website: https://bitcoin-blake2b.org/
+submitter: Local
+submission: https://github.com/iohzrd/ratum
+repo: https://github.com/iohzrd/ratum
+support: https://github.com/iohzrd/ratum/issues
+gallery: []
+releaseNotes: >-
+  Initial local XBT pool dashboard.
+dependencies: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
