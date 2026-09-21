@@ -1,378 +1,2339 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import urllib.request
+import urllib.parse
 
 GATEWAY = "http://host.docker.internal:7153/stats.json"
 PRIME = "http://172.17.0.1:28916/stats.json"
 
 HTML = r"""<!doctype html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>XBT Pool</title>
-
+<title>TERMINUS POOL // XBT</title>
 <style>
+:root{
+  --bg:#050912;
+  --panel:#07111b;
+  --panel2:#091823;
+  --line:#123747;
+  --cyan:#43f5ff;
+  --green:#72ffb4;
+  --pink:#ff4fb8;
+  --purple:#aa72ff;
+  --gold:#ffc85c;
+  --text:#e7faff;
+  --muted:#7895a0;
+}
 *{box-sizing:border-box}
+html{background:var(--bg)}
+body{
+  margin:0;
+  color:var(--text);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  background:
+    linear-gradient(rgba(34,110,130,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(34,110,130,.045) 1px,transparent 1px),
+    radial-gradient(circle at 50% -10%,#10243b 0,#050912 48%);
+  background-size:32px 32px,32px 32px,auto;
+}
+.shell{max-width:1380px;margin:auto;padding:34px 28px 70px}
+header{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:24px;margin-bottom:22px
+}
+.brand{display:flex;gap:18px;align-items:center;min-width:0}
+.badge{
+  width:76px;height:76px;flex:0 0 76px;
+  display:grid;place-items:center;
+  font-weight:1000;font-size:24px;letter-spacing:2px;
+  color:#fff;
+  background:linear-gradient(145deg,#102f3d,#07151f);
+  border:1px solid #39dce8;
+  clip-path:polygon(16% 0,84% 0,100% 16%,100% 84%,84% 100%,16% 100%,0 84%,0 16%);
+  box-shadow:0 0 25px #20d9e533
+}
+.brandText{min-width:0}
+h1{
+  margin:0;font-size:clamp(26px,4vw,54px);line-height:.98;
+  letter-spacing:.06em;font-weight:1000;white-space:nowrap
+}
+.tagline{
+  margin-top:8px;color:var(--green);font-size:14px;
+  letter-spacing:.22em;font-weight:800
+}
+.stackline{
+  margin-top:7px;color:#78c9d2;font-size:12px;letter-spacing:.12em
+}
+.live{
+  border:1px solid #1f6873;background:#07131b;
+  padding:12px 16px;color:var(--cyan);
+  white-space:nowrap;font-size:12px;letter-spacing:.08em
+}
+.live.bad{color:#ff7890;border-color:#7d2736}
+
+.hero{
+  height:390px;position:relative;overflow:hidden;
+  border:1px solid #164956;border-radius:10px;
+  background:
+    radial-gradient(circle at 68% 27%,rgba(198,75,184,.15),transparent 28%),
+    linear-gradient(#07101d,#0a1021 48%,#100d26);
+  box-shadow:inset 0 0 80px #0009,0 16px 70px #0007
+}
+.hero:after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:20;
+  background:repeating-linear-gradient(
+    0deg,transparent 0,transparent 3px,rgba(89,239,255,.025) 4px
+  )
+}
+.heroText{
+  position:absolute;z-index:15;left:34px;top:27px;
+  border-left:4px solid var(--cyan);padding-left:17px
+}
+.kicker{font-size:11px;letter-spacing:.22em;color:#77dbe4;margin-bottom:9px}
+.heroTitle{
+  font-size:clamp(32px,5vw,58px);font-weight:1000;letter-spacing:.03em
+}
+.heroSub{
+  margin-top:7px;color:var(--green);font-weight:900;
+  font-size:14px;letter-spacing:.19em
+}
+.heroMicro{margin-top:12px;color:#7895a0;font-size:11px;letter-spacing:.12em}
+
+.stars{
+  position:absolute;inset:0 0 45% 0;
+  background-image:
+    radial-gradient(circle,#fff 1px,transparent 1.5px),
+    radial-gradient(circle,#9df7ff 1px,transparent 1.7px),
+    radial-gradient(circle,#fff 1.4px,transparent 2px);
+  background-size:113px 83px,167px 119px,241px 151px;
+  background-position:13px 17px,71px 34px,122px 8px;
+  opacity:.75
+}
+.sun{
+  position:absolute;z-index:2;width:175px;height:175px;
+  left:66%;top:84px;border-radius:50%;
+  background:repeating-linear-gradient(
+    to bottom,#ffcf6b 0,#ffcf6b 13px,#ff7b9d 14px,#ff4fa9 20px,#341d54 21px,#341d54 24px
+  );
+  box-shadow:0 0 50px #ff4fa966
+}
+.mountainBack,.mountainFront{
+  position:absolute;left:-3%;width:106%;bottom:92px;z-index:4;
+}
+.mountainBack{
+  height:150px;background:#171738;
+  clip-path:polygon(0 81%,9% 58%,17% 69%,29% 34%,40% 65%,53% 28%,64% 70%,77% 42%,88% 65%,100% 38%,100% 100%,0 100%);
+  box-shadow:inset 0 2px #4772a255
+}
+.mountainFront{
+  height:125px;bottom:69px;background:#0a1630;
+  clip-path:polygon(0 75%,11% 49%,22% 72%,33% 39%,45% 76%,58% 48%,68% 70%,80% 34%,91% 67%,100% 52%,100% 100%,0 100%);
+}
+.horizon{
+  position:absolute;left:0;right:0;bottom:76px;height:2px;z-index:6;
+  background:linear-gradient(90deg,transparent,var(--pink),var(--cyan),transparent);
+  box-shadow:0 0 22px #48f5ff
+}
+.road{
+  position:absolute;z-index:8;left:22%;right:22%;height:155px;bottom:-18px;
+  background:
+    linear-gradient(90deg,#1cebd022 1px,transparent 1px) 0 0/12% 100%,
+    linear-gradient(#08131c,#030508);
+  clip-path:polygon(43% 0,57% 0,100% 100%,0 100%);
+  border-top:1px solid #53f5ef88
+}
+.road:before{
+  content:"";position:absolute;left:49.4%;top:8px;width:1.2%;height:145px;
+  background:repeating-linear-gradient(to bottom,#affff5 0 13px,transparent 13px 27px);
+  transform:perspective(180px) rotateX(29deg);
+  transform-origin:top;
+  animation:roadRush .8s linear infinite
+}
+.road:after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,#00ffe522,transparent 22%,transparent 78%,#00ffe522)
+}
+.car{
+  position:absolute;z-index:12;left:50%;bottom:16px;
+  transform:translateX(-50%);
+  width:116px;height:41px;
+  animation:carCruise 5.8s ease-in-out infinite;
+  will-change:transform;
+  background:linear-gradient(#182337,#070a11);
+  clip-path:polygon(13% 30%,26% 8%,75% 8%,88% 30%,100% 53%,95% 100%,5% 100%,0 53%);
+  border-bottom:2px solid #0fe7d8;
+  filter:drop-shadow(0 0 9px #ff39b34f)
+}
+.car:before,.car:after{
+  content:"";position:absolute;bottom:10px;width:28px;height:8px;
+  background:#ff3ba6;box-shadow:0 0 12px #ff3ba6;
+  animation:tailPulse 1.7s ease-in-out infinite
+}
+.car:before{left:15px}.car:after{right:15px}
+
+@keyframes carCruise{
+  0%,100%{
+    transform:translateX(-50%) translateX(-7px) translateY(0) rotate(-.3deg)
+  }
+  25%{
+    transform:translateX(-50%) translateX(2px) translateY(-2px) rotate(.1deg)
+  }
+  50%{
+    transform:translateX(-50%) translateX(8px) translateY(0) rotate(.35deg)
+  }
+  75%{
+    transform:translateX(-50%) translateX(1px) translateY(-1px) rotate(0)
+  }
+}
+
+@keyframes roadRush{
+  from{background-position:0 0}
+  to{background-position:0 27px}
+}
+
+@keyframes tailPulse{
+  0%,100%{opacity:.78;filter:brightness(.9)}
+  50%{opacity:1;filter:brightness(1.35)}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .car,.car:before,.car:after,.road:before{
+    animation:none !important
+  }
+}
+
+.sectionTitle{
+  display:flex;align-items:center;gap:12px;
+  margin:36px 0 15px;color:var(--pink);
+  letter-spacing:.22em;font-size:12px;font-weight:900
+}
+.sectionTitle:before{content:"";width:4px;height:17px;background:var(--green)}
+.sectionTitle:after{content:"";height:1px;flex:1;background:linear-gradient(90deg,#5d284c,transparent)}
+
+.accountSearch{
+  display:flex;
+  gap:10px;
+  margin-bottom:10px
+}
+.accountSearch input{
+  flex:1;
+  min-width:0;
+  padding:14px 16px;
+  color:var(--text);
+  background:#040a0f;
+  border:1px solid #185264;
+  outline:none;
+  font:inherit
+}
+.accountSearch input:focus{
+  border-color:var(--cyan);
+  box-shadow:0 0 16px #43f5ff22
+}
+.accountSearch button{
+  padding:14px 18px;
+  border:1px solid #207481;
+  background:#09212a;
+  color:var(--cyan);
+  font:inherit;
+  font-weight:900;
+  cursor:pointer
+}
+.accountSearch .clear{
+  color:#8aa3ab;
+  border-color:#29424a;
+  background:#091016
+}
+.accountHint{
+  margin:0 0 14px;
+  color:#66858f;
+  font-size:10px;
+  letter-spacing:.12em
+}
+.accountHint.good{color:var(--green)}
+.accountHint.badText{color:#ff6f8d}
+
+.grid{display:grid;gap:12px}
+.grid6{grid-template-columns:repeat(6,1fr)}
+.grid5{grid-template-columns:repeat(5,1fr)}
+.grid4{grid-template-columns:repeat(4,1fr)}
+.card{
+  position:relative;min-height:112px;padding:18px;
+  border:1px solid #123541;background:linear-gradient(145deg,#08141d,#060c13);
+  overflow:hidden
+}
+.card:before{
+  content:"";position:absolute;top:0;left:0;width:38%;height:2px;
+  background:var(--green);box-shadow:0 0 11px var(--green)
+}
+.label{font-size:10px;color:#7795a0;letter-spacing:.13em;text-transform:uppercase}
+.value{
+  margin-top:12px;font-size:clamp(18px,2vw,28px);font-weight:900;
+  word-break:break-word
+}
+.card.ok .value{color:var(--green);text-shadow:0 0 12px #72ffb433}
+.card.bad .value{color:#ff6f8d}
+.card.cyan .value{color:var(--cyan)}
+.card.purple .value{color:#c28cff}
+.card.gold .value{color:var(--gold)}
+.card.small .value{font-size:18px}
+.card.tiny .value{font-size:13px;line-height:1.5}
+
+.twoCol{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+.access{
+  position:relative;
+  border-radius:8px;
+}
+
+.access:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  border-radius:8px;
+  background:linear-gradient(
+    135deg,
+    rgba(67,245,255,.035),
+    transparent 38%,
+    rgba(255,79,184,.025)
+  );
+}
+
+.accessLabel{
+  margin:17px 0 7px;
+  color:#678895;
+  font-size:9px;
+  letter-spacing:.18em;
+  font-weight:900;
+}
+
+.copyRow{
+  position:relative;
+  z-index:2;
+  display:flex;
+  align-items:stretch;
+  gap:8px;
+}
+
+.copyText{
+  flex:1;
+  min-width:0;
+  padding:11px 12px;
+  color:var(--cyan);
+  background:#03080d;
+  border:1px solid #173f4b;
+  font-size:12px;
+  line-height:1.45;
+  overflow-wrap:anywhere;
+}
+
+.copyBtn{
+  flex:0 0 auto;
+  min-width:76px;
+  border:1px solid #287783;
+  background:#08202a;
+  color:var(--cyan);
+  padding:0 13px;
+  font:inherit;
+  font-size:10px;
+  font-weight:1000;
+  letter-spacing:.12em;
+  cursor:pointer;
+  transition:.16s ease;
+}
+
+.copyBtn:hover{
+  border-color:var(--cyan);
+  background:#0b2b36;
+  box-shadow:0 0 15px #43f5ff20;
+  transform:translateY(-1px)
+}
+
+.identityAccess{
+  margin-top:14px;
+  box-shadow:inset 3px 0 var(--cyan)
+}
+
+.identityGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:13px;
+  margin-top:15px
+}
+
+.identityWide{grid-column:1/-1}
+
+.copyToast{
+  position:fixed;
+  right:22px;
+  bottom:22px;
+  z-index:9999;
+  padding:12px 16px;
+  border:1px solid #2bd9be;
+  background:#071713;
+  color:var(--green);
+  font-size:11px;
+  font-weight:1000;
+  letter-spacing:.15em;
+  opacity:0;
+  transform:translateY(12px);
+  pointer-events:none;
+  transition:.2s ease;
+  box-shadow:0 12px 40px #0009
+}
+
+.copyToast.show{
+  opacity:1;
+  transform:translateY(0)
+}
+.access{
+  border:1px solid #164653;background:#07121a;padding:20px;min-height:175px
+}
+.access.primary{box-shadow:inset 3px 0 var(--green)}
+.access.legacy{box-shadow:inset 3px 0 var(--pink)}
+.access h3{margin:0 0 7px;font-size:17px}
+.access .mode{font-size:10px;letter-spacing:.17em;color:#83dce4;margin-bottom:18px}
+.endpoint{
+  color:var(--cyan);font-size:15px;padding:10px 12px;
+  border:1px solid #16414e;background:#040a0f;overflow-wrap:anywhere
+}
+.note{margin-top:12px;color:#7895a0;font-size:11px;line-height:1.7}
+.note strong{color:#d8f9ff}
+
+.graphCard{
+  margin-top:14px;border:1px solid #123541;background:#07111a;padding:18px
+}
+.poolHashrateGraph{
+  margin-top:0;
+  box-shadow:inset 0 0 35px #43f5ff08
+}
+.graphTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+  margin-bottom:12px
+}
+
+.graphStats{
+  display:flex;
+  align-items:center;
+  gap:10px
+}
+
+.graphPill{
+  padding:7px 9px;
+  border:1px solid #23515c;
+  background:#061017;
+  color:var(--green);
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.12em
+}
+.graphTitle{font-size:11px;color:#7795a0;letter-spacing:.16em}
+#graphNow{color:var(--cyan);font-weight:900}
+svg{
+  display:block;
+  width:100%;
+  height:180px;
+  background:
+    linear-gradient(rgba(67,245,255,.045) 1px,transparent 1px);
+  background-size:100% 25%;
+  border-top:1px solid #10303a;
+  border-bottom:1px solid #10303a
+}
+#graphFill{fill:#26dce40d}
+#graphLine{fill:none;stroke:#4bf4ff;stroke-width:3;filter:drop-shadow(0 0 4px #4bf4ff)}
+
+.blockBanner{
+  display:none;margin-top:16px;padding:15px;text-align:center;
+  border:1px solid #7a6024;background:#211807;color:var(--gold);
+  font-weight:1000;letter-spacing:.1em
+}
+footer{
+  margin-top:42px;padding-top:20px;border-top:1px solid #11303b;
+  color:#486976;font-size:10px;letter-spacing:.12em;text-align:center
+}
+
+@media(max-width:1050px){
+  .grid6{grid-template-columns:repeat(3,1fr)}
+  .grid5{grid-template-columns:repeat(3,1fr)}
+  .grid4{grid-template-columns:repeat(2,1fr)}
+  .hero{height:350px}
+}
+@media(max-width:760px){
+  .shell{padding:20px 14px 45px}
+  header{align-items:flex-start}
+  .badge{width:58px;height:58px;flex-basis:58px;font-size:18px}
+  h1{font-size:clamp(22px,7.2vw,34px)}
+  .tagline{font-size:10px}
+  .stackline{font-size:9px}
+  header .live{display:none}
+  .hero{height:330px}
+  .heroText{left:22px;top:22px}
+  .heroMicro{display:none}
+  .twoCol{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .copyRow{flex-direction:column}
+  .copyBtn{min-height:40px}
+  .identityGrid{grid-template-columns:1fr}
+  .identityWide{grid-column:auto}
+  .graphStats{
+    align-items:flex-end;
+    flex-direction:column;
+    gap:5px
+  }
+}
+
+@media(max-width:520px){
+  .hero{height:300px}
+  .heroTitle{font-size:28px}
+  .heroSub{font-size:10px}
+  .sun{width:105px;height:105px;top:72px;left:65%}
+  .mountainBack{
+    height:112px;bottom:89px;
+    clip-path:polygon(0 78%,10% 58%,23% 68%,36% 49%,49% 69%,62% 52%,76% 70%,89% 55%,100% 66%,100% 100%,0 100%)
+  }
+  .mountainFront{
+    height:95px;bottom:69px;
+    clip-path:polygon(0 72%,13% 57%,27% 69%,40% 53%,54% 72%,67% 56%,81% 69%,92% 58%,100% 66%,100% 100%,0 100%)
+  }
+  .road{left:15%;right:15%;height:129px}
+  .car{width:94px;height:34px;bottom:14px}
+  .grid6,.grid5,.grid4{grid-template-columns:repeat(2,1fr)}
+  .card{min-height:100px;padding:14px}
+  .value{font-size:19px}
+}
+
+/* TERMINUS_MOON_GRAPH_V3 */
+
+/* --- QUARTER / CRESCENT MOON --- */
+.skyMoon{
+    width:88px !important;
+    height:88px !important;
+    right:86px !important;
+    top:66px !important;
+    overflow:hidden !important;
+    background:
+        radial-gradient(circle at 28% 32%,
+            #ffffff 0%,
+            #dff7ff 28%,
+            #9ddaff 65%,
+            #5a9fe8 100%) !important;
+    box-shadow:
+        0 0 15px rgba(67,245,255,.42),
+        0 0 42px rgba(170,114,255,.22) !important;
+}
+
+/* dark lunar shadow = strong quarter/crescent phase */
+.skyMoon:before{
+    content:"" !important;
+    position:absolute !important;
+    width:92px !important;
+    height:92px !important;
+    border-radius:50% !important;
+    left:30px !important;
+    top:-2px !important;
+    background:#07101d !important;
+    box-shadow:
+        -5px 0 8px rgba(5,9,18,.85),
+        -10px 0 18px rgba(5,9,18,.45) !important;
+    z-index:3 !important;
+}
+
+/* subtle crater texture only on the lit side */
+.skyMoon:after{
+    content:"" !important;
+    position:absolute !important;
+    inset:0 !important;
+    border-radius:50% !important;
+    background:
+        radial-gradient(circle at 19px 20px,
+            rgba(72,112,150,.18) 0 6px,
+            transparent 7px),
+        radial-gradient(circle at 27px 45px,
+            rgba(72,112,150,.13) 0 5px,
+            transparent 6px),
+        radial-gradient(circle at 18px 65px,
+            rgba(72,112,150,.10) 0 4px,
+            transparent 5px) !important;
+    z-index:2 !important;
+}
+
+/* --- HASHRATE CHART POLISH --- */
+.poolHashrateGraph{
+    position:relative;
+    overflow:hidden;
+}
+
+/* animated radar / scanner sweep */
+.poolHashrateGraph:after{
+    content:"";
+    position:absolute;
+    top:52px;
+    bottom:18px;
+    width:120px;
+    left:-150px;
+    pointer-events:none;
+    background:linear-gradient(
+        90deg,
+        transparent,
+        rgba(67,245,255,.035),
+        rgba(67,245,255,.12),
+        rgba(114,255,180,.07),
+        transparent
+    );
+    filter:blur(3px);
+    animation:hashScan 6s linear infinite;
+}
+
+@keyframes hashScan{
+    from{left:-150px}
+    to{left:calc(100% + 150px)}
+}
+
+#graphPeakDot{
+    filter:drop-shadow(0 0 8px rgba(255,200,92,.85));
+}
+
+.graphMetricText{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:18px;
+    font-weight:900;
+    letter-spacing:1px;
+}
+
+@media(max-width:520px){
+    .skyMoon{
+        width:58px !important;
+        height:58px !important;
+        right:22px !important;
+        top:54px !important;
+    }
+
+    .skyMoon:before{
+        width:62px !important;
+        height:62px !important;
+        left:20px !important;
+    }
+}
+
+
+/* TERMINUS_HALFSCREEN_POLISH_V1 */
+
+html,body{
+    overflow-x:hidden;
+}
 
 body{
-    margin:0;
-    background:
-      radial-gradient(circle at 50% -20%,rgba(168,85,247,.16),transparent 38%),
-      linear-gradient(180deg,#070910,#0b0e15 55%,#07090e);
-    color:#f7f7fb;
-    font-family:Arial,Helvetica,sans-serif;
+    text-wrap:pretty;
 }
 
-.wrap{
-    max-width:1500px;
-    margin:auto;
-    padding:28px;
+.shell{
+    width:min(100%, 1420px);
+    margin-inline:auto;
 }
 
-header{
-    display:flex;
-    align-items:flex-end;
-    justify-content:space-between;
-    gap:20px;
-    margin-bottom:28px;
+header,
+.hero,
+[class*="hero"],
+[class*="topbar"],
+[class*="topBar"]{
+    min-width:0;
 }
 
-h1{
-    margin:0;
-    font-size:42px;
-    letter-spacing:.5px;
-    color:#b45cff;
+.card,
+.graphCard,
+.poolHashrateGraph,
+.heroPanel,
+.heroCard,
+.panel,
+.copyCard,
+.infoCard,
+.endpointCard,
+.v3AccessCard,
+.accountCard,
+.lookupCard,
+.searchCard{
+    min-width:0;
 }
 
-.subtitle{
-    margin-top:5px;
-    color:#8793a8;
-    font-size:16px;
+.card *,
+.graphCard *,
+.poolHashrateGraph *,
+.heroPanel *,
+.heroCard *{
+    min-width:0;
 }
 
-.live{
-    color:#4ade80;
-    font-size:14px;
+button,
+.copyBtn,
+.actionBtn,
+.lookupBtn,
+.clearBtn{
     white-space:nowrap;
 }
 
-.section{
-    margin:28px 0 12px;
-    font-weight:bold;
-    font-size:14px;
-    letter-spacing:.11em;
-    color:#ccd5e2;
-}
-
-.grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
-    gap:16px;
-}
-
-.card{
-    background:rgba(20,24,34,.94);
-    border:1px solid rgba(168,85,247,.38);
-    border-radius:17px;
-    padding:20px;
-    min-height:118px;
-    box-shadow:
-      0 12px 35px rgba(0,0,0,.14),
-      inset 0 1px rgba(255,255,255,.015);
-}
-
-.label{
-    color:#9ca9bb;
-    font-size:13px;
-    text-transform:uppercase;
-    letter-spacing:.08em;
-}
-
-.value{
-    margin-top:10px;
-    font-size:30px;
-    line-height:1.08;
-    font-weight:750;
-}
-
-.small{
-    font-size:21px;
-}
-
-.tiny{
-    font-size:15px;
-    word-break:break-all;
-    line-height:1.45;
-}
-
-.ok{color:#4ade80}
-.bad{color:#fb7185}
-.cyan{color:#5ee7f4}
-.purple{color:#c26cff}
-.gold{color:#ffd21f}
-
-.wide{
-    grid-column:1/-1;
-}
-
-.graph-card{
-    background:rgba(20,24,34,.94);
-    border:1px solid rgba(168,85,247,.38);
-    border-radius:17px;
-    padding:20px;
-}
-
-.graph-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:16px;
-}
-
-.graph-title{
-    font-weight:bold;
-    color:#d9e0eb;
-}
-
-.graph-now{
-    color:#5ee7f4;
-    font-size:21px;
-    font-weight:bold;
+input,
+button,
+textarea,
+select{
+    max-width:100%;
 }
 
 svg{
-    width:100%;
-    height:220px;
-    display:block;
-    overflow:visible;
+    max-width:100%;
 }
 
-.graph-line{
-    fill:none;
-    stroke:#b45cff;
-    stroke-width:3;
-    vector-effect:non-scaling-stroke;
+/* clean chart shell */
+.poolHashrateGraph,
+.graphCard{
+    overflow:hidden;
 }
 
-.graph-fill{
-    fill:url(#fade);
+/* more graceful default wrapping */
+#telemetry,
+#miner,
+#network,
+#window,
+#sv1,
+#access{
+    min-width:0;
 }
 
-.graph-grid{
-    stroke:rgba(255,255,255,.07);
-    stroke-width:1;
+#telemetry > *,
+#miner > *,
+#network > *,
+#window > *,
+#sv1 > *,
+#access > *{
+    min-width:0;
 }
 
-.banner{
-    display:none;
-    padding:18px 20px;
-    margin-bottom:22px;
-    border-radius:16px;
-    border:1px solid #ffd21f;
-    background:rgba(250,204,21,.09);
-    color:#ffd21f;
-    font-weight:bold;
-    font-size:20px;
+/* ---------------------------------
+   HALF SCREEN / SNAPPED DESKTOP
+---------------------------------- */
+@media (max-width: 1280px){
+
+    .shell{
+        max-width:none;
+        padding:22px 18px 44px !important;
+    }
+
+    header{
+        display:grid !important;
+        grid-template-columns:minmax(0,1fr) auto !important;
+        gap:14px !important;
+        align-items:start !important;
+        margin-bottom:18px !important;
+    }
+
+    header > *{
+        min-width:0;
+    }
+
+    h1{
+        font-size:clamp(30px, 4vw, 54px) !important;
+        line-height:1.02 !important;
+        letter-spacing:2px !important;
+    }
+
+    .heroTitle{
+        font-size:clamp(40px, 5vw, 68px) !important;
+        line-height:.96 !important;
+        letter-spacing:2px !important;
+    }
+
+    .heroCard,
+    .heroPanel,
+    .panel,
+    .graphCard,
+    .poolHashrateGraph{
+        border-radius:16px !important;
+    }
+
+    .heroCard,
+    .heroPanel{
+        padding:18px !important;
+    }
+
+    .heroArt,
+    .heroScene,
+    .heroCanvas,
+    .heroGraphic{
+        min-height:320px !important;
+        height:320px !important;
+    }
+
+    .sectionTitle{
+        font-size:14px !important;
+        letter-spacing:4px !important;
+        gap:10px !important;
+        margin:28px 0 12px !important;
+    }
+
+    .card{
+        padding:16px 16px 15px !important;
+    }
+
+    .poolHashrateGraph,
+    .graphCard{
+        min-height:300px !important;
+    }
+
+    /* telemetry-style grids become 2 columns cleanly */
+    #telemetry,
+    #miner,
+    #network,
+    #window,
+    #sv1,
+    #access{
+        display:grid !important;
+        grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+        gap:14px !important;
+    }
+
+    /* search rows / action bars wrap better */
+    .accountSearch,
+    .searchRow,
+    .lookupRow,
+    .actionRow,
+    .copyRow,
+    .endpointRow{
+        display:grid !important;
+        grid-template-columns:minmax(0,1fr) auto auto !important;
+        gap:10px !important;
+        align-items:stretch !important;
+    }
+
+    .accountSearch input,
+    .searchRow input,
+    .lookupRow input{
+        width:100% !important;
+        min-width:0 !important;
+    }
+
+    .live,
+    .statusPill,
+    .livePill{
+        justify-self:end;
+        max-width:100%;
+    }
 }
 
-.footer{
-    margin-top:30px;
-    padding-bottom:20px;
-    color:#6f7989;
-    font-size:12px;
+/* ---------------------------------
+   TIGHT HALF SCREEN / SMALL LAPTOP
+---------------------------------- */
+@media (max-width: 1080px){
+
+    .shell{
+        padding:18px 14px 36px !important;
+    }
+
+    header{
+        grid-template-columns:1fr !important;
+        gap:12px !important;
+    }
+
+    .live,
+    .statusPill,
+    .livePill{
+        justify-self:start !important;
+        width:100%;
+    }
+
+    .heroCard,
+    .heroPanel{
+        padding:16px !important;
+    }
+
+    .heroArt,
+    .heroScene,
+    .heroCanvas,
+    .heroGraphic{
+        min-height:280px !important;
+        height:280px !important;
+    }
+
+    .heroTitle{
+        font-size:clamp(34px, 6vw, 54px) !important;
+    }
+
+    #telemetry,
+    #network,
+    #window,
+    #sv1,
+    #access{
+        grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    #miner{
+        grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    .accountSearch,
+    .searchRow,
+    .lookupRow,
+    .actionRow,
+    .copyRow,
+    .endpointRow{
+        grid-template-columns:1fr 1fr !important;
+    }
+
+    .accountSearch input,
+    .searchRow input,
+    .lookupRow input{
+        grid-column:1 / -1 !important;
+    }
+
+    .poolHashrateGraph,
+    .graphCard{
+        min-height:280px !important;
+    }
 }
 
-@media(max-width:700px){
-    .wrap{padding:17px}
-    h1{font-size:32px}
-    header{align-items:flex-start;flex-direction:column}
-    .value{font-size:25px}
+/* ---------------------------------
+   LARGE TABLET / VERY TIGHT SPLIT
+---------------------------------- */
+@media (max-width: 820px){
+
+    #telemetry,
+    #miner,
+    #network,
+    #window,
+    #sv1,
+    #access{
+        grid-template-columns:1fr !important;
+    }
+
+    .accountSearch,
+    .searchRow,
+    .lookupRow,
+    .actionRow,
+    .copyRow,
+    .endpointRow{
+        grid-template-columns:1fr !important;
+    }
+
+    .heroArt,
+    .heroScene,
+    .heroCanvas,
+    .heroGraphic{
+        min-height:240px !important;
+        height:240px !important;
+    }
+
+    .poolHashrateGraph,
+    .graphCard{
+        min-height:250px !important;
+    }
+
+    .sectionTitle{
+        margin-top:24px !important;
+    }
 }
+
+
+/* TERMINUS_FINAL_HALFSCREEN_POLISH */
+
+/* slightly richer app background */
+body{
+    background:
+        radial-gradient(circle at 50% -10%,
+            rgba(24,67,95,.20),
+            transparent 42%),
+        #050912 !important;
+}
+
+/* premium card edges */
+.card,
+.graphCard,
+.poolHashrateGraph,
+.access{
+    box-shadow:
+        inset 0 1px 0 rgba(67,245,255,.04),
+        0 8px 30px rgba(0,0,0,.16);
+}
+
+/* section titles tighten up */
+.sectionTitle{
+    font-weight:1000 !important;
+    text-shadow:0 0 14px rgba(255,79,184,.12);
+}
+
+/* hero gets a subtle internal frame */
+.hero{
+    box-shadow:
+        inset 0 0 0 1px rgba(67,245,255,.025),
+        inset 0 -80px 100px rgba(0,0,0,.20),
+        0 16px 50px rgba(0,0,0,.25) !important;
+}
+
+/* quarter moon separation from sun */
+.skyMoon{
+    right:128px !important;
+    top:50px !important;
+    z-index:6 !important;
+}
+
+.skyMoonGlow{
+    right:108px !important;
+    top:34px !important;
+}
+
+/* hero typography */
+.heroText{
+    max-width:58% !important;
+}
+
+.heroTitle{
+    text-shadow:
+        0 0 18px rgba(231,250,255,.08);
+}
+
+.heroSub{
+    text-shadow:
+        0 0 12px rgba(114,255,180,.12);
+}
+
+/* graph presentation */
+.poolHashrateGraph{
+    border-color:#174653 !important;
+    background:
+        linear-gradient(
+            180deg,
+            rgba(7,20,29,.98),
+            rgba(4,11,17,.98)
+        ) !important;
+}
+
+.graphTop{
+    padding-bottom:12px;
+    border-bottom:1px solid rgba(67,245,255,.12);
+}
+
+.graphTitle{
+    color:#72a9b5 !important;
+    font-weight:900 !important;
+    letter-spacing:.16em !important;
+}
+
+#graphNow{
+    font-size:18px !important;
+    color:var(--cyan) !important;
+    text-shadow:0 0 14px rgba(67,245,255,.22);
+}
+
+.graphPill{
+    border-color:#1a6770 !important;
+    color:var(--green) !important;
+    background:#061218 !important;
+    box-shadow:inset 0 0 14px rgba(114,255,180,.04);
+}
+
+/* half screen sweet spot */
+@media (min-width:821px) and (max-width:1080px){
+
+    .shell{
+        padding-top:18px !important;
+    }
+
+    header{
+        grid-template-columns:auto minmax(0,1fr) !important;
+        align-items:center !important;
+        column-gap:14px !important;
+        row-gap:10px !important;
+    }
+
+    .brand{
+        grid-column:1 / -1;
+        gap:14px !important;
+    }
+
+    .badge{
+        width:70px !important;
+        height:70px !important;
+        flex-basis:70px !important;
+    }
+
+    .live{
+        grid-column:1 / -1;
+        width:auto !important;
+        min-width:0 !important;
+        padding:10px 14px !important;
+        font-size:11px !important;
+    }
+
+    h1{
+        font-size:clamp(30px,4.5vw,44px) !important;
+    }
+
+    .tagline{
+        margin-top:6px !important;
+    }
+
+    .stackline{
+        margin-top:5px !important;
+        line-height:1.45 !important;
+    }
+
+    .hero{
+        height:374px !important;
+    }
+
+    .heroText{
+        left:36px !important;
+        top:30px !important;
+        max-width:62% !important;
+    }
+
+    .heroTitle{
+        font-size:clamp(38px,5.5vw,56px) !important;
+    }
+
+    .sun{
+        right:auto !important;
+        left:66% !important;
+    }
+
+    .poolHashrateGraph{
+        min-height:265px !important;
+    }
+
+    .graphTop{
+        gap:12px !important;
+    }
+}
+
+/* very narrow desktop / tablet */
+@media (max-width:820px){
+
+    .skyMoon{
+        right:82px !important;
+        top:48px !important;
+    }
+
+    .heroText{
+        max-width:70% !important;
+    }
+
+    .heroTitle{
+        font-size:36px !important;
+    }
+
+    .graphTop{
+        align-items:flex-start !important;
+        flex-direction:column !important;
+    }
+
+    .graphStats{
+        width:100%;
+        flex-direction:row !important;
+        justify-content:space-between;
+        align-items:center !important;
+    }
+}
+
+/* phone */
+@media (max-width:520px){
+
+    .skyMoon{
+        right:52px !important;
+        top:50px !important;
+    }
+
+    .heroText{
+        max-width:78% !important;
+    }
+
+    .heroTitle{
+        font-size:28px !important;
+    }
+}
+
+
+/* TERMINUS_PIGGY_MINER_STATS_V1 */
+
+.piggyLabel {
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+}
+
+.piggyIcon {
+    display:inline-block;
+    width:25px;
+    height:25px;
+    flex:0 0 25px;
+    vertical-align:middle;
+
+    background:
+        url("data:image/webp;base64,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")
+        center/contain no-repeat;
+
+    filter:
+        drop-shadow(0 0 5px rgba(67,245,255,.35))
+        drop-shadow(0 0 8px rgba(255,79,184,.20));
+}
+
+@media(max-width:760px) {
+    .piggyIcon {
+        width:22px;
+        height:22px;
+        flex-basis:22px;
+    }
+}
+
+
+/* TERMINUS_XBT_PIG_BRAND_V1 */
+
+.badge.piggyBrand {
+    width:82px !important;
+    height:82px !important;
+    flex:0 0 82px !important;
+    padding:0 !important;
+
+    border-radius:18px !important;
+    clip-path:none !important;
+
+    border:1px solid rgba(67,245,255,.58) !important;
+
+    background:
+        #020813
+        url("data:image/webp;base64,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")
+        center/cover no-repeat !important;
+
+    box-shadow:
+        0 0 0 1px rgba(67,245,255,.08),
+        0 0 22px rgba(67,245,255,.13),
+        0 0 32px rgba(255,79,184,.07),
+        inset 0 0 18px rgba(0,0,0,.25) !important;
+
+    color:transparent !important;
+    text-indent:-9999px !important;
+    overflow:hidden !important;
+}
+
+.badge.piggyBrand:before,
+.badge.piggyBrand:after {
+    display:none !important;
+}
+
+@media(max-width:760px) {
+    .badge.piggyBrand {
+        width:62px !important;
+        height:62px !important;
+        flex-basis:62px !important;
+        border-radius:14px !important;
+    }
+}
+
+@media(max-width:520px) {
+    .badge.piggyBrand {
+        width:56px !important;
+        height:56px !important;
+        flex-basis:56px !important;
+        border-radius:13px !important;
+    }
+}
+
 </style>
 </head>
-
 <body>
-<div class="wrap">
+<div id="copyToast" class="copyToast">COPIED TO CLIPBOARD</div>
+
+<div class="shell">
 
 <header>
-    <div>
-        <h1>XBT Pool</h1>
-        <div class="subtitle">RATUM Prime + Gateway • BLAKE2b</div>
+  <div class="brand">
+    <div class="badge piggyBrand" title="Terminus Pool // XBT" aria-label="Terminus Pool XBT Piggybank">XBT</div>
+    <div class="brandText">
+      <h1>TERMINUS POOL // XBT</h1>
+      <div class="tagline">THE LAST WORD IN MINING</div>
+      <div class="stackline">RATUM PRIME // GATEWAY // BLAKE2B NODE LINK</div>
     </div>
-    <div class="live" id="live">CONNECTING...</div>
+  </div>
+  <div id="live" class="live">● NODE LINK ACTIVE</div>
 </header>
 
-<div id="blockBanner" class="banner"></div>
+<section class="hero">
+  <div class="stars"></div>
+  <div class="sun"></div>
+  <div class="mountainBack"></div>
+  <div class="mountainFront"></div>
+  <div class="horizon"></div>
+  <div class="road"></div>
+  <div class="car"></div>
 
-<div class="section">MINING</div>
-<div class="grid" id="mining"></div>
+  <div class="heroText">
+    <div class="kicker">NEON HIGHWAY // MIDNIGHT RUN</div>
+    <div class="heroTitle">TERMINUS POOL</div>
+    <div class="heroSub">THE LAST WORD IN MINING</div>
+    <div class="heroMicro">DATUM-FIRST // CYBER MOUNTAIN // XBT BLAKE2B</div>
+  </div>
+</section>
 
-<div class="section">HASHRATE HISTORY</div>
-<div class="graph-card">
-    <div class="graph-head">
-        <div class="graph-title">Rolling Gateway Hashrate</div>
-        <div class="graph-now" id="graphNow">0 TH/s</div>
+<div class="sectionTitle">LIVE-POOL-HASHRATE</div>
+
+<div class="graphCard poolHashrateGraph">
+  <div class="graphTop">
+    <div class="graphTitle">
+      TERMINUS POOL // ROLLING LIVE HASHRATE
     </div>
 
-    <svg viewBox="0 0 1000 220" preserveAspectRatio="none">
-        <defs>
-            <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#b45cff" stop-opacity=".35"/>
-                <stop offset="100%" stop-color="#b45cff" stop-opacity="0"/>
-            </linearGradient>
-        </defs>
+    <div class="graphStats">
+      <span id="graphMiners" class="graphPill">0 POOL MINERS</span>
+      <div id="graphNow">0.000 TH/s</div>
+    </div>
+  </div>
 
-        <line class="graph-grid" x1="0" y1="55" x2="1000" y2="55"/>
-        <line class="graph-grid" x1="0" y1="110" x2="1000" y2="110"/>
-        <line class="graph-grid" x1="0" y1="165" x2="1000" y2="165"/>
-
-        <path id="graphFill" class="graph-fill"></path>
-        <path id="graphLine" class="graph-line"></path>
-    </svg>
+  <svg viewBox="0 0 1000 220" preserveAspectRatio="none">
+    <path id="graphFill"></path>
+    <path id="graphLine"></path>
+  </svg>
 </div>
 
-<div class="section">YOUR MINER</div>
-<div class="grid" id="miner"></div>
+<div class="sectionTitle">POOL-TELEMETRY</div>
+<div id="telemetry" class="grid grid6"></div>
 
-<div class="section">XBT NETWORK</div>
-<div class="grid" id="network"></div>
+<div class="sectionTitle">MINER-ACCOUNTING</div>
 
-<div class="section">PAYOUT WINDOW</div>
-<div class="grid" id="window"></div>
-
-<div class="footer">
-Estimated payout is what your current payout-window share would receive if the pool found a block now. It is not an earned balance until a block is actually found and settled.
+<div class="accountSearch">
+  <input
+    id="accountAddress"
+    type="text"
+    placeholder="SEARCH XBT PAYOUT ADDRESS // bc1..."
+    autocomplete="off"
+    autocapitalize="none"
+    spellcheck="false"
+  >
+  <button id="accountGo" type="button">LOOK UP</button>
+  <button id="accountClear" class="clear" type="button">CLEAR</button>
 </div>
+
+<div id="accountHint" class="accountHint">
+  SEARCH YOUR PAYOUT ADDRESS TO VIEW ACCOUNTING
+</div>
+
+<div id="miner" class="grid grid4" style="display:none"></div>
+
+<div class="sectionTitle">NETWORK-UPLINK</div>
+<div id="network" class="grid grid4"></div>
+
+<div class="sectionTitle">SV1-PIGGY-BANK // REDISTRIBUTION</div>
+<div id="window" class="grid grid5"></div>
+
+<div class="sectionTitle">PUBLIC-ACCESS</div>
+
+<div class="twoCol">
+
+  <div class="access primary">
+    <h3>DATUM // RECOMMENDED</h3>
+    <div class="mode">PRIMARY TERMINUS CONNECTION</div>
+
+    <div class="accessLabel">PUBLIC DATUM ENDPOINT</div>
+    <div class="copyRow">
+      <div class="copyText">67.205.136.13:28915</div>
+      <button
+        class="copyBtn"
+        data-copy="67.205.136.13:28915"
+        onclick="copyField(this)"
+      >COPY</button>
+    </div>
+
+    <div class="note">
+      Username: <strong>payout_address.worker</strong><br>
+      Global pool fee: <strong>1%</strong><br>
+      DATUM participates in redistributed legacy SV1 work.
+    </div>
+  </div>
+
+  <div class="access legacy">
+    <h3>LEGACY SV1</h3>
+    <div class="mode">PUBLIC STRATUM V1 GATEWAY</div>
+
+    <div class="accessLabel">PUBLIC SV1 ENDPOINT</div>
+    <div class="copyRow">
+      <div class="copyText">stratum+tcp://67.205.136.13:23340</div>
+      <button
+        class="copyBtn"
+        data-copy="stratum+tcp://67.205.136.13:23340"
+        onclick="copyField(this)"
+      >COPY</button>
+    </div>
+
+    <div class="note">
+      Username: <strong>payout_address.worker</strong><br>
+      Global pool fee: <strong>1%</strong><br>
+      Additional <strong>5% work redistribution</strong> to non-SV1/DATUM miners.
+    </div>
+  </div>
+
+</div>
+
+<div class="access identityAccess">
+  <h3>POOL IDENTITY // RATUM PRIME</h3>
+  <div class="mode">VERIFY YOUR TERMINUS CONNECTION</div>
+
+  <div class="identityGrid">
+
+    <div>
+      <div class="accessLabel">PRIME PUBLIC KEY</div>
+      <div class="copyRow">
+        <div id="primePubkey" class="copyText">LOADING...</div>
+        <button
+          id="copyPrimePubkey"
+          class="copyBtn"
+          data-copy=""
+          onclick="copyField(this)"
+        >COPY</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="accessLabel">POOL PAYOUT SCRIPT</div>
+      <div class="copyRow">
+        <div id="poolPayoutScript" class="copyText">LOADING...</div>
+        <button
+          id="copyPayoutScript"
+          class="copyBtn"
+          data-copy=""
+          onclick="copyField(this)"
+        >COPY</button>
+      </div>
+    </div>
+
+    <div class="identityWide">
+      <div class="accessLabel">COINBASE TAG</div>
+      <div class="copyRow">
+        <div id="coinbaseTag" class="copyText">LOADING...</div>
+        <button
+          id="copyCoinbaseTag"
+          class="copyBtn"
+          data-copy=""
+          onclick="copyField(this)"
+        >COPY</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="blockBanner" class="blockBanner"></div>
+
+<footer>
+TERMINUS POOL // THE LAST WORD IN MINING // DATUM-FIRST ARCHITECTURE // XBT BLAKE2B
+</footer>
 
 </div>
 
 <script>
-function num(v,d=2){
-    if(v===null || v===undefined || isNaN(Number(v))) return "N/A";
-    return Number(v).toLocaleString(undefined,{
-        maximumFractionDigits:d
-    });
+const $=id=>document.getElementById(id);
+
+let accountAddress =
+  localStorage.getItem("terminusAccountAddress") || "";
+
+$("accountAddress").value=accountAddress;
+
+function lookupAccount(){
+  accountAddress=$("accountAddress").value.trim();
+
+  if(accountAddress){
+    localStorage.setItem("terminusAccountAddress",accountAddress);
+  }else{
+    localStorage.removeItem("terminusAccountAddress");
+  }
+
+  refresh();
+}
+
+$("accountGo").addEventListener("click",lookupAccount);
+
+$("accountClear").addEventListener("click",()=>{
+  accountAddress="";
+  $("accountAddress").value="";
+  localStorage.removeItem("terminusAccountAddress");
+  refresh();
+});
+
+$("accountAddress").addEventListener("keydown",e=>{
+  if(e.key==="Enter") lookupAccount();
+});
+
+async function copyField(btn){
+  const value=(btn.dataset.copy||"").trim();
+  if(!value) return;
+
+  try{
+    await navigator.clipboard.writeText(value);
+  }catch(e){
+    const ta=document.createElement("textarea");
+    ta.value=value;
+    ta.style.position="fixed";
+    ta.style.opacity="0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+  }
+
+  const old=btn.textContent;
+  btn.textContent="COPIED";
+
+  const toast=$("copyToast");
+  toast.textContent="COPIED TO CLIPBOARD";
+  toast.classList.add("show");
+
+  setTimeout(()=>{
+    btn.textContent=old;
+    toast.classList.remove("show");
+  },1200);
+}
+
+function num(v,d=0){
+  const n=Number(v);
+  return Number.isFinite(n)?n.toLocaleString(undefined,{
+    minimumFractionDigits:d,maximumFractionDigits:d
+  }):"0";
+}
+
+function compact(v){
+  let n=Number(v)||0;
+  if(n>=1e12)return (n/1e12).toFixed(2)+"T";
+  if(n>=1e9)return (n/1e9).toFixed(2)+"B";
+  if(n>=1e6)return (n/1e6).toFixed(2)+"M";
+  if(n>=1e3)return (n/1e3).toFixed(2)+"K";
+  return num(n,0);
+}
+
+function bestShareFmt(v){
+    const n=Number(v)||0;
+
+    if(n<=0) return "WAITING FOR SHARE";
+    if(n>=1e15) return (n/1e15).toFixed(2)+"P";
+    if(n>=1e12) return (n/1e12).toFixed(2)+"T";
+    if(n>=1e9)  return (n/1e9).toFixed(2)+"G";
+    if(n>=1e6)  return (n/1e6).toFixed(2)+"M";
+    if(n>=1e3)  return (n/1e3).toFixed(2)+"K";
+
+    return n.toFixed(2);
 }
 
 function card(label,value,cls=""){
-    return `
-    <div class="card">
-        <div class="label">${label}</div>
-        <div class="value ${cls}">${value}</div>
-    </div>`;
+  return `<div class="card ${cls}">
+    <div class="label">${label}</div>
+    <div class="value">${value}</div>
+  </div>`;
+}
+
+
+function injectVisualFx(){
+    if(document.getElementById("terminusFxStyles")) return;
+
+    const style=document.createElement("style");
+    style.id="terminusFxStyles";
+    style.textContent=`
+    .skyFxLayer{
+        position:absolute;
+        inset:0;
+        pointer-events:none;
+        overflow:hidden;
+        z-index:1;
+    }
+    .skyNebula{
+        position:absolute;
+        width:320px;
+        height:320px;
+        right:8%;
+        top:-90px;
+        border-radius:50%;
+        background:radial-gradient(circle,
+            rgba(170,114,255,.18) 0%,
+            rgba(67,245,255,.10) 28%,
+            rgba(255,79,184,.06) 50%,
+            rgba(0,0,0,0) 72%);
+        filter:blur(10px);
+        animation:nebulaPulse 8s ease-in-out infinite;
+        opacity:.9;
+    }
+    .skyMoonGlow{
+        position:absolute;
+        right:68px;
+        top:54px;
+        width:118px;
+        height:118px;
+        border-radius:50%;
+        background:radial-gradient(circle,
+            rgba(67,245,255,.18) 0%,
+            rgba(170,114,255,.10) 42%,
+            rgba(0,0,0,0) 72%);
+        filter:blur(12px);
+        animation:moonGlow 5.5s ease-in-out infinite;
+    }
+    .skyMoon{
+        position:absolute;
+        right:84px;
+        top:66px;
+        width:78px;
+        height:78px;
+        border-radius:50%;
+        background:
+            radial-gradient(circle at 30% 30%,
+                rgba(255,255,255,.92) 0%,
+                rgba(226,245,255,.92) 32%,
+                rgba(165,218,255,.78) 68%,
+                rgba(98,176,255,.56) 100%);
+        box-shadow:
+            0 0 18px rgba(67,245,255,.35),
+            0 0 42px rgba(170,114,255,.18);
+        opacity:.92;
+    }
+    .skyMoon:after{
+        content:"";
+        position:absolute;
+        width:26px;
+        height:26px;
+        border-radius:50%;
+        left:20px;
+        top:18px;
+        background:rgba(120,149,160,.15);
+        box-shadow:
+            20px 12px 0 4px rgba(120,149,160,.12),
+            10px 34px 0 1px rgba(120,149,160,.10);
+    }
+    .skyStar{
+        position:absolute;
+        border-radius:50%;
+        background:#dffcff;
+        box-shadow:
+            0 0 6px rgba(67,245,255,.65),
+            0 0 12px rgba(170,114,255,.25);
+        animation:starTwinkle var(--dur) ease-in-out infinite,
+                  starDrift var(--drift) linear infinite;
+        opacity:var(--op);
+    }
+
+    #graphDot{
+        filter:drop-shadow(0 0 8px rgba(67,245,255,.9));
+    }
+    #graphPulse{
+        transform-origin:center;
+        animation:graphPulse 1.8s ease-out infinite;
+    }
+    .graphCard svg{
+        overflow:visible;
+    }
+
+    @keyframes starTwinkle{
+        0%,100%{opacity:calc(var(--op) * .55); transform:scale(.9)}
+        50%{opacity:1; transform:scale(1.35)}
+    }
+    @keyframes starDrift{
+        0%{transform:translateY(0)}
+        50%{transform:translateY(-2px)}
+        100%{transform:translateY(0)}
+    }
+    @keyframes moonGlow{
+        0%,100%{transform:scale(.98); opacity:.72}
+        50%{transform:scale(1.04); opacity:1}
+    }
+    @keyframes nebulaPulse{
+        0%,100%{opacity:.65; transform:scale(.98)}
+        50%{opacity:1; transform:scale(1.03)}
+    }
+    @keyframes graphPulse{
+        0%{opacity:.75; r:6}
+        100%{opacity:0; r:20}
+    }`;
+    document.head.appendChild(style);
+}
+
+function initSkyFx(){
+    const hero=document.querySelector(
+        ".heroArt, .heroScene, .heroVisual, .heroGraphic, .heroIllustration, .hero"
+    );
+    if(!hero || hero.dataset.fxReady) return;
+
+    hero.dataset.fxReady="1";
+    hero.style.position=hero.style.position || "relative";
+    hero.style.overflow="hidden";
+
+    const layer=document.createElement("div");
+    layer.className="skyFxLayer";
+
+    const nebula=document.createElement("div");
+    nebula.className="skyNebula";
+    layer.appendChild(nebula);
+
+    const moonGlow=document.createElement("div");
+    moonGlow.className="skyMoonGlow";
+    layer.appendChild(moonGlow);
+
+    const moon=document.createElement("div");
+    moon.className="skyMoon";
+    layer.appendChild(moon);
+
+    for(let i=0;i<28;i++){
+        const star=document.createElement("div");
+        star.className="skyStar";
+        const size=(Math.random()*2.8+1.2).toFixed(2);
+        star.style.width=size+"px";
+        star.style.height=size+"px";
+        star.style.left=(Math.random()*92+2)+"%";
+        star.style.top=(Math.random()*42+4)+"%";
+        star.style.setProperty("--op",(Math.random()*.55+.35).toFixed(2));
+        star.style.setProperty("--dur",(Math.random()*2.8+1.8).toFixed(2)+"s");
+        star.style.setProperty("--drift",(Math.random()*7+5).toFixed(2)+"s");
+        star.style.animationDelay=
+            `${(Math.random()*4).toFixed(2)}s, ${(Math.random()*3).toFixed(2)}s`;
+        layer.appendChild(star);
+    }
+
+    hero.appendChild(layer);
+}
+
+function ensureGraphFx(svg){
+    if(!svg) return {};
+
+    let defs=svg.querySelector("defs");
+    if(!defs){
+        defs=document.createElementNS("http://www.w3.org/2000/svg","defs");
+        svg.insertBefore(defs, svg.firstChild);
+    }
+
+    if(!svg.querySelector("#graphStrokeGradient")){
+        const strokeGrad=document.createElementNS("http://www.w3.org/2000/svg","linearGradient");
+        strokeGrad.setAttribute("id","graphStrokeGradient");
+        strokeGrad.setAttribute("x1","0%");
+        strokeGrad.setAttribute("y1","0%");
+        strokeGrad.setAttribute("x2","100%");
+        strokeGrad.setAttribute("y2","0%");
+        strokeGrad.innerHTML=`
+            <stop offset="0%" stop-color="#43f5ff"/>
+            <stop offset="55%" stop-color="#72ffb4"/>
+            <stop offset="100%" stop-color="#aa72ff"/>`;
+        defs.appendChild(strokeGrad);
+    }
+
+    if(!svg.querySelector("#graphFillGradient")){
+        const fillGrad=document.createElementNS("http://www.w3.org/2000/svg","linearGradient");
+        fillGrad.setAttribute("id","graphFillGradient");
+        fillGrad.setAttribute("x1","0%");
+        fillGrad.setAttribute("y1","0%");
+        fillGrad.setAttribute("x2","0%");
+        fillGrad.setAttribute("y2","100%");
+        fillGrad.innerHTML=`
+            <stop offset="0%" stop-color="rgba(67,245,255,.32)"/>
+            <stop offset="45%" stop-color="rgba(67,245,255,.15)"/>
+            <stop offset="100%" stop-color="rgba(67,245,255,0)"/>`;
+        defs.appendChild(fillGrad);
+    }
+
+    if(!svg.querySelector("#graphGlowFilter")){
+        const filter=document.createElementNS("http://www.w3.org/2000/svg","filter");
+        filter.setAttribute("id","graphGlowFilter");
+        filter.innerHTML=`
+            <feGaussianBlur stdDeviation="3.2" result="blur"/>
+            <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>`;
+        defs.appendChild(filter);
+    }
+
+    let dot=svg.querySelector("#graphDot");
+    if(!dot){
+        dot=document.createElementNS("http://www.w3.org/2000/svg","circle");
+        dot.setAttribute("id","graphDot");
+        dot.setAttribute("r","5");
+        dot.setAttribute("fill","#43f5ff");
+        svg.appendChild(dot);
+    }
+
+    let pulse=svg.querySelector("#graphPulse");
+    if(!pulse){
+        pulse=document.createElementNS("http://www.w3.org/2000/svg","circle");
+        pulse.setAttribute("id","graphPulse");
+        pulse.setAttribute("r","6");
+        pulse.setAttribute("fill","none");
+        pulse.setAttribute("stroke","#43f5ff");
+        pulse.setAttribute("stroke-opacity",".8");
+        pulse.setAttribute("stroke-width","2");
+        svg.appendChild(pulse);
+    }
+
+    return {dot,pulse};
+}
+
+function smoothPath(points){
+    if(points.length<2) return "";
+    let d=`M ${points[0][0]} ${points[0][1]}`;
+    for(let i=0;i<points.length-1;i++){
+        const p0=points[i-1] || points[i];
+        const p1=points[i];
+        const p2=points[i+1];
+        const p3=points[i+2] || p2;
+
+        const cp1x=p1[0]+(p2[0]-p0[0])/6;
+        const cp1y=p1[1]+(p2[1]-p0[1])/6;
+        const cp2x=p2[0]-(p3[0]-p1[0])/6;
+        const cp2y=p2[1]-(p3[1]-p1[1])/6;
+
+        d+=` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2[0]} ${p2[1]}`;
+    }
+    return d;
 }
 
 function drawGraph(values){
-    const line=document.getElementById("graphLine");
-    const fill=document.getElementById("graphFill");
+    const svg=document.getElementById("hashGraph") ||
+              document.querySelector(".graphCard svg");
+
+    const line=document.getElementById("line") ||
+               document.getElementById("graphLine");
+
+    const fill=document.getElementById("fill") ||
+               document.getElementById("graphFill");
+
+    if(!svg || !line || !fill) return;
+
+    const fx=ensureGraphFx(svg);
+
+    function svgEl(tag,id){
+        let el=id ? svg.querySelector("#"+id) : null;
+
+        if(!el){
+            el=document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                tag
+            );
+
+            if(id) el.setAttribute("id",id);
+        }
+
+        return el;
+    }
+
+    let grid=svg.querySelector("#hashGrid");
+
+    if(!grid){
+        grid=svgEl("g","hashGrid");
+        svg.insertBefore(grid,fill);
+    }
+
+    let bars=svg.querySelector("#hashBars");
+
+    if(!bars){
+        bars=svgEl("g","hashBars");
+        svg.insertBefore(bars,fill);
+    }
+
+    let avgGroup=svg.querySelector("#hashAverage");
+
+    if(!avgGroup){
+        avgGroup=svgEl("g","hashAverage");
+        svg.insertBefore(avgGroup,line);
+    }
+
+    let peakDot=svg.querySelector("#graphPeakDot");
+
+    if(!peakDot){
+        peakDot=svgEl("circle","graphPeakDot");
+        peakDot.setAttribute("r","5");
+        peakDot.setAttribute("fill","#ffc85c");
+        peakDot.setAttribute("stroke","#fff0bc");
+        peakDot.setAttribute("stroke-width","2");
+        svg.appendChild(peakDot);
+    }
+
+    let peakLabel=svg.querySelector("#graphPeakLabel");
+
+    if(!peakLabel){
+        peakLabel=svgEl("text","graphPeakLabel");
+        peakLabel.setAttribute("fill","#ffc85c");
+        peakLabel.setAttribute("class","graphMetricText");
+        peakLabel.setAttribute("text-anchor","middle");
+        svg.appendChild(peakLabel);
+    }
 
     if(!values || values.length < 2){
         line.setAttribute("d","");
         fill.setAttribute("d","");
+        grid.innerHTML="";
+        bars.innerHTML="";
+        avgGroup.innerHTML="";
+
+        [fx.dot,fx.pulse,peakDot].forEach(el=>{
+            if(el){
+                el.setAttribute("cx","-100");
+                el.setAttribute("cy","-100");
+            }
+        });
+
+        peakLabel.textContent="";
         return;
     }
 
-    let max=Math.max(...values,0.001);
+    const nums=values
+        .map(v=>Number(v))
+        .filter(Number.isFinite);
 
-    let points=values.map((v,i)=>{
-        let x=(i/(values.length-1))*1000;
-        let y=210-(v/max)*190;
-        return [x,y];
+    if(nums.length < 2) return;
+
+    const max=Math.max(...nums);
+    const min=Math.min(...nums);
+    const avg=nums.reduce((a,b)=>a+b,0)/nums.length;
+
+    /*
+      Give the graph breathing room rather than mapping
+      min/max directly to the roof/floor.
+    */
+    const rawRange=Math.max(max-min,0.001);
+
+    const padding=Math.max(
+        rawRange*.28,
+        max*.025,
+        .05
+    );
+
+    const low=Math.max(0,min-padding);
+    const high=max+padding;
+    const displayRange=Math.max(high-low,.001);
+
+    const yFor=v=>{
+        const pct=(v-low)/displayRange;
+
+        return Math.max(
+            16,
+            Math.min(
+                205,
+                205-(pct*174)
+            )
+        );
+    };
+
+    const points=nums.map((v,i)=>{
+        const x=(i/(nums.length-1))*1000;
+        return [x,yFor(v)];
     });
 
-    let path="M "+points.map(p=>p.join(" ")).join(" L ");
+    const path=smoothPath(points);
+    const last=points[points.length-1];
+
+    /* -----------------------------
+       MAIN GLOWING CURVE
+       ----------------------------- */
     line.setAttribute("d",path);
+    line.setAttribute(
+        "stroke",
+        "url(#graphStrokeGradient)"
+    );
+    line.setAttribute("stroke-width","4");
+    line.setAttribute("stroke-linecap","round");
+    line.setAttribute("stroke-linejoin","round");
+    line.setAttribute("fill","none");
+    line.setAttribute(
+        "filter",
+        "url(#graphGlowFilter)"
+    );
 
-    let fillPath=path+
-        " L 1000 220 L 0 220 Z";
+    fill.setAttribute(
+        "d",
+        path+` L ${last[0]} 220 L 0 220 Z`
+    );
 
-    fill.setAttribute("d",fillPath);
-}
+    fill.setAttribute(
+        "fill",
+        "url(#graphFillGradient)"
+    );
 
-async function refresh(){
-    try{
-        const r=await fetch("/api/stats?ts="+Date.now(),{
-            cache:"no-store"
+    fill.setAttribute("stroke","none");
+
+    /* -----------------------------
+       DASHED GUIDE GRID
+       ----------------------------- */
+    grid.innerHTML="";
+
+    [25,50,75].forEach(percent=>{
+        const y=205-(percent/100)*174;
+
+        const guide=svgEl("line");
+
+        guide.setAttribute("x1","0");
+        guide.setAttribute("x2","1000");
+        guide.setAttribute("y1",y);
+        guide.setAttribute("y2",y);
+
+        guide.setAttribute(
+            "stroke",
+            "rgba(120,149,160,.18)"
+        );
+
+        guide.setAttribute(
+            "stroke-dasharray",
+            "7 11"
+        );
+
+        guide.setAttribute("stroke-width","1");
+
+        grid.appendChild(guide);
+    });
+
+    /* -----------------------------
+       HASHRATE HISTOGRAM
+       ----------------------------- */
+    bars.innerHTML="";
+
+    /*
+      Limit bars so a long history does not turn
+      into a solid rectangle.
+    */
+    const step=Math.max(
+        1,
+        Math.ceil(nums.length/48)
+    );
+
+    const samples=[];
+
+    for(let i=0;i<nums.length;i+=step){
+        samples.push({
+            i,
+            value:nums[i]
         });
+    }
 
-        if(!r.ok) throw new Error("HTTP "+r.status);
+    const barWidth=Math.max(
+        5,
+        (1000/samples.length)*.55
+    );
 
-        const d=await r.json();
+    samples.forEach((sample,index)=>{
+        const x=
+            (sample.i/(nums.length-1))*1000;
 
-        document.getElementById("live").textContent =
-            "LIVE • "+new Date().toLocaleTimeString();
+        const y=yFor(sample.value);
 
-        document.getElementById("mining").innerHTML =
-            card(
-                "Status",
-                d.status,
-                d.status.includes("Ready") ? "ok":"bad"
-            ) +
-            card("Connected Miners",d.connections) +
-            card("Live Hashrate",num(d.hashrate,3)+" TH/s","cyan") +
-            card("Accepted Shares",num(d.accepted,0)) +
-            card(
-                "Rejected Shares",
-                num(d.rejected,0),
-                d.rejected>0 ? "bad":""
-            ) +
-            card("Share Difficulty",num(d.shareDifficulty,0)) +
-            card("Gateway Uptime",d.uptime,"small");
+        const rect=svgEl("rect");
 
-        document.getElementById("miner").innerHTML =
-            card("Payout Identity",d.identity || "N/A","tiny") +
-            card("Prime Hashrate",num(d.primeHashrate,3)+" TH/s","cyan") +
-            card("Window Work",d.minerWork || "0") +
-            card("Window Share",num(d.sharePercent,2)+"%","purple") +
-            card(
-                "Payable",
-                d.payable ? "YES":"NO",
-                d.payable ? "ok":"bad"
-            );
+        rect.setAttribute(
+            "x",
+            x-barWidth/2
+        );
 
-        document.getElementById("network").innerHTML =
-            card("Block Height",num(d.height,0)) +
-            card("Network Difficulty",num(d.difficulty,2),"small") +
-            card("Block Value",num(d.blockValue,8)+" XBT","gold") +
-            card("Network Hashrate",num(d.networkTh,2)+" TH/s","small");
+        rect.setAttribute("y",y);
+        rect.setAttribute(
+            "width",
+            barWidth
+        );
 
-        document.getElementById("window").innerHTML =
-            card("Window Shares",num(d.windowShares,0)) +
-            card("Total Window Work",d.windowWork) +
-            card("Your Share",num(d.sharePercent,2)+"%","purple") +
-            card(
-                "Estimated Payout",
-                num(d.estimatedPayoutXbt,8)+" XBT",
-                "gold"
-            ) +
-            card("Blocks Found",num(d.blocks,0));
+        rect.setAttribute(
+            "height",
+            Math.max(4,215-y)
+        );
 
-        document.getElementById("graphNow").textContent =
-            num(d.hashrate,3)+" TH/s";
+        rect.setAttribute("rx","2");
 
-        drawGraph(d.hashHistory || []);
+        rect.setAttribute(
+            "fill",
+            index===samples.length-1
+                ? "rgba(67,245,255,.23)"
+                : "rgba(114,255,180,.10)"
+        );
 
-        const banner=document.getElementById("blockBanner");
+        bars.appendChild(rect);
+    });
 
-        if(d.blocks>0){
-            banner.style.display="block";
-            banner.textContent =
-                "🔥 BLOCKS FOUND: "+d.blocks+" — XBT POOL HAS HIT!";
-        }else{
-            banner.style.display="none";
+    /* -----------------------------
+       AVERAGE LINE + LABEL
+       ----------------------------- */
+    avgGroup.innerHTML="";
+
+    const avgY=yFor(avg);
+
+    const avgLine=svgEl("line");
+
+    avgLine.setAttribute("x1","0");
+    avgLine.setAttribute("x2","1000");
+    avgLine.setAttribute("y1",avgY);
+    avgLine.setAttribute("y2",avgY);
+
+    avgLine.setAttribute(
+        "stroke",
+        "rgba(255,79,184,.55)"
+    );
+
+    avgLine.setAttribute(
+        "stroke-dasharray",
+        "14 12"
+    );
+
+    avgLine.setAttribute("stroke-width","1.5");
+
+    const avgText=svgEl("text");
+
+    avgText.setAttribute("x","18");
+    avgText.setAttribute(
+        "y",
+        Math.max(20,avgY-8)
+    );
+
+    avgText.setAttribute(
+        "fill",
+        "#ff72c4"
+    );
+
+    avgText.setAttribute(
+        "class",
+        "graphMetricText"
+    );
+
+    avgText.textContent=
+        "AVG "+avg.toFixed(3)+" TH/s";
+
+    avgGroup.appendChild(avgLine);
+    avgGroup.appendChild(avgText);
+
+    /* -----------------------------
+       PEAK MARKER
+       ----------------------------- */
+    let peakIndex=0;
+
+    for(let i=1;i<nums.length;i++){
+        if(nums[i]>nums[peakIndex]){
+            peakIndex=i;
         }
+    }
 
-    }catch(e){
-        document.getElementById("live").textContent="DATA ERROR";
-        document.getElementById("live").className="live bad";
+    const peak=points[peakIndex];
+
+    peakDot.setAttribute(
+        "cx",
+        peak[0]
+    );
+
+    peakDot.setAttribute(
+        "cy",
+        peak[1]
+    );
+
+    peakLabel.setAttribute(
+        "x",
+        peak[0]
+    );
+
+    peakLabel.setAttribute(
+        "y",
+        Math.max(18,peak[1]-14)
+    );
+
+    peakLabel.textContent=
+        "PEAK "+nums[peakIndex].toFixed(3);
+
+    /* -----------------------------
+       LIVE PULSE
+       ----------------------------- */
+    if(fx.dot){
+        fx.dot.setAttribute(
+            "cx",
+            last[0]
+        );
+
+        fx.dot.setAttribute(
+            "cy",
+            last[1]
+        );
+    }
+
+    if(fx.pulse){
+        fx.pulse.setAttribute(
+            "cx",
+            last[0]
+        );
+
+        fx.pulse.setAttribute(
+            "cy",
+            last[1]
+        );
     }
 }
 
+async function refresh(){
+  try{
+    const params=new URLSearchParams();
+    params.set("ts",Date.now().toString());
+
+    if(accountAddress){
+      params.set("address",accountAddress);
+    }
+
+    const r=await fetch(
+      "/api/stats?"+params.toString(),
+      {cache:"no-store"}
+    );
+    if(!r.ok)throw new Error("HTTP "+r.status);
+
+    const d=await r.json();
+    const ready=String(d.status||"").includes("Ready");
+
+    const pubkey=d.primePubkey||"";
+    const payoutScript=d.poolPayoutScript||"";
+    const tag=d.coinbaseTag||"";
+
+    $("primePubkey").textContent=pubkey||"UNAVAILABLE";
+    $("copyPrimePubkey").dataset.copy=pubkey;
+
+    $("poolPayoutScript").textContent=payoutScript||"UNAVAILABLE";
+    $("copyPayoutScript").dataset.copy=payoutScript;
+
+    $("coinbaseTag").textContent=tag||"UNAVAILABLE";
+    $("copyCoinbaseTag").dataset.copy=tag;
+
+    $("live").className=ready?"live":"live bad";
+    $("live").textContent=
+      (ready?"● NODE LINK ACTIVE // ":"● NODE LINK DEGRADED // ")+
+      new Date().toLocaleTimeString();
+
+    $("telemetry").innerHTML=
+      card("SYSTEM STATUS",d.status||"Unknown",ready?"ok":"bad")+
+      card("LIVE POOL HASHRATE",num(d.hashrate,3)+" TH/s","cyan")+
+      card("POOL MINERS",num(d.poolMiners,0))+
+      card("WINDOW SHARES",num(d.windowShares,0),"purple")+
+      card("POOL SHARE FLOOR",compact(Number(d.shareDifficulty)||1024),"cyan")+
+      card("BLOCKS FOUND",num(d.blocks,0),Number(d.blocks)>0?"gold":"");
+
+    if(!d.accountQuery){
+
+      $("accountHint").textContent=
+        "SEARCH YOUR PAYOUT ADDRESS TO VIEW ACCOUNTING";
+
+      $("accountHint").className="accountHint";
+
+      $("miner").style.display="none";
+      $("miner").innerHTML="";
+
+    }else if(!d.accountFound){
+
+      $("accountHint").textContent=
+        "NO ACCOUNT FOUND // CHECK THE PAYOUT ADDRESS";
+
+      $("accountHint").className="accountHint badText";
+
+      $("miner").style.display="none";
+      $("miner").innerHTML="";
+
+    }else{
+
+      $("accountHint").textContent=
+        "ACCOUNT FOUND // "+(d.minerTag||"UNTAGGED");
+
+      $("accountHint").className="accountHint good";
+
+      $("miner").style.display="grid";
+
+      $("miner").innerHTML=
+        card("PAYOUT ADDRESS",d.identity||"N/A","tiny")+
+        card("MINER TAG",d.minerTag||"UNTAGGED","cyan")+
+        card("PRIME HASHRATE",num(d.primeHashrate,3)+" TH/s","cyan")+
+        card("WINDOW WORK",compact(d.minerWork||0))+
+        card("GATEWAY WORK",compact(d.ownGatewayWork||0))+
+
+        card(
+            "BEST SHARE",
+            bestShareFmt(d.bestShare)
+        )+
+
+        card(
+            '<span class="piggyLabel"><span class="piggyIcon"></span>SV1 PIGGYBANK SHARE</span>',
+            num(d.sv1PiggySharePercent,2)+"%"
+        )+
+
+        card(
+            '<span class="piggyLabel"><span class="piggyIcon"></span>SV1 PIGGYBANK REWARD</span>',
+            num(d.sv1PiggyRewardXbt,8)+" XBT"
+        )+
+
+        card("WINDOW OWNERSHIP",num(d.sharePercent,2)+"%","purple")+
+        card(
+          "PROJECTED PAYOUT",
+          num(d.estimatedPayoutXbt,8)+" XBT",
+          "gold"
+        )+
+        card(
+          "PAYOUT STATUS",
+          d.payable
+            ? "PAYABLE"
+            : (d.unpayableReason||"LOCKED"),
+          d.payable ? "ok":"bad"
+        );
+    }
+
+    $("network").innerHTML=
+      card("CHAIN HEIGHT",num(d.height,0))+
+      card("NETWORK DIFFICULTY",(Number(d.difficulty||0)/1e9).toFixed(2)+"G","small")+
+      card("COINBASE VALUE",num(d.blockValue,8)+" XBT","gold")+
+      card("NETWORK HASHRATE",num(d.networkTh,2)+" TH/s","small");
+
+    const redistributionPct=
+      Number(d.sv1SubsidyBps||0)/100;
+
+    $("window").innerHTML=
+      card(
+        "PUBLIC SV1 WORK",
+        compact(d.sv1PublicWork||0),
+        "cyan"
+      )+
+      card(
+        "SV1 REDISTRIBUTION RATE",
+        num(Number(d.sv1FeeBps||0)/100,2)+"%",
+        "purple"
+      )+
+      card(
+            '<span class="piggyLabel"><span class="piggyIcon"></span>PIGGY BANK</span>',
+        
+        num(Number(d.sv1FeeSats||0)/100000000,8)+" XBT",
+        "gold"
+      )+
+      card(
+        "REASSIGNED WORK",
+        compact(d.sv1ReassignedWork||0),
+        "cyan"
+      )+
+      card(
+        "REDISTRIBUTION STATUS",
+        redistributionPct>=100
+          ? "100% REASSIGNED"
+          : num(redistributionPct,2)+"% REASSIGNED",
+        redistributionPct>=100 ? "ok":"purple"
+      );
+
+    $("graphNow").textContent=num(d.hashrate,3)+" TH/s";
+    $("graphMiners").textContent=
+      num(d.poolMiners,0)+" POOL MINERS";
+
+    drawGraph(d.hashHistory||[]);
+
+    if(Number(d.blocks)>0){
+      $("blockBanner").style.display="block";
+      $("blockBanner").textContent=
+        "🔥 BLOCKS FOUND: "+num(d.blocks,0)+" // TERMINUS POOL HAS HIT";
+    }else{
+      $("blockBanner").style.display="none";
+    }
+
+  }catch(e){
+    $("live").textContent="● NODE LINK DATA ERROR";
+    $("live").className="live bad";
+  }
+}
+
+injectVisualFx();
+initSkyFx();
 refresh();
 setInterval(refresh,5000);
 </script>
-
 </body>
 </html>
 """
@@ -391,9 +2352,27 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
 
-        if self.path.startswith("/api/stats"):
+        parsed = urllib.parse.urlparse(self.path)
+
+        if parsed.path == "/api/stats":
 
             try:
+
+                query = urllib.parse.parse_qs(parsed.query)
+
+                account_query = (
+                    query.get("address", [""])[0] or ""
+                ).strip()
+
+                normalized_account = account_query
+
+                # Accept either:
+                # bc1...
+                # bc1....worker
+                if "." in normalized_account:
+                    normalized_account = (
+                        normalized_account.split(".",1)[0]
+                    )
 
                 gateway=json.load(
                     urllib.request.urlopen(
@@ -414,12 +2393,58 @@ class Handler(BaseHTTPRequestHandler):
                 rejected=gateway.get("shares_rejected",{})
                 job=gateway.get("job",{})
 
+                pool=prime.get("pool",{})
                 window=prime.get("window",{})
                 network=prime.get("network",{})
                 blocks=prime.get("blocks",{})
 
+                public_gateway_fee=prime.get(
+                    "public_gateway_fee",{}
+                )
+
                 miners=window.get("miners",[])
-                miner=miners[0] if miners else {}
+
+                # Pool-wide telemetry comes from every miner
+                # currently represented in Prime's window.
+                pool_hash_hs=0.0
+
+                for pool_miner in miners:
+                    try:
+                        pool_hash_hs += float(
+                            pool_miner.get("hashrate_hs",0) or 0
+                        )
+                    except:
+                        pass
+
+                pool_hash_th=(
+                    pool_hash_hs/1_000_000_000_000
+                )
+
+                pool_miner_count=len(miners)
+
+                miner={}
+                account_found=False
+
+                if normalized_account:
+
+                    wanted=normalized_account.lower()
+
+                    for candidate in miners:
+
+                        identity=str(
+                            candidate.get("identity","")
+                        ).strip().lower()
+
+                        if identity == wanted:
+                            miner=candidate
+                            account_found=True
+                            break
+
+                else:
+                    # Do not expose a miner account until an
+                    # explicit payout-address lookup is made.
+                    miner={}
+                    account_found=False
 
                 gateway_hash=float(
                     s.get("hashrate_ths",0) or 0
@@ -431,32 +2456,95 @@ class Handler(BaseHTTPRequestHandler):
 
                 prime_hash_th=prime_hash_hs/1_000_000_000_000
 
-                # If Gateway's short-term estimate is currently zero,
-                # fall back to Prime's ledger-based estimate.
-                display_hash = (
-                    gateway_hash
-                    if gateway_hash > 0
-                    else prime_hash_th
-                )
+                # Dashboard headline/chart represents the
+                # complete Prime pool, not legacy SV1 Gateway.
+                display_hash = pool_hash_th
 
                 network_hashps=float(
                     s.get("network_hashps",0) or 0
                 )
 
-                history=[]
+                # Keep a rolling pool-wide history in the
+                # dashboard process. This is sourced from Prime,
+                # not the SV1-only Gateway.
+                history = getattr(
+                    self.server,
+                    "pool_hash_history",
+                    []
+                )
 
-                for sample in gateway.get("hashrate",{}).get("history",[]):
-                    try:
-                        value=float(sample[1] or 0)
-                        history.append(value)
-                    except:
-                        pass
+                history.append(pool_hash_th)
+
+                if len(history) > 180:
+                    history = history[-180:]
+
+                self.server.pool_hash_history = history
 
                 payout_sats=int(
                     miner.get("payout_sats",0) or 0
                 )
 
                 data={
+                    "accountQuery":
+                        account_query,
+
+                    "accountFound":
+                        account_found,
+
+                    "primePubkey":
+                        pool.get("pubkey",""),
+
+                    "poolPayoutScript":
+                        pool.get("payout_script",""),
+
+                    "coinbaseTag":
+                        pool.get("coinbase_tag",""),
+
+                    "sv1Tag":
+                        public_gateway_fee.get(
+                            "public_gateway_tag",""
+                        ),
+
+                    "sv1FeeBps":
+                        public_gateway_fee.get(
+                            "fee_bps",0
+                        ),
+
+                    "sv1SubsidyBps":
+                        public_gateway_fee.get(
+                            "subsidy_bps",0
+                        ),
+
+                    "sv1PublicWork":
+                        public_gateway_fee.get(
+                            "public_gateway_work","0"
+                        ),
+
+                    "sv1FeeWork":
+                        public_gateway_fee.get(
+                            "fee_work","0"
+                        ),
+
+                    "sv1FeeSats":
+                        public_gateway_fee.get(
+                            "fee_sats",0
+                        ),
+
+                    "sv1ReassignedWork":
+                        public_gateway_fee.get(
+                            "reassigned_work","0"
+                        ),
+
+                    "sv1ReassignedSats":
+                        public_gateway_fee.get(
+                            "reassigned_sats",0
+                        ),
+
+                    "sv1OwnGatewayWork":
+                        public_gateway_fee.get(
+                            "own_gateway_work","0"
+                        ),
+
                     "status":
                         gateway.get("status","Unknown"),
 
@@ -468,6 +2556,9 @@ class Handler(BaseHTTPRequestHandler):
 
                     "hashrate":
                         display_hash,
+
+                    "poolMiners":
+                        pool_miner_count,
 
                     "primeHashrate":
                         prime_hash_th,
@@ -482,9 +2573,9 @@ class Handler(BaseHTTPRequestHandler):
                         rejected.get("count",0),
 
                     "shareDifficulty":
-                        accepted.get(
-                            "diff",
-                            prime.get("pool",{}).get(
+                        (
+                            accepted.get("diff",0)
+                            or prime.get("pool",{}).get(
                                 "min_difficulty",0
                             )
                         ),
@@ -522,6 +2613,102 @@ class Handler(BaseHTTPRequestHandler):
 
                     "identity":
                         miner.get("identity",""),
+
+                    "minerTag":
+                        miner.get("tag",""),
+
+                    "ownGatewayWork":
+                        miner.get("own_gateway_work","0"),
+
+                    "bestShare":
+                        float(
+                            miner.get(
+                                "best_share",0
+                            ) or 0
+                        ),
+
+                    "sv1PiggySharePercent":
+                        (
+                            int(
+                                miner.get(
+                                    "own_gateway_work",0
+                                ) or 0
+                            )
+                            /
+                            int(
+                                public_gateway_fee.get(
+                                    "own_gateway_work",0
+                                ) or 0
+                            )
+                            * 100.0
+                        )
+                        if int(
+                            public_gateway_fee.get(
+                                "own_gateway_work",0
+                            ) or 0
+                        ) > 0
+                        else 0.0,
+
+                    "sv1PiggyRewardSats":
+                        round(
+                            int(
+                                public_gateway_fee.get(
+                                    "reassigned_sats",0
+                                ) or 0
+                            )
+                            *
+                            int(
+                                miner.get(
+                                    "own_gateway_work",0
+                                ) or 0
+                            )
+                            /
+                            int(
+                                public_gateway_fee.get(
+                                    "own_gateway_work",0
+                                ) or 0
+                            )
+                        )
+                        if int(
+                            public_gateway_fee.get(
+                                "own_gateway_work",0
+                            ) or 0
+                        ) > 0
+                        else 0,
+
+                    "sv1PiggyRewardXbt":
+                        (
+                            round(
+                                int(
+                                    public_gateway_fee.get(
+                                        "reassigned_sats",0
+                                    ) or 0
+                                )
+                                *
+                                int(
+                                    miner.get(
+                                        "own_gateway_work",0
+                                    ) or 0
+                                )
+                                /
+                                int(
+                                    public_gateway_fee.get(
+                                        "own_gateway_work",0
+                                    ) or 0
+                                )
+                            )
+                            / 100000000
+                        )
+                        if int(
+                            public_gateway_fee.get(
+                                "own_gateway_work",0
+                            ) or 0
+                        ) > 0
+                        else 0.0,
+
+
+                    "unpayableReason":
+                        miner.get("unpayable_reason"),
 
                     "minerWork":
                         miner.get("work","0"),
