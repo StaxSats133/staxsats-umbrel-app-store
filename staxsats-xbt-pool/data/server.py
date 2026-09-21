@@ -5,6 +5,7 @@ import urllib.parse
 
 GATEWAY = "http://host.docker.internal:7153/stats.json"
 PRIME = "http://172.17.0.1:28916/stats.json"
+PUBLIC_STATS = "http://67.205.136.13:8082/api/stats"
 
 HTML = r"""<!doctype html>
 <html lang="en">
@@ -2354,7 +2355,7 @@ class Handler(BaseHTTPRequestHandler):
 
         parsed = urllib.parse.urlparse(self.path)
 
-        if parsed.path == "/api/stats":
+        if parsed.path in ("/api/stats", "/api/local-stats"):
 
             try:
 
@@ -2377,14 +2378,14 @@ class Handler(BaseHTTPRequestHandler):
                 gateway=json.load(
                     urllib.request.urlopen(
                         GATEWAY,
-                        timeout=3
+                        timeout=1.25
                     )
                 )
 
                 prime=json.load(
                     urllib.request.urlopen(
                         PRIME,
-                        timeout=3
+                        timeout=1.25
                     )
                 )
 
@@ -2735,10 +2736,56 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(data)
 
             except Exception as e:
-                self.send_json(
-                    {"error":str(e)},
-                    500
-                )
+
+                # /api/local-stats is the operator-only upstream used
+                # by the Terminus VPS relay. Never fall back from this
+                # route or a relay outage could recurse back into itself.
+                if parsed.path == "/api/local-stats":
+                    self.send_json(
+                        {"error":str(e)},
+                        500
+                    )
+                    return
+
+                # Public-client mode: on a normal Umbrel install there
+                # is no local RATUM Prime/Gateway. Fall back to the
+                # public Terminus relay while preserving account lookup.
+                try:
+                    public_url = PUBLIC_STATS
+
+                    if parsed.query:
+                        public_url += "?" + parsed.query
+
+                    req = urllib.request.Request(
+                        public_url,
+                        headers={
+                            "User-Agent":
+                                "Terminus-Umbrel-Client/0.2.2"
+                        }
+                    )
+
+                    with urllib.request.urlopen(
+                        req,
+                        timeout=8
+                    ) as r:
+                        public_data = json.load(r)
+
+                    public_data["dataSource"] = "public-relay"
+
+                    self.send_json(public_data)
+
+                except Exception as public_error:
+                    self.send_json(
+                        {
+                            "error":
+                                "local and public stats unavailable",
+                            "local":
+                                str(e),
+                            "public":
+                                str(public_error)
+                        },
+                        502
+                    )
 
         else:
 
