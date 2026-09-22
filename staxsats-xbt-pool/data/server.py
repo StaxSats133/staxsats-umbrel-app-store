@@ -5,7 +5,7 @@ import urllib.parse
 
 GATEWAY = "http://host.docker.internal:7153/stats.json"
 PRIME = "http://172.17.0.1:28916/stats.json"
-PUBLIC_STATS = "http://67.205.136.13:8082/api/stats"
+PUBLIC_STATS = "https://terminuspool.xyz/api/stats"
 
 HTML = r"""<!doctype html>
 <html lang="en">
@@ -1241,6 +1241,130 @@ body{
     }
 }
 
+
+/* TERMINUS_GRAND_OPENING_PROMO */
+.launchPromo{
+    margin:18px 0 26px;
+    padding:20px 22px;
+    border:1px solid rgba(67,245,255,.30);
+    border-radius:14px;
+    background:
+        linear-gradient(135deg,
+            rgba(8,24,34,.98),
+            rgba(10,18,31,.98));
+    box-shadow:
+        inset 0 1px 0 rgba(114,255,180,.05),
+        0 0 30px rgba(67,245,255,.05),
+        0 14px 40px rgba(0,0,0,.22);
+    display:grid;
+    grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr);
+    gap:24px;
+    align-items:center;
+    overflow:hidden;
+    position:relative;
+}
+.launchPromo:before{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:
+        linear-gradient(90deg,
+            rgba(67,245,255,.04),
+            transparent 35%,
+            rgba(255,79,184,.035));
+}
+.launchPromoCopy,
+.launchPromoClock{
+    position:relative;
+    z-index:1;
+}
+.launchPromoKicker{
+    color:#72ffb4;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.18em;
+    margin-bottom:7px;
+}
+.launchPromoTitle{
+    color:#43f5ff;
+    font-size:28px;
+    line-height:1;
+    font-weight:1000;
+    letter-spacing:.05em;
+    text-shadow:0 0 18px rgba(67,245,255,.18);
+}
+.launchPromoText{
+    margin-top:10px;
+    color:#d7edf3;
+    font-size:13px;
+    line-height:1.55;
+    max-width:720px;
+}
+.launchPromoMeta{
+    margin-top:9px;
+    color:#8daab4;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.11em;
+}
+.launchPromoClock{
+    border-left:1px solid rgba(67,245,255,.14);
+    padding-left:24px;
+}
+.launchPromoClockLabel{
+    color:#7895a0;
+    font-size:9px;
+    font-weight:900;
+    letter-spacing:.16em;
+    margin-bottom:10px;
+}
+.promoCountdown{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:7px;
+}
+.promoUnit{
+    min-width:0;
+    padding:10px 5px 9px;
+    text-align:center;
+    background:#060d15;
+    border:1px solid rgba(67,245,255,.16);
+    border-radius:9px;
+}
+.promoNumber{
+    display:block;
+    color:#e7faff;
+    font-size:22px;
+    font-weight:1000;
+    line-height:1;
+    font-variant-numeric:tabular-nums;
+}
+.promoLabel{
+    display:block;
+    margin-top:6px;
+    color:#657f89;
+    font-size:8px;
+    font-weight:900;
+    letter-spacing:.10em;
+}
+@media(max-width:760px){
+    .launchPromo{
+        grid-template-columns:1fr;
+        gap:16px;
+        padding:17px;
+    }
+    .launchPromoClock{
+        border-left:0;
+        border-top:1px solid rgba(67,245,255,.14);
+        padding-left:0;
+        padding-top:16px;
+    }
+    .launchPromoTitle{
+        font-size:24px;
+    }
+}
+
 </style>
 </head>
 <body>
@@ -1274,6 +1398,49 @@ body{
     <div class="heroTitle">TERMINUS POOL</div>
     <div class="heroSub">THE LAST WORD IN MINING</div>
     <div class="heroMicro">DATUM-FIRST // CYBER MOUNTAIN // XBT BLAKE2B</div>
+  </div>
+</section>
+
+
+<!-- TERMINUS_GRAND_OPENING_PROMO -->
+<section class="launchPromo" id="launchPromo">
+  <div class="launchPromoCopy">
+    <div class="launchPromoKicker">
+      GRAND OPENING // LIMITED-TIME LAUNCH PROMO
+    </div>
+    <div class="launchPromoTitle" id="promoTitle">
+      0% DATUM FEE
+    </div>
+    <div class="launchPromoText" id="promoText">
+      Mine Terminus over DATUM with zero operational fee
+      through November 5, 2026.
+    </div>
+    <div class="launchPromoMeta" id="promoMeta">
+      STANDARD DATUM OPERATIONAL FEE AFTER PROMO: 1%
+    </div>
+  </div>
+  <div class="launchPromoClock">
+    <div class="launchPromoClockLabel" id="promoClockLabel">
+      PROMO TIME REMAINING
+    </div>
+    <div class="promoCountdown" id="promoCountdown">
+      <div class="promoUnit">
+        <span class="promoNumber" id="promoDays">00</span>
+        <span class="promoLabel">DAYS</span>
+      </div>
+      <div class="promoUnit">
+        <span class="promoNumber" id="promoHours">00</span>
+        <span class="promoLabel">HOURS</span>
+      </div>
+      <div class="promoUnit">
+        <span class="promoNumber" id="promoMinutes">00</span>
+        <span class="promoLabel">MIN</span>
+      </div>
+      <div class="promoUnit">
+        <span class="promoNumber" id="promoSeconds">00</span>
+        <span class="promoLabel">SEC</span>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -1347,7 +1514,9 @@ body{
 
     <div class="note">
       Username: <strong>payout_address.worker</strong><br>
-      Global pool fee: <strong>1%</strong><br>
+      Grand Opening DATUM fee: <strong>0%</strong><br>
+      Promo through <strong>November 5, 2026</strong><br>
+      Standard DATUM operational fee after promo: <strong>1%</strong><br>
       DATUM participates in redistributed legacy SV1 work.
     </div>
   </div>
@@ -1368,8 +1537,9 @@ body{
 
     <div class="note">
       Username: <strong>payout_address.worker</strong><br>
-      Global pool fee: <strong>1%</strong><br>
-      Additional <strong>5% work redistribution</strong> to non-SV1/DATUM miners.
+      Base pool fee during Grand Opening promo: <strong>0%</strong><br>
+      Legacy SV1 redistribution: <strong>5%</strong><br>
+      Standard base pool fee after promo: <strong>1%</strong>.
     </div>
   </div>
 
@@ -2334,6 +2504,51 @@ injectVisualFx();
 initSkyFx();
 refresh();
 setInterval(refresh,5000);
+
+/* TERMINUS_GRAND_OPENING_PROMO_COUNTDOWN
+   Promo is valid through Nov 5, 2026.
+   Midnight entering Nov 6 in Toronto ends the promotion.
+*/
+const PROMO_END = new Date("2026-11-06T00:00:00-05:00").getTime();
+
+function renderPromoCountdown(){
+    const now = Date.now();
+    let remaining = PROMO_END - now;
+
+    const daysEl = document.getElementById("promoDays");
+    const hoursEl = document.getElementById("promoHours");
+    const minutesEl = document.getElementById("promoMinutes");
+    const secondsEl = document.getElementById("promoSeconds");
+
+    if (!daysEl || !hoursEl || !minutesEl || !secondsEl) return;
+
+    if (remaining <= 0){
+        remaining = 0;
+        document.getElementById("promoTitle").textContent =
+            "GRAND OPENING PROMO COMPLETE";
+        document.getElementById("promoText").textContent =
+            "The 0% DATUM Grand Opening promotion ended November 5, 2026.";
+        document.getElementById("promoMeta").textContent =
+            "STANDARD DATUM OPERATIONAL FEE: 1%";
+        document.getElementById("promoClockLabel").textContent =
+            "PROMOTION COMPLETE";
+    }
+
+    const totalSeconds = Math.floor(remaining / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    daysEl.textContent = String(days).padStart(2, "0");
+    hoursEl.textContent = String(hours).padStart(2, "0");
+    minutesEl.textContent = String(minutes).padStart(2, "0");
+    secondsEl.textContent = String(seconds).padStart(2, "0");
+}
+
+renderPromoCountdown();
+setInterval(renderPromoCountdown, 1000);
+
 </script>
 </body>
 </html>
@@ -2760,7 +2975,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.2"
+                                "Terminus-Umbrel-Client/0.2.4"
                         }
                     )
 
