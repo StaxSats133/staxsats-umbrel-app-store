@@ -1,11 +1,147 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+import os
+import sqlite3
+import threading
+import time
 import urllib.request
 import urllib.parse
 
 GATEWAY = "http://host.docker.internal:7153/stats.json"
 PRIME = "http://172.17.0.1:28916/stats.json"
 PUBLIC_STATS = "https://terminuspool.xyz/api/stats"
+
+STATE_DIR = os.environ.get(
+    "TERMINUS_STATE_DIR",
+    os.path.join(os.path.dirname(__file__), "state")
+)
+HISTORY_DB = os.path.join(STATE_DIR, "terminus-history.sqlite3")
+HISTORY_LOCK = threading.Lock()
+HISTORY_RETENTION_SECONDS = 8 * 24 * 60 * 60
+
+
+def _history_connection():
+    os.makedirs(STATE_DIR, exist_ok=True)
+    connection = sqlite3.connect(HISTORY_DB, timeout=3)
+    connection.execute("PRAGMA journal_mode=WAL")
+    connection.execute("PRAGMA synchronous=NORMAL")
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS pool_history (
+            minute INTEGER PRIMARY KEY,
+            hashrate REAL NOT NULL,
+            miners INTEGER NOT NULL,
+            connections INTEGER NOT NULL,
+            accepted INTEGER NOT NULL,
+            rejected INTEGER NOT NULL,
+            height INTEGER NOT NULL
+        )
+        """
+    )
+    return connection
+
+
+def record_history(sample):
+    minute = int(time.time()) // 60 * 60
+
+    with HISTORY_LOCK:
+        with _history_connection() as connection:
+            connection.execute(
+                """
+                INSERT INTO pool_history (
+                    minute, hashrate, miners, connections,
+                    accepted, rejected, height
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(minute) DO UPDATE SET
+                    hashrate=excluded.hashrate,
+                    miners=excluded.miners,
+                    connections=excluded.connections,
+                    accepted=excluded.accepted,
+                    rejected=excluded.rejected,
+                    height=excluded.height
+                """,
+                (
+                    minute,
+                    float(sample.get("hashrate", 0) or 0),
+                    int(sample.get("poolMiners", 0) or 0),
+                    int(sample.get("connections", 0) or 0),
+                    int(sample.get("accepted", 0) or 0),
+                    int(sample.get("rejected", 0) or 0),
+                    int(sample.get("height", 0) or 0),
+                )
+            )
+            connection.execute(
+                "DELETE FROM pool_history WHERE minute < ?",
+                (minute - HISTORY_RETENTION_SECONDS,)
+            )
+
+
+def load_history(hours=24, max_points=288):
+    cutoff = int(time.time()) - (hours * 60 * 60)
+
+    with HISTORY_LOCK:
+        with _history_connection() as connection:
+            rows = connection.execute(
+                """
+                SELECT minute, hashrate, miners, connections,
+                       accepted, rejected, height
+                FROM pool_history
+                WHERE minute >= ?
+                ORDER BY minute ASC
+                """,
+                (cutoff,)
+            ).fetchall()
+
+    if len(rows) > max_points:
+        stride = max(1, len(rows) // max_points)
+        sampled = rows[::stride]
+        if sampled[-1] != rows[-1]:
+            sampled.append(rows[-1])
+        rows = sampled[-max_points:]
+
+    points = [
+        {
+            "ts": row[0],
+            "hashrate": row[1],
+            "miners": row[2],
+            "connections": row[3],
+            "accepted": row[4],
+            "rejected": row[5],
+            "height": row[6],
+        }
+        for row in rows
+    ]
+
+    values = [point["hashrate"] for point in points]
+    summary = {
+        "samples": len(points),
+        "averageHashrate": (
+            sum(values) / len(values) if values else 0
+        ),
+        "peakHashrate": max(values) if values else 0,
+        "lowHashrate": min(values) if values else 0,
+    }
+
+    return points, summary
+
+
+def collect_history_forever():
+    # The dashboard API remains the single telemetry reader. This
+    # background loop performs one local, read-only GET per minute so
+    # durable history continues even when no browser is open.
+    time.sleep(5)
+
+    while True:
+        try:
+            with urllib.request.urlopen(
+                "http://127.0.0.1:8080/api/local-stats?collector=1",
+                timeout=8
+            ) as response:
+                response.read()
+        except Exception:
+            pass
+
+        time.sleep(60)
 
 HTML = r"""<!doctype html>
 <html lang="en">
@@ -418,6 +554,70 @@ h1{
 .graphCard{
   margin-top:14px;border:1px solid #123541;background:#07111a;padding:18px
 }
+.historySummary{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  margin-top:12px
+}
+.historyMetric{
+  border:1px solid #163c47;
+  background:#050d14;
+  padding:11px 12px;
+  min-width:0
+}
+.historyMetric .label{
+  color:#7895a0;
+  font-size:8px;
+  letter-spacing:.14em
+}
+.historyMetric .value{
+  margin-top:5px;
+  color:var(--cyan);
+  font-size:14px;
+  font-weight:900
+}
+.healthMatrix{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px
+}
+.healthItem{
+  position:relative;
+  min-height:112px;
+  border:1px solid #173e49;
+  background:linear-gradient(145deg,#07131b,#050b11);
+  padding:16px
+}
+.healthItem:before{
+  content:"";
+  position:absolute;
+  left:0;top:0;bottom:0;
+  width:3px;
+  background:var(--green)
+}
+.healthItem.degraded:before{background:var(--gold)}
+.healthItem.offline:before{background:#ff5975}
+.healthName{
+  color:#8eb4be;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.14em
+}
+.healthState{
+  margin-top:10px;
+  color:var(--green);
+  font-size:16px;
+  font-weight:1000
+}
+.healthItem.degraded .healthState{color:var(--gold)}
+.healthItem.offline .healthState{color:#ff7890}
+.healthDetail{
+  margin-top:7px;
+  color:#7895a0;
+  font-size:9px;
+  line-height:1.5
+}
 .poolHashrateGraph{
   margin-top:0;
   box-shadow:inset 0 0 35px #43f5ff08
@@ -475,6 +675,7 @@ footer{
   .grid6{grid-template-columns:repeat(3,1fr)}
   .grid5{grid-template-columns:repeat(3,1fr)}
   .grid4{grid-template-columns:repeat(2,1fr)}
+  .healthMatrix{grid-template-columns:repeat(2,1fr)}
   .hero{height:350px}
 }
 @media(max-width:760px){
@@ -500,6 +701,7 @@ footer{
     flex-direction:column;
     gap:5px
   }
+  .historySummary{grid-template-columns:repeat(2,1fr)}
 }
 
 @media(max-width:520px){
@@ -1715,10 +1917,14 @@ a:focus-visible,button:focus-visible,input:focus-visible{
     <path id="graphFill"></path>
     <path id="graphLine"></path>
   </svg>
+  <div id="historySummary" class="historySummary" aria-label="24-hour pool summary"></div>
 </div>
 
 <div class="sectionTitle">POOL-TELEMETRY</div>
 <div id="telemetry" class="grid grid6"></div>
+
+<div class="sectionTitle">OPERATOR-HEALTH // READ-ONLY</div>
+<div id="healthMatrix" class="healthMatrix" aria-live="polite"></div>
 
 <div class="sectionTitle" id="minerAccounting">MINER-ACCOUNTING</div>
 
@@ -1994,6 +2200,26 @@ function bestShareFmt(v){
 
 function card(label,value,cls=""){
   return `<div class="card ${cls}">
+    <div class="label">${label}</div>
+    <div class="value">${value}</div>
+  </div>`;
+}
+
+function healthItem(component){
+  const state=String(component.status||"offline").toLowerCase();
+  const safeState=["healthy","degraded","offline"].includes(state)
+    ? state
+    : "offline";
+
+  return `<div class="healthItem ${safeState}">
+    <div class="healthName">${component.name||"UNKNOWN COMPONENT"}</div>
+    <div class="healthState">${safeState.toUpperCase()}</div>
+    <div class="healthDetail">${component.detail||"NO TELEMETRY"}</div>
+  </div>`;
+}
+
+function historyMetric(label,value){
+  return `<div class="historyMetric">
     <div class="label">${label}</div>
     <div class="value">${value}</div>
   </div>`;
@@ -2673,6 +2899,29 @@ async function refresh(){
       card("POOL SHARE FLOOR",compact(Number(d.shareDifficulty)||1024),"cyan")+
       card("BLOCKS FOUND",num(d.blocks,0),Number(d.blocks)>0?"gold":"");
 
+    $("healthMatrix").innerHTML=(d.health||[])
+      .map(healthItem)
+      .join("");
+
+    const historySummary=d.historySummary||{};
+    $("historySummary").innerHTML=
+      historyMetric(
+        "24H AVERAGE",
+        num(historySummary.averageHashrate,3)+" TH/s"
+      )+
+      historyMetric(
+        "24H PEAK",
+        num(historySummary.peakHashrate,3)+" TH/s"
+      )+
+      historyMetric(
+        "24H LOW",
+        num(historySummary.lowHashrate,3)+" TH/s"
+      )+
+      historyMetric(
+        "PERSISTENT SAMPLES",
+        num(historySummary.samples,0)
+      );
+
     if(!d.accountQuery){
 
       $("accountHint").textContent=
@@ -2795,6 +3044,11 @@ async function refresh(){
   }catch(e){
     $("live").textContent="● NODE LINK DATA ERROR";
     $("live").className="live bad";
+    $("healthMatrix").innerHTML=healthItem({
+      name:"TELEMETRY API",
+      status:"offline",
+      detail:"LIVE DATA UNAVAILABLE"
+    });
   }
 }
 
@@ -3041,22 +3295,6 @@ class Handler(BaseHTTPRequestHandler):
                     s.get("network_hashps",0) or 0
                 )
 
-                # Keep a rolling pool-wide history in the
-                # dashboard process. This is sourced from Prime,
-                # not the SV1-only Gateway.
-                history = getattr(
-                    self.server,
-                    "pool_hash_history",
-                    []
-                )
-
-                history.append(pool_hash_th)
-
-                if len(history) > 180:
-                    history = history[-180:]
-
-                self.server.pool_hash_history = history
-
                 payout_sats=int(
                     miner.get("payout_sats",0) or 0
                 )
@@ -3139,9 +3377,6 @@ class Handler(BaseHTTPRequestHandler):
 
                     "primeHashrate":
                         prime_hash_th,
-
-                    "hashHistory":
-                        history,
 
                     "accepted":
                         accepted.get("count",0),
@@ -3309,6 +3544,85 @@ class Handler(BaseHTTPRequestHandler):
                         blocks.get("found",0)
                 }
 
+                history_persistent = True
+                try:
+                    record_history(data)
+                    history_points, history_summary = load_history()
+                except Exception:
+                    history_persistent = False
+                    history_points = [{
+                        "ts": int(time.time()),
+                        "hashrate": display_hash,
+                        "miners": pool_miner_count,
+                        "connections": s.get("connections",0),
+                        "accepted": accepted.get("count",0),
+                        "rejected": rejected.get("count",0),
+                        "height": data.get("height",0),
+                    }]
+                    history_summary = {
+                        "samples": 1,
+                        "averageHashrate": display_hash,
+                        "peakHashrate": display_hash,
+                        "lowHashrate": display_hash,
+                    }
+
+                gateway_ready = "ready" in str(
+                    gateway.get("status", "")
+                ).lower()
+                chain_height = int(data.get("height",0) or 0)
+
+                data["history24h"] = history_points
+                data["hashHistory"] = [
+                    point["hashrate"] for point in history_points
+                ]
+                data["historySummary"] = history_summary
+                data["historyPersistent"] = history_persistent
+                data["lastUpdated"] = int(time.time())
+                data["health"] = [
+                    {
+                        "name": "RATUM PRIME",
+                        "status": "healthy",
+                        "detail": (
+                            str(pool_miner_count) +
+                            " miners represented in payout window"
+                        ),
+                    },
+                    {
+                        "name": "SV1 GATEWAY",
+                        "status": (
+                            "healthy" if gateway_ready else "degraded"
+                        ),
+                        "detail": (
+                            str(s.get("connections",0)) +
+                            " active connections // " +
+                            str(gateway.get("status","Unknown"))
+                        ),
+                    },
+                    {
+                        "name": "KNOTS NODE",
+                        "status": (
+                            "healthy" if chain_height > 0 else "degraded"
+                        ),
+                        "detail": (
+                            "tip height " + str(chain_height)
+                            if chain_height > 0
+                            else "chain tip unavailable"
+                        ),
+                    },
+                    {
+                        "name": "24H HISTORY",
+                        "status": (
+                            "healthy" if history_persistent else "degraded"
+                        ),
+                        "detail": (
+                            str(history_summary.get("samples",0)) +
+                            " durable samples"
+                            if history_persistent
+                            else "current-sample fallback active"
+                        ),
+                    },
+                ]
+
                 self.send_json(data)
 
             except Exception as e:
@@ -3336,7 +3650,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.6"
+                                "Terminus-Umbrel-Client/0.2.7"
                         }
                     )
 
@@ -3382,7 +3696,14 @@ class Handler(BaseHTTPRequestHandler):
 
             self.wfile.write(body)
 
-HTTPServer(
-    ("0.0.0.0",8080),
-    Handler
-).serve_forever()
+if __name__ == "__main__":
+    threading.Thread(
+        target=collect_history_forever,
+        daemon=True,
+        name="terminus-history-collector"
+    ).start()
+
+    HTTPServer(
+        ("0.0.0.0",8080),
+        Handler
+    ).serve_forever()
