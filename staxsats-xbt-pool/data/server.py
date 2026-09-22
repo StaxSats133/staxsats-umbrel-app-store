@@ -18,6 +18,10 @@ STATE_DIR = os.environ.get(
 HISTORY_DB = os.path.join(STATE_DIR, "terminus-history.sqlite3")
 HISTORY_LOCK = threading.Lock()
 HISTORY_RETENTION_SECONDS = 8 * 24 * 60 * 60
+COLLECTOR_PATH = os.environ.get(
+    "TERMINUS_COLLECTOR_PATH",
+    "/api/local-stats"
+)
 
 
 def _history_connection():
@@ -134,7 +138,9 @@ def collect_history_forever():
     while True:
         try:
             with urllib.request.urlopen(
-                "http://127.0.0.1:8080/api/local-stats?collector=1",
+                "http://127.0.0.1:8080" +
+                COLLECTOR_PATH +
+                "?collector=1",
                 timeout=8
             ) as response:
                 response.read()
@@ -1722,6 +1728,20 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 .accountHint{min-height:20px}
 .copyToast[aria-live]{pointer-events:none}
 
+.versionBadge{
+    display:inline-block;
+    margin-top:7px;
+    padding:4px 8px;
+    border:1px solid rgba(67,245,255,.32);
+    border-radius:4px;
+    background:rgba(4,18,26,.72);
+    color:var(--cyan);
+    font-size:9px;
+    font-weight:900;
+    letter-spacing:.14em;
+    box-shadow:0 0 12px rgba(67,245,255,.08);
+}
+
 @media(max-width:760px){
     header{gap:12px}
     .brand{gap:12px;align-items:flex-start}
@@ -1785,6 +1805,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // GATEWAY // BLAKE2B NODE LINK</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.7</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
