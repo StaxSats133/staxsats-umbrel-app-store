@@ -4,7 +4,7 @@ name: Terminus Pool
 tagline: The last word in mining
 icon: https://raw.githubusercontent.com/StaxSats133/staxsats-umbrel-app-store/main/staxsats-xbt-pool/icon.svg
 category: bitcoin
-version: "0.2.6"
+version: "0.2.7"
 port: 8081
 description: >-
   Terminus Pool is an XBT BLAKE2b mining pool dashboard for RATUM Prime and Gateway.
@@ -19,9 +19,10 @@ repo: https://github.com/StaxSats133/staxsats-umbrel-app-store
 support: https://github.com/StaxSats133/staxsats-umbrel-app-store/issues
 gallery: []
 releaseNotes: >-
-  Terminus Pool v0.2.6 streamlines the mobile landing experience by removing duplicate
-  navigation controls, keeping one clear Start Mining action, and tightening the header
-  and hero layout. Desktop presentation, telemetry, and all three mining routes are unchanged.
+  Terminus Pool v0.2.7 adds durable 24-hour pool history with average, peak, and low
+  hashrate summaries plus a read-only operator health matrix for RATUM Prime, the SV1
+  Gateway, Knots chain telemetry, and the history store. Historical samples survive
+  dashboard restarts while all mining routes and the v0.2.6 mobile layout remain unchanged.
 dependencies: []
 path: ""
 defaultUsername: ""
