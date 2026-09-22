@@ -1547,6 +1547,27 @@ a:focus-visible,button:focus-visible,input:focus-visible{
     .heroTitle{font-size:26px}
     .kicker{font-size:9px}
 }
+
+/* TERMINUS_MOBILE_DECLUTTER_V1 */
+@media(max-width:760px){
+    .topNav{display:none}
+    header{margin-bottom:14px}
+    .badge{width:52px;height:52px;flex-basis:52px}
+    .tagline{margin-top:6px}
+    .stackline{margin-top:5px}
+    .hero{height:285px}
+    .heroActions a:not(.primaryAction){display:none}
+    .heroActions .primaryAction{width:100%}
+}
+
+@media(max-width:430px){
+    .shell{padding-top:14px}
+    header{gap:9px}
+    .brand{gap:10px}
+    h1{font-size:clamp(21px,7.6vw,28px)}
+    .hero{height:270px}
+    .heroText{left:18px;right:18px;top:20px}
+}
 </style>
 </head>
 <body>
@@ -3315,7 +3336,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.5"
+                                "Terminus-Umbrel-Client/0.2.6"
                         }
                     )
 
