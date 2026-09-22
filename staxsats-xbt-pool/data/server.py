@@ -1782,8 +1782,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
     .tagline{margin-top:6px}
     .stackline{margin-top:5px}
     .hero{height:285px}
-    .heroActions a:not(.primaryAction){display:none}
-    .heroActions .primaryAction{width:100%}
+    .heroActions{display:none}
 }
 
 @media(max-width:430px){
@@ -1809,7 +1808,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // GATEWAY // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.7</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.8</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -3675,7 +3674,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.7"
+                                "Terminus-Umbrel-Client/0.2.8"
                         }
                     )
 
