@@ -22,6 +22,10 @@ COLLECTOR_PATH = os.environ.get(
     "TERMINUS_COLLECTOR_PATH",
     "/api/local-stats"
 )
+COLLECTOR_ENABLED = os.environ.get(
+    "TERMINUS_COLLECTOR_ENABLED",
+    "true"
+).lower() not in ("0", "false", "no")
 
 
 def _history_connection():
@@ -3718,11 +3722,12 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(body)
 
 if __name__ == "__main__":
-    threading.Thread(
-        target=collect_history_forever,
-        daemon=True,
-        name="terminus-history-collector"
-    ).start()
+    if COLLECTOR_ENABLED:
+        threading.Thread(
+            target=collect_history_forever,
+            daemon=True,
+            name="terminus-history-collector"
+        ).start()
 
     HTTPServer(
         ("0.0.0.0",8080),
