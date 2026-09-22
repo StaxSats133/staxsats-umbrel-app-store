@@ -13,6 +13,17 @@ HTML = r"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TERMINUS POOL // XBT</title>
+<meta name="description" content="Terminus Pool is a non-custodial, DATUM-first XBT BLAKE2b mining pool with live telemetry and public DATUM and SV1 access.">
+<meta name="theme-color" content="#050912">
+<link rel="canonical" href="https://terminuspool.xyz/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Terminus Pool // XBT">
+<meta property="og:description" content="Non-custodial, DATUM-first XBT BLAKE2b mining with live pool telemetry.">
+<meta property="og:url" content="https://terminuspool.xyz/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Terminus Pool // XBT">
+<meta name="twitter:description" content="Non-custodial, DATUM-first XBT BLAKE2b mining with live pool telemetry.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23050912'/%3E%3Cpath d='M14 16h36v9H37v25H27V25H14z' fill='%2343f5ff'/%3E%3C/svg%3E">
 <style>
 :root{
   --bg:#050912;
@@ -281,7 +292,7 @@ h1{
 .card.small .value{font-size:18px}
 .card.tiny .value{font-size:13px;line-height:1.5}
 
-.twoCol{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.twoCol{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 
 .access{
   position:relative;
@@ -392,6 +403,7 @@ h1{
 .access{
   border:1px solid #164653;background:#07121a;padding:20px;min-height:175px
 }
+.access.gateway{box-shadow:inset 3px 0 var(--cyan)}
 .access.primary{box-shadow:inset 3px 0 var(--green)}
 .access.legacy{box-shadow:inset 3px 0 var(--pink)}
 .access h3{margin:0 0 7px;font-size:17px}
@@ -459,6 +471,7 @@ footer{
 }
 
 @media(max-width:1050px){
+  .twoCol{grid-template-columns:repeat(2,1fr)}
   .grid6{grid-template-columns:repeat(3,1fr)}
   .grid5{grid-template-columns:repeat(3,1fr)}
   .grid4{grid-template-columns:repeat(2,1fr)}
@@ -1263,6 +1276,7 @@ body{
     overflow:hidden;
     position:relative;
 }
+
 .launchPromo:before{
     content:"";
     position:absolute;
@@ -1274,11 +1288,13 @@ body{
             transparent 35%,
             rgba(255,79,184,.035));
 }
+
 .launchPromoCopy,
 .launchPromoClock{
     position:relative;
     z-index:1;
 }
+
 .launchPromoKicker{
     color:#72ffb4;
     font-size:10px;
@@ -1286,6 +1302,7 @@ body{
     letter-spacing:.18em;
     margin-bottom:7px;
 }
+
 .launchPromoTitle{
     color:#43f5ff;
     font-size:28px;
@@ -1294,6 +1311,7 @@ body{
     letter-spacing:.05em;
     text-shadow:0 0 18px rgba(67,245,255,.18);
 }
+
 .launchPromoText{
     margin-top:10px;
     color:#d7edf3;
@@ -1301,6 +1319,7 @@ body{
     line-height:1.55;
     max-width:720px;
 }
+
 .launchPromoMeta{
     margin-top:9px;
     color:#8daab4;
@@ -1308,10 +1327,12 @@ body{
     font-weight:900;
     letter-spacing:.11em;
 }
+
 .launchPromoClock{
     border-left:1px solid rgba(67,245,255,.14);
     padding-left:24px;
 }
+
 .launchPromoClockLabel{
     color:#7895a0;
     font-size:9px;
@@ -1319,11 +1340,13 @@ body{
     letter-spacing:.16em;
     margin-bottom:10px;
 }
+
 .promoCountdown{
     display:grid;
     grid-template-columns:repeat(4,1fr);
     gap:7px;
 }
+
 .promoUnit{
     min-width:0;
     padding:10px 5px 9px;
@@ -1332,6 +1355,7 @@ body{
     border:1px solid rgba(67,245,255,.16);
     border-radius:9px;
 }
+
 .promoNumber{
     display:block;
     color:#e7faff;
@@ -1340,6 +1364,7 @@ body{
     line-height:1;
     font-variant-numeric:tabular-nums;
 }
+
 .promoLabel{
     display:block;
     margin-top:6px;
@@ -1348,27 +1373,185 @@ body{
     font-weight:900;
     letter-spacing:.10em;
 }
+
 @media(max-width:760px){
     .launchPromo{
         grid-template-columns:1fr;
         gap:16px;
         padding:17px;
     }
+
     .launchPromoClock{
         border-left:0;
         border-top:1px solid rgba(67,245,255,.14);
         padding-left:0;
         padding-top:16px;
     }
+
     .launchPromoTitle{
         font-size:24px;
     }
 }
 
+/* TERMINUS_UX_V1 */
+html{scroll-behavior:smooth}
+body{overflow-x:hidden}
+a{color:inherit}
+a:focus-visible,button:focus-visible,input:focus-visible{
+    outline:2px solid var(--gold);
+    outline-offset:3px;
+}
+.skipLink{
+    position:fixed;
+    left:14px;
+    top:14px;
+    z-index:1000;
+    transform:translateY(-180%);
+    padding:11px 14px;
+    border:1px solid var(--cyan);
+    background:#02070d;
+    color:var(--cyan);
+    font-weight:900;
+    text-decoration:none;
+}
+.skipLink:focus{transform:translateY(0)}
+.topNav{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin:-6px 0 18px;
+}
+.topNav a,.heroActions a{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:44px;
+    padding:10px 14px;
+    border:1px solid #1d6571;
+    background:#07151f;
+    color:#a7dce3;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.12em;
+    text-decoration:none;
+}
+.topNav a:first-child,.heroActions .primaryAction{
+    border-color:var(--green);
+    background:linear-gradient(135deg,#0a2c29,#071b22);
+    color:var(--green);
+    box-shadow:0 0 20px #72ffb414;
+}
+.heroActions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:18px;
+}
+.quickConnect{
+    margin:18px 0 28px;
+    padding:20px 22px;
+    border:1px solid rgba(114,255,180,.38);
+    border-radius:14px;
+    background:linear-gradient(135deg,rgba(7,25,29,.98),rgba(9,18,31,.98));
+    box-shadow:0 14px 40px rgba(0,0,0,.24);
+}
+.quickConnectHead{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:18px;
+    margin-bottom:14px;
+}
+.quickConnectHead h2{
+    margin:0;
+    color:var(--green);
+    font-size:22px;
+    letter-spacing:.08em;
+}
+.quickConnectHead p{
+    margin:5px 0 0;
+    color:#8aacb6;
+    font-size:11px;
+    line-height:1.55;
+}
+.quickConnectHead a{
+    color:var(--cyan);
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.1em;
+    white-space:nowrap;
+}
+.quickConnectGrid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
+}
+.quickEndpoint{
+    min-width:0;
+    padding:15px;
+    border:1px solid #164651;
+    background:#050d14;
+}
+.quickEndpoint.recommended{border-left:4px solid var(--green)}
+.quickEndpoint.gateway{border-left:4px solid var(--cyan)}
+.quickEndpoint.legacy{border-left:4px solid var(--pink)}
+.quickLabel{
+    color:#7a9ba5;
+    font-size:9px;
+    font-weight:900;
+    letter-spacing:.16em;
+}
+.quickValue{
+    margin:8px 0 11px;
+    color:var(--cyan);
+    font-size:13px;
+    overflow-wrap:anywhere;
+}
+.quickEndpoint .copyBtn{
+    width:100%;
+    min-height:44px;
+}
+.quickNote{
+    margin-top:10px;
+    color:#819ca5;
+    font-size:10px;
+    line-height:1.55;
+}
+.accountHint{min-height:20px}
+.copyToast[aria-live]{pointer-events:none}
+
+@media(max-width:760px){
+    header{gap:12px}
+    .brand{gap:12px;align-items:flex-start}
+    .brandText{overflow:hidden}
+    h1{
+        white-space:normal;
+        overflow-wrap:anywhere;
+        font-size:clamp(23px,8vw,31px);
+        line-height:1.04;
+    }
+    .topNav{margin-top:-2px}
+    .topNav a{flex:1 1 30%;padding-inline:8px}
+    .heroText{right:18px}
+    .heroActions{margin-top:14px}
+    .heroActions a{padding:9px 11px}
+    .quickConnect{padding:17px}
+    .quickConnectHead{align-items:flex-start;flex-direction:column}
+    .quickConnectGrid{grid-template-columns:1fr}
+    .copyBtn{min-height:44px}
+}
+
+@media(max-width:430px){
+    .topNav a{flex-basis:100%}
+    .heroActions a{flex:1 1 100%}
+    .heroTitle{font-size:26px}
+    .kicker{font-size:9px}
+}
 </style>
 </head>
 <body>
-<div id="copyToast" class="copyToast">COPIED TO CLIPBOARD</div>
+<a class="skipLink" href="#mainContent">SKIP TO MAIN CONTENT</a>
+<div id="copyToast" class="copyToast" role="status" aria-live="polite">COPIED TO CLIPBOARD</div>
 
 <div class="shell">
 
@@ -1384,7 +1567,14 @@ body{
   <div id="live" class="live">● NODE LINK ACTIVE</div>
 </header>
 
-<section class="hero">
+<nav class="topNav" aria-label="Primary navigation">
+  <a href="#startMining">START MINING</a>
+  <a href="#poolStats">LIVE STATS</a>
+  <a href="#minerAccounting">MINER LOOKUP</a>
+</nav>
+
+<main id="mainContent">
+<section class="hero" aria-labelledby="heroTitle">
   <div class="stars"></div>
   <div class="sun"></div>
   <div class="mountainBack"></div>
@@ -1395,9 +1585,13 @@ body{
 
   <div class="heroText">
     <div class="kicker">NEON HIGHWAY // MIDNIGHT RUN</div>
-    <div class="heroTitle">TERMINUS POOL</div>
+    <div class="heroTitle" id="heroTitle">TERMINUS POOL</div>
     <div class="heroSub">THE LAST WORD IN MINING</div>
     <div class="heroMicro">DATUM-FIRST // CYBER MOUNTAIN // XBT BLAKE2B</div>
+    <div class="heroActions">
+      <a class="primaryAction" href="#startMining">START MINING</a>
+      <a href="#poolStats">VIEW LIVE STATS</a>
+    </div>
   </div>
 </section>
 
@@ -1408,34 +1602,42 @@ body{
     <div class="launchPromoKicker">
       GRAND OPENING // LIMITED-TIME LAUNCH PROMO
     </div>
+
     <div class="launchPromoTitle" id="promoTitle">
       0% DATUM FEE
     </div>
+
     <div class="launchPromoText" id="promoText">
       Mine Terminus over DATUM with zero operational fee
       through November 5, 2026.
     </div>
+
     <div class="launchPromoMeta" id="promoMeta">
       STANDARD DATUM OPERATIONAL FEE AFTER PROMO: 1%
     </div>
   </div>
+
   <div class="launchPromoClock">
     <div class="launchPromoClockLabel" id="promoClockLabel">
       PROMO TIME REMAINING
     </div>
+
     <div class="promoCountdown" id="promoCountdown">
       <div class="promoUnit">
         <span class="promoNumber" id="promoDays">00</span>
         <span class="promoLabel">DAYS</span>
       </div>
+
       <div class="promoUnit">
         <span class="promoNumber" id="promoHours">00</span>
         <span class="promoLabel">HOURS</span>
       </div>
+
       <div class="promoUnit">
         <span class="promoNumber" id="promoMinutes">00</span>
         <span class="promoLabel">MIN</span>
       </div>
+
       <div class="promoUnit">
         <span class="promoNumber" id="promoSeconds">00</span>
         <span class="promoLabel">SEC</span>
@@ -1444,7 +1646,37 @@ body{
   </div>
 </section>
 
-<div class="sectionTitle">LIVE-POOL-HASHRATE</div>
+<section class="quickConnect" id="startMining" aria-labelledby="startMiningTitle">
+  <div class="quickConnectHead">
+    <div>
+      <h2 id="startMiningTitle">START MINING IN 60 SECONDS</h2>
+      <p>Use your XBT payout address as the username. Add <strong>.worker</strong> if you want a worker name.</p>
+    </div>
+    <a href="#connectionDetails">FULL CONNECTION DETAILS ↓</a>
+  </div>
+  <div class="quickConnectGrid">
+    <div class="quickEndpoint recommended">
+      <div class="quickLabel">NATIVE DATUM // RECOMMENDED // 0% PROMO FEE</div>
+      <div class="quickValue">67.205.136.13:28915</div>
+      <button type="button" class="copyBtn" aria-label="Copy DATUM endpoint" data-copy="67.205.136.13:28915" onclick="copyField(this)">COPY DATUM ENDPOINT</button>
+      <div class="quickNote">For DATUM-compatible clients · Username: <strong>payout_address.worker</strong></div>
+    </div>
+    <div class="quickEndpoint gateway">
+      <div class="quickLabel">SV1 VIA DATUM // STANDARD MINERS</div>
+      <div class="quickValue">stratum+tcp://67.205.136.13:23341</div>
+      <button type="button" class="copyBtn" aria-label="Copy DATUM-backed SV1 endpoint" data-copy="stratum+tcp://67.205.136.13:23341" onclick="copyField(this)">COPY SV1 VIA DATUM</button>
+      <div class="quickNote">Standard miners and Mining Rig Rentals · Username: <strong>payout_address.worker</strong></div>
+    </div>
+    <div class="quickEndpoint legacy">
+      <div class="quickLabel">LEGACY SV1 // 5% REDISTRIBUTION</div>
+      <div class="quickValue">stratum+tcp://67.205.136.13:23340</div>
+      <button type="button" class="copyBtn" aria-label="Copy SV1 endpoint" data-copy="stratum+tcp://67.205.136.13:23340" onclick="copyField(this)">COPY SV1 ENDPOINT</button>
+      <div class="quickNote">Username: <strong>payout_address.worker</strong> · Password: <strong>x</strong></div>
+    </div>
+  </div>
+</section>
+
+<div class="sectionTitle" id="poolStats">LIVE-POOL-HASHRATE</div>
 
 <div class="graphCard poolHashrateGraph">
   <div class="graphTop">
@@ -1467,7 +1699,7 @@ body{
 <div class="sectionTitle">POOL-TELEMETRY</div>
 <div id="telemetry" class="grid grid6"></div>
 
-<div class="sectionTitle">MINER-ACCOUNTING</div>
+<div class="sectionTitle" id="minerAccounting">MINER-ACCOUNTING</div>
 
 <div class="accountSearch">
   <input
@@ -1477,12 +1709,14 @@ body{
     autocomplete="off"
     autocapitalize="none"
     spellcheck="false"
+    aria-label="XBT payout address"
+    aria-describedby="accountHint"
   >
   <button id="accountGo" type="button">LOOK UP</button>
   <button id="accountClear" class="clear" type="button">CLEAR</button>
 </div>
 
-<div id="accountHint" class="accountHint">
+<div id="accountHint" class="accountHint" role="status" aria-live="polite">
   SEARCH YOUR PAYOUT ADDRESS TO VIEW ACCOUNTING
 </div>
 
@@ -1494,42 +1728,72 @@ body{
 <div class="sectionTitle">SV1-PIGGY-BANK // REDISTRIBUTION</div>
 <div id="window" class="grid grid5"></div>
 
-<div class="sectionTitle">PUBLIC-ACCESS</div>
+<div class="sectionTitle" id="connectionDetails">PUBLIC-ACCESS</div>
 
 <div class="twoCol">
 
   <div class="access primary">
-    <h3>DATUM // RECOMMENDED</h3>
-    <div class="mode">PRIMARY TERMINUS CONNECTION</div>
+    <h3>NATIVE DATUM</h3>
+    <div class="mode">DATUM-COMPATIBLE CLIENTS // RECOMMENDED</div>
 
     <div class="accessLabel">PUBLIC DATUM ENDPOINT</div>
     <div class="copyRow">
       <div class="copyText">67.205.136.13:28915</div>
       <button
+        type="button"
         class="copyBtn"
+        aria-label="Copy DATUM endpoint"
         data-copy="67.205.136.13:28915"
         onclick="copyField(this)"
       >COPY</button>
     </div>
 
     <div class="note">
+      For <strong>DATUM-compatible clients</strong> connecting natively.<br>
       Username: <strong>payout_address.worker</strong><br>
       Grand Opening DATUM fee: <strong>0%</strong><br>
       Promo through <strong>November 5, 2026</strong><br>
-      Standard DATUM operational fee after promo: <strong>1%</strong><br>
-      DATUM participates in redistributed legacy SV1 work.
+      Standard DATUM operational fee after promo: <strong>1%</strong>.
+    </div>
+  </div>
+
+  <div class="access gateway">
+    <h3>SV1 VIA DATUM GATEWAY</h3>
+    <div class="mode">STANDARD MINERS // MINING RIG RENTALS</div>
+
+    <div class="accessLabel">DATUM-BACKED SV1 ENDPOINT</div>
+    <div class="copyRow">
+      <div class="copyText">stratum+tcp://67.205.136.13:23341</div>
+      <button
+        type="button"
+        class="copyBtn"
+        aria-label="Copy DATUM-backed SV1 endpoint"
+        data-copy="stratum+tcp://67.205.136.13:23341"
+        onclick="copyField(this)"
+      >COPY</button>
+    </div>
+
+    <div class="note">
+      Connect using ordinary <strong>Stratum V1</strong>.<br>
+      The gateway translates SV1 traffic into <strong>DATUM</strong> upstream.<br>
+      Ideal for standard miners and <strong>Mining Rig Rentals</strong>.<br>
+      Username: <strong>payout_address.worker</strong><br>
+      Grand Opening DATUM fee: <strong>0%</strong><br>
+      Standard DATUM operational fee after promo: <strong>1%</strong>.
     </div>
   </div>
 
   <div class="access legacy">
     <h3>LEGACY SV1</h3>
-    <div class="mode">PUBLIC STRATUM V1 GATEWAY</div>
+    <div class="mode">PUBLIC COMPATIBILITY // REDISTRIBUTION ROUTE</div>
 
-    <div class="accessLabel">PUBLIC SV1 ENDPOINT</div>
+    <div class="accessLabel">PUBLIC LEGACY SV1 ENDPOINT</div>
     <div class="copyRow">
       <div class="copyText">stratum+tcp://67.205.136.13:23340</div>
       <button
+        type="button"
         class="copyBtn"
+        aria-label="Copy SV1 endpoint"
         data-copy="stratum+tcp://67.205.136.13:23340"
         onclick="copyField(this)"
       >COPY</button>
@@ -1556,8 +1820,10 @@ body{
       <div class="copyRow">
         <div id="primePubkey" class="copyText">LOADING...</div>
         <button
+          type="button"
           id="copyPrimePubkey"
           class="copyBtn"
+          aria-label="Copy Prime public key"
           data-copy=""
           onclick="copyField(this)"
         >COPY</button>
@@ -1569,8 +1835,10 @@ body{
       <div class="copyRow">
         <div id="poolPayoutScript" class="copyText">LOADING...</div>
         <button
+          type="button"
           id="copyPayoutScript"
           class="copyBtn"
+          aria-label="Copy pool payout script"
           data-copy=""
           onclick="copyField(this)"
         >COPY</button>
@@ -1582,8 +1850,10 @@ body{
       <div class="copyRow">
         <div id="coinbaseTag" class="copyText">LOADING...</div>
         <button
+          type="button"
           id="copyCoinbaseTag"
           class="copyBtn"
+          aria-label="Copy coinbase tag"
           data-copy=""
           onclick="copyField(this)"
         >COPY</button>
@@ -1594,6 +1864,7 @@ body{
 </div>
 
 <div id="blockBanner" class="blockBanner"></div>
+</main>
 
 <footer>
 TERMINUS POOL // THE LAST WORD IN MINING // DATUM-FIRST ARCHITECTURE // XBT BLAKE2B
@@ -1612,12 +1883,18 @@ $("accountAddress").value=accountAddress;
 function lookupAccount(){
   accountAddress=$("accountAddress").value.trim();
 
-  if(accountAddress){
-    localStorage.setItem("terminusAccountAddress",accountAddress);
-  }else{
+  if(!accountAddress){
     localStorage.removeItem("terminusAccountAddress");
+    $("accountHint").textContent=
+      "ENTER AN XBT PAYOUT ADDRESS TO SEARCH";
+    $("accountHint").className="accountHint badText";
+    $("miner").style.display="none";
+    $("miner").innerHTML="";
+    $("accountAddress").focus();
+    return;
   }
 
+  localStorage.setItem("terminusAccountAddress",accountAddress);
   refresh();
 }
 
@@ -2503,7 +2780,15 @@ async function refresh(){
 injectVisualFx();
 initSkyFx();
 refresh();
-setInterval(refresh,5000);
+
+const REFRESH_MS=10000;
+let refreshTimer=setInterval(()=>{
+  if(!document.hidden) refresh();
+},REFRESH_MS);
+
+document.addEventListener("visibilitychange",()=>{
+  if(!document.hidden) refresh();
+});
 
 /* TERMINUS_GRAND_OPENING_PROMO_COUNTDOWN
    Promo is valid through Nov 5, 2026.
@@ -2524,17 +2809,22 @@ function renderPromoCountdown(){
 
     if (remaining <= 0){
         remaining = 0;
+
         document.getElementById("promoTitle").textContent =
             "GRAND OPENING PROMO COMPLETE";
+
         document.getElementById("promoText").textContent =
             "The 0% DATUM Grand Opening promotion ended November 5, 2026.";
+
         document.getElementById("promoMeta").textContent =
             "STANDARD DATUM OPERATIONAL FEE: 1%";
+
         document.getElementById("promoClockLabel").textContent =
             "PROMOTION COMPLETE";
     }
 
     const totalSeconds = Math.floor(remaining / 1000);
+
     const days = Math.floor(totalSeconds / 86400);
     const hours = Math.floor((totalSeconds % 86400) / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -2556,15 +2846,65 @@ setInterval(renderPromoCountdown, 1000);
 
 class Handler(BaseHTTPRequestHandler):
 
+    server_version = "TerminusDashboard"
+    sys_version = ""
+
+    def version_string(self):
+        return self.server_version
+
+    def send_security_headers(self):
+        self.send_header("X-Content-Type-Options","nosniff")
+        self.send_header("Referrer-Policy","no-referrer")
+        self.send_header(
+            "Permissions-Policy",
+            "camera=(), microphone=(), geolocation=()"
+        )
+        self.send_header(
+            "Content-Security-Policy",
+            "default-src 'self'; img-src 'self' data:; "
+            "style-src 'self' 'unsafe-inline'; "
+            "script-src 'self' 'unsafe-inline'; "
+            "connect-src 'self'"
+        )
+        self.send_header(
+            "Strict-Transport-Security",
+            "max-age=31536000"
+        )
+
     def send_json(self,obj,status=200):
         body=json.dumps(obj).encode()
 
         self.send_response(status)
-        self.send_header("Content-Type","application/json")
+        self.send_header(
+            "Content-Type",
+            "application/json; charset=utf-8"
+        )
         self.send_header("Cache-Control","no-store")
+        self.send_header("Access-Control-Allow-Origin","*")
+        self.send_header("Content-Length",str(len(body)))
+        self.send_security_headers()
         self.end_headers()
 
         self.wfile.write(body)
+
+    def do_HEAD(self):
+        parsed = urllib.parse.urlparse(self.path)
+
+        self.send_response(200)
+
+        if parsed.path in ("/api/stats", "/api/local-stats"):
+            self.send_header(
+                "Content-Type",
+                "application/json; charset=utf-8"
+            )
+            self.send_header("Cache-Control","no-store")
+            self.send_header("Access-Control-Allow-Origin","*")
+        else:
+            self.send_header("Content-Type","text/html; charset=utf-8")
+            self.send_header("Cache-Control","public, max-age=60")
+
+        self.send_security_headers()
+        self.end_headers()
 
     def do_GET(self):
 
@@ -2975,7 +3315,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.4"
+                                "Terminus-Umbrel-Client/0.2.5"
                         }
                     )
 
@@ -3009,12 +3349,14 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header(
                 "Content-Type",
-                "text/html"
+                "text/html; charset=utf-8"
             )
             self.send_header(
                 "Cache-Control",
-                "no-store"
+                "public, max-age=60"
             )
+            self.send_header("Content-Length",str(len(body)))
+            self.send_security_headers()
             self.end_headers()
 
             self.wfile.write(body)
