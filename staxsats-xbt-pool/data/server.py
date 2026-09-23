@@ -438,7 +438,7 @@ h1{
 .card.small .value{font-size:18px}
 .card.tiny .value{font-size:13px;line-height:1.5}
 
-.twoCol{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.twoCol{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
 
 .access{
   position:relative;
@@ -1695,7 +1695,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 }
 .quickConnectGrid{
     display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-template-columns:repeat(2,minmax(0,1fr));
     gap:12px;
 }
 .quickEndpoint{
@@ -1808,7 +1808,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // GATEWAY // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.8</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.9</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -1904,21 +1904,15 @@ a:focus-visible,button:focus-visible,input:focus-visible{
   <div class="quickConnectGrid">
     <div class="quickEndpoint recommended">
       <div class="quickLabel">NATIVE DATUM // RECOMMENDED // 0% PROMO FEE</div>
-      <div class="quickValue">67.205.136.13:28915</div>
-      <button type="button" class="copyBtn" aria-label="Copy DATUM endpoint" data-copy="67.205.136.13:28915" onclick="copyField(this)">COPY DATUM ENDPOINT</button>
+      <div class="quickValue">datum.terminuspool.xyz:28915</div>
+      <button type="button" class="copyBtn" aria-label="Copy DATUM endpoint" data-copy="datum.terminuspool.xyz:28915" onclick="copyField(this)">COPY DATUM ENDPOINT</button>
       <div class="quickNote">For DATUM-compatible clients · Username: <strong>payout_address.worker</strong></div>
     </div>
     <div class="quickEndpoint gateway">
-      <div class="quickLabel">SV1 VIA DATUM // STANDARD MINERS</div>
-      <div class="quickValue">stratum+tcp://67.205.136.13:23341</div>
-      <button type="button" class="copyBtn" aria-label="Copy DATUM-backed SV1 endpoint" data-copy="stratum+tcp://67.205.136.13:23341" onclick="copyField(this)">COPY SV1 VIA DATUM</button>
+      <div class="quickLabel">SV1 / RENTALS // STANDARD MINERS</div>
+      <div class="quickValue">stratum.terminuspool.xyz:23341</div>
+      <button type="button" class="copyBtn" aria-label="Copy SV1 rentals endpoint" data-copy="stratum.terminuspool.xyz:23341" onclick="copyField(this)">COPY SV1 / RENTALS ENDPOINT</button>
       <div class="quickNote">Standard miners and Mining Rig Rentals · Username: <strong>payout_address.worker</strong></div>
-    </div>
-    <div class="quickEndpoint legacy">
-      <div class="quickLabel">LEGACY SV1 // 5% REDISTRIBUTION</div>
-      <div class="quickValue">stratum+tcp://67.205.136.13:23340</div>
-      <button type="button" class="copyBtn" aria-label="Copy SV1 endpoint" data-copy="stratum+tcp://67.205.136.13:23340" onclick="copyField(this)">COPY SV1 ENDPOINT</button>
-      <div class="quickNote">Username: <strong>payout_address.worker</strong> · Password: <strong>x</strong></div>
     </div>
   </div>
 </section>
@@ -1989,12 +1983,12 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 
     <div class="accessLabel">PUBLIC DATUM ENDPOINT</div>
     <div class="copyRow">
-      <div class="copyText">67.205.136.13:28915</div>
+      <div class="copyText">datum.terminuspool.xyz:28915</div>
       <button
         type="button"
         class="copyBtn"
         aria-label="Copy DATUM endpoint"
-        data-copy="67.205.136.13:28915"
+        data-copy="datum.terminuspool.xyz:28915"
         onclick="copyField(this)"
       >COPY</button>
     </div>
@@ -2009,17 +2003,17 @@ a:focus-visible,button:focus-visible,input:focus-visible{
   </div>
 
   <div class="access gateway">
-    <h3>SV1 VIA DATUM GATEWAY</h3>
+    <h3>SV1 / RENTALS</h3>
     <div class="mode">STANDARD MINERS // MINING RIG RENTALS</div>
 
-    <div class="accessLabel">DATUM-BACKED SV1 ENDPOINT</div>
+    <div class="accessLabel">PUBLIC SV1 / RENTALS ENDPOINT</div>
     <div class="copyRow">
-      <div class="copyText">stratum+tcp://67.205.136.13:23341</div>
+      <div class="copyText">stratum.terminuspool.xyz:23341</div>
       <button
         type="button"
         class="copyBtn"
-        aria-label="Copy DATUM-backed SV1 endpoint"
-        data-copy="stratum+tcp://67.205.136.13:23341"
+        aria-label="Copy SV1 rentals endpoint"
+        data-copy="stratum.terminuspool.xyz:23341"
         onclick="copyField(this)"
       >COPY</button>
     </div>
@@ -2031,30 +2025,6 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       Username: <strong>payout_address.worker</strong><br>
       Grand Opening DATUM fee: <strong>0%</strong><br>
       Standard DATUM operational fee after promo: <strong>1%</strong>.
-    </div>
-  </div>
-
-  <div class="access legacy">
-    <h3>LEGACY SV1</h3>
-    <div class="mode">PUBLIC COMPATIBILITY // REDISTRIBUTION ROUTE</div>
-
-    <div class="accessLabel">PUBLIC LEGACY SV1 ENDPOINT</div>
-    <div class="copyRow">
-      <div class="copyText">stratum+tcp://67.205.136.13:23340</div>
-      <button
-        type="button"
-        class="copyBtn"
-        aria-label="Copy SV1 endpoint"
-        data-copy="stratum+tcp://67.205.136.13:23340"
-        onclick="copyField(this)"
-      >COPY</button>
-    </div>
-
-    <div class="note">
-      Username: <strong>payout_address.worker</strong><br>
-      Base pool fee during Grand Opening promo: <strong>0%</strong><br>
-      Legacy SV1 redistribution: <strong>5%</strong><br>
-      Standard base pool fee after promo: <strong>1%</strong>.
     </div>
   </div>
 
@@ -3674,7 +3644,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.8"
+                                "Terminus-Umbrel-Client/0.2.9"
                         }
                     )
 
