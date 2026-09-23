@@ -4,7 +4,7 @@ name: Terminus Pool
 tagline: The last word in mining
 icon: https://raw.githubusercontent.com/StaxSats133/staxsats-umbrel-app-store/main/staxsats-xbt-pool/icon.svg
 category: bitcoin
-version: "0.2.11"
+version: "0.2.12"
 port: 8081
 description: >-
   Terminus Pool is an XBT BLAKE2b mining pool dashboard for RATUM Prime and Gateway.
@@ -19,10 +19,10 @@ repo: https://github.com/StaxSats133/staxsats-umbrel-app-store
 support: https://github.com/StaxSats133/staxsats-umbrel-app-store/issues
 gallery: []
 releaseNotes: >-
-  Terminus Pool v0.2.11 adds a private, read-only Umbrel admin dashboard for viewing
-  every miner account represented in the RATUM payout window, with masked identities,
-  hashrate, window share, best share, projected payout, and payout status. The public
-  website and API remain aggregate-only, and all three mining lanes are preserved.
+  Terminus Pool v0.2.12 adds calibrated cosmic Work-in-Window rewards beside miner
+  tags, progressing from Spark to Galaxy with rare Diamond and current-leader Crown
+  achievements. Tiers scale against the full RATUM target window, remain read-only,
+  and preserve the private admin boundary, public aggregate API, and mining backend.
 dependencies: []
 path: ""
 defaultUsername: ""
