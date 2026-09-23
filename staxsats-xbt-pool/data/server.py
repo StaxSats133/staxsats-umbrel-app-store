@@ -9,7 +9,10 @@ import urllib.parse
 
 GATEWAY = "http://host.docker.internal:7153/stats.json"
 PRIME = "http://172.17.0.1:28916/stats.json"
-PUBLIC_STATS = "https://terminuspool.xyz/api/stats"
+PUBLIC_STATS = os.environ.get(
+    "TERMINUS_PUBLIC_STATS",
+    "https://terminuspool.xyz/api/stats"
+)
 
 STATE_DIR = os.environ.get(
     "TERMINUS_STATE_DIR",
@@ -30,6 +33,17 @@ ADMIN_ENABLED = os.environ.get(
     "TERMINUS_ADMIN_ENABLED",
     "false"
 ).lower() in ("1", "true", "yes")
+
+WORK_REWARD_TIERS = (
+    (0.40, "🌌", "GALAXY"),
+    (0.20, "🪐", "ORBIT"),
+    (0.10, "🌙", "MOON"),
+    (0.05, "☄️", "COMET"),
+    (0.02, "🌟", "BRIGHT STAR"),
+    (0.0075, "⭐", "STAR"),
+    (0.0025, "✨", "SPARK"),
+)
+DIAMOND_WORK_RATIO = 0.75
 
 
 def _history_connection():
@@ -172,6 +186,40 @@ def _mask_identity(identity):
     return identity[:10] + "…" + identity[-7:]
 
 
+def work_reward(work, target_work, is_leader=False):
+    work_value = max(0, int(_number(work, 0)))
+    target_value = max(0, int(_number(target_work, 0)))
+    ratio = work_value / target_value if target_value else 0.0
+    cosmic = None
+
+    for threshold, emoji, label in WORK_REWARD_TIERS:
+        if ratio >= threshold:
+            cosmic = {
+                "emoji": emoji,
+                "label": label,
+                "thresholdPercent": threshold * 100,
+            }
+            break
+
+    specials = []
+    if target_value and ratio >= DIAMOND_WORK_RATIO:
+        specials.append({
+            "emoji": "💎",
+            "label": "DIAMOND WORK",
+        })
+    if is_leader and work_value > 0:
+        specials.append({
+            "emoji": "👑",
+            "label": "CURRENT WINDOW LEADER",
+        })
+
+    return {
+        "cosmic": cosmic,
+        "specials": specials,
+        "targetPercent": ratio * 100,
+    }
+
+
 def load_admin_snapshot(reveal=False):
     """Return read-only per-account telemetry from RATUM Prime."""
     with urllib.request.urlopen(PRIME, timeout=2.5) as response:
@@ -179,12 +227,18 @@ def load_admin_snapshot(reveal=False):
 
     window = prime.get("window", {})
     raw_miners = window.get("miners", [])
+    target_work = int(_number(window.get("target_work", 0)))
+    max_work = max(
+        (int(_number(raw.get("work", 0))) for raw in raw_miners),
+        default=0
+    )
     miners = []
 
     for raw in raw_miners:
         identity = str(raw.get("identity", "") or "").strip()
         hashrate_hs = _number(raw.get("hashrate_hs", 0))
         payout_sats = int(_number(raw.get("payout_sats", 0)))
+        miner_work = int(_number(raw.get("work", 0)))
         miners.append({
             "identity": identity if reveal else _mask_identity(identity),
             "identityMasked": not reveal,
@@ -192,7 +246,12 @@ def load_admin_snapshot(reveal=False):
             "status": "active" if hashrate_hs > 0 else "idle",
             "hashrateThs": hashrate_hs / 1_000_000_000_000,
             "sharePercent": _number(raw.get("share_percent", 0)),
-            "work": str(raw.get("work", "0") or "0"),
+            "work": str(miner_work),
+            "reward": work_reward(
+                miner_work,
+                target_work,
+                is_leader=(miner_work == max_work and max_work > 0)
+            ),
             "ownGatewayWork": str(
                 raw.get("own_gateway_work", "0") or "0"
             ),
@@ -214,6 +273,19 @@ def load_admin_snapshot(reveal=False):
         "generatedAt": int(time.time()),
         "scope": "ratum-payout-window",
         "privacy": "revealed" if reveal else "masked",
+        "rewardScale": {
+            "basis": "percent-of-target-window-work",
+            "targetWork": str(target_work),
+            "tiers": [
+                {
+                    "thresholdPercent": threshold * 100,
+                    "emoji": emoji,
+                    "label": label,
+                }
+                for threshold, emoji, label in reversed(WORK_REWARD_TIERS)
+            ],
+            "diamondThresholdPercent": DIAMOND_WORK_RATIO * 100,
+        },
         "summary": {
             "accounts": len(miners),
             "active": active,
@@ -494,6 +566,16 @@ h1{
   border:1px solid #123541;background:linear-gradient(145deg,#08141d,#060c13);
   overflow:hidden
 }
+.minerTagText{color:var(--cyan)}
+.workBadges{display:inline-flex;gap:4px;margin-left:6px;vertical-align:middle}
+.workBadge{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:22px;height:22px;padding:0 3px;border:1px solid #24505d;
+  border-radius:5px;background:#07131b;font-size:14px;line-height:1;
+  font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+  filter:drop-shadow(0 0 5px rgba(67,245,255,.2));
+}
+.workBadge.special{border-color:#775f27;filter:drop-shadow(0 0 6px rgba(255,200,92,.28))}
 .card:before{
   content:"";position:absolute;top:0;left:0;width:38%;height:2px;
   background:var(--green);box-shadow:0 0 11px var(--green)
@@ -1896,7 +1978,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // GATEWAY // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.11</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.12</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -2297,6 +2379,30 @@ function compact(v){
   if(n>=1e6)return (n/1e6).toFixed(2)+"M";
   if(n>=1e3)return (n/1e3).toFixed(2)+"K";
   return num(n,0);
+}
+
+function escapeHtml(value){
+  return String(value??"").replace(/[&<>"']/g,char=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[char]);
+}
+
+function workRewardMarkup(reward){
+  if(!reward) return "";
+  const parts=[];
+  if(reward.cosmic) parts.push({...reward.cosmic,special:false});
+  for(const item of (reward.specials||[])){
+    parts.push({...item,special:true});
+  }
+  if(!parts.length) return "";
+  return `<span class="workBadges" aria-label="Work rewards">${parts.map(item=>
+    `<span class="workBadge${item.special?" special":""}" role="img" title="${escapeHtml(item.label)}" aria-label="${escapeHtml(item.label)}">${escapeHtml(item.emoji)}</span>`
+  ).join("")}</span>`;
+}
+
+function minerTagMarkup(tag,reward){
+  return `<span class="minerTagText">${escapeHtml(tag||"UNTAGGED")}</span>`+
+    workRewardMarkup(reward);
 }
 
 function bestShareFmt(v){
@@ -3067,7 +3173,7 @@ async function refresh(){
 
       $("miner").innerHTML=
         card("PAYOUT ADDRESS",d.identity||"N/A","tiny")+
-        card("MINER TAG",d.minerTag||"UNTAGGED","cyan")+
+        card("MINER TAG",minerTagMarkup(d.minerTag,d.workReward),"cyan")+
         card("PRIME HASHRATE",num(d.primeHashrate,3)+" TH/s","cyan")+
         card("WINDOW WORK",compact(d.minerWork||0))+
         card("GATEWAY WORK",compact(d.ownGatewayWork||0))+
@@ -3243,7 +3349,7 @@ ADMIN_HTML = r"""<!doctype html>
 <meta name="theme-color" content="#050912">
 <style>
 :root{--bg:#050912;--panel:#08131d;--line:#174655;--cyan:#43f5ff;--green:#72ffb4;--pink:#ff4fb8;--gold:#ffc85c;--text:#e7faff;--muted:#7895a0}
-*{box-sizing:border-box}body{margin:0;color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:radial-gradient(circle at 50% -10%,#10243b 0,var(--bg) 45%);min-height:100vh}.shell{max-width:1440px;margin:auto;padding:28px}.top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:22px}.eyebrow{color:var(--pink);font-size:11px;letter-spacing:.2em;font-weight:900}h1{margin:8px 0 5px;font-size:clamp(28px,5vw,54px);letter-spacing:.05em}.sub{color:var(--muted);line-height:1.55;max-width:780px}.private{border:1px solid #2c6b56;color:var(--green);padding:10px 13px;font-size:11px;white-space:nowrap}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.toolbar input{flex:1;min-width:220px}.toolbar input,.toolbar button,.toolbar a{border:1px solid var(--line);background:#06101a;color:var(--text);padding:12px 14px;font:inherit}.toolbar button,.toolbar a{cursor:pointer;color:var(--cyan);font-weight:900;text-decoration:none}.summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}.metric,.panel{border:1px solid var(--line);background:linear-gradient(145deg,#07131d,#08101a);box-shadow:0 12px 35px #0005}.metric{padding:16px}.label{color:var(--muted);font-size:9px;letter-spacing:.15em}.value{margin-top:8px;font-size:clamp(19px,3vw,28px);font-weight:1000;color:var(--cyan)}.panel{overflow:hidden}.tableWrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:1050px}th,td{text-align:left;padding:13px 14px;border-bottom:1px solid #112c37}th{position:sticky;top:0;background:#091722;color:#7ca8b2;font-size:9px;letter-spacing:.13em}td{font-size:12px}.identity{color:var(--cyan)}.tag{color:var(--green)}.status{display:inline-block;border:1px solid;padding:4px 7px;font-size:9px;letter-spacing:.12em}.status.active{color:var(--green);border-color:#287559}.status.idle{color:#a3abb2;border-color:#4c5860}.payable{color:var(--gold)}.empty{padding:45px;text-align:center;color:var(--muted)}.foot{display:flex;justify-content:space-between;gap:15px;margin-top:12px;color:var(--muted);font-size:10px;line-height:1.5}.error{color:#ff7890}.sr{position:absolute;left:-9999px}@media(max-width:900px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.top{flex-direction:column}.private{white-space:normal}}@media(max-width:520px){.shell{padding:18px 12px}.summary{grid-template-columns:1fr 1fr}.metric:last-child{grid-column:1/-1}.toolbar>*{width:100%}.foot{flex-direction:column}}
+*{box-sizing:border-box}body{margin:0;color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:radial-gradient(circle at 50% -10%,#10243b 0,var(--bg) 45%);min-height:100vh}.shell{max-width:1440px;margin:auto;padding:28px}.top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:22px}.eyebrow{color:var(--pink);font-size:11px;letter-spacing:.2em;font-weight:900}h1{margin:8px 0 5px;font-size:clamp(28px,5vw,54px);letter-spacing:.05em}.sub{color:var(--muted);line-height:1.55;max-width:780px}.private{border:1px solid #2c6b56;color:var(--green);padding:10px 13px;font-size:11px;white-space:nowrap}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.toolbar input{flex:1;min-width:220px}.toolbar input,.toolbar button,.toolbar a{border:1px solid var(--line);background:#06101a;color:var(--text);padding:12px 14px;font:inherit}.toolbar button,.toolbar a{cursor:pointer;color:var(--cyan);font-weight:900;text-decoration:none}.rewardLegend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-5px 0 18px;padding:10px 12px;border:1px solid #163440;background:#06101a;color:var(--muted);font-size:10px}.rewardLegend strong{color:var(--pink);letter-spacing:.12em}.legendTier{display:inline-flex;gap:4px;align-items:center;color:#a7c4cc}.summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}.metric,.panel{border:1px solid var(--line);background:linear-gradient(145deg,#07131d,#08101a);box-shadow:0 12px 35px #0005}.metric{padding:16px}.label{color:var(--muted);font-size:9px;letter-spacing:.15em}.value{margin-top:8px;font-size:clamp(19px,3vw,28px);font-weight:1000;color:var(--cyan)}.panel{overflow:hidden}.tableWrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:1050px}th,td{text-align:left;padding:13px 14px;border-bottom:1px solid #112c37}th{position:sticky;top:0;background:#091722;color:#7ca8b2;font-size:9px;letter-spacing:.13em}td{font-size:12px}.identity{color:var(--cyan)}.tag{color:var(--green)}.tagRewards{display:inline-flex;gap:3px;margin-left:5px;vertical-align:middle}.tagReward,.legendTier{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}.tagReward{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 2px;border:1px solid #24505d;border-radius:4px;background:#07131b;font-size:13px;line-height:1}.tagReward.special{border-color:#775f27}.status{display:inline-block;border:1px solid;padding:4px 7px;font-size:9px;letter-spacing:.12em}.status.active{color:var(--green);border-color:#287559}.status.idle{color:#a3abb2;border-color:#4c5860}.payable{color:var(--gold)}.empty{padding:45px;text-align:center;color:var(--muted)}.foot{display:flex;justify-content:space-between;gap:15px;margin-top:12px;color:var(--muted);font-size:10px;line-height:1.5}.error{color:#ff7890}.sr{position:absolute;left:-9999px}@media(max-width:900px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.top{flex-direction:column}.private{white-space:normal}}@media(max-width:520px){.shell{padding:18px 12px}.summary{grid-template-columns:1fr 1fr}.metric:last-child{grid-column:1/-1}.toolbar>*{width:100%}.foot{flex-direction:column}.rewardLegend{align-items:flex-start}}
 @media(max-width:760px){table{min-width:0}thead{display:none}tbody,tr,td{display:block;width:100%}tr{padding:10px 14px;border-bottom:1px solid var(--line)}td{display:flex;justify-content:space-between;gap:18px;padding:8px 0;border:0;text-align:right;overflow-wrap:anywhere}td:before{content:attr(data-label);color:var(--muted);font-size:9px;letter-spacing:.12em;text-align:left;flex:0 0 38%}.empty{display:block;text-align:center;padding:32px 10px}.empty:before{display:none}}
 </style>
 </head>
@@ -3259,6 +3365,7 @@ ADMIN_HTML = r"""<!doctype html>
     <button id="refresh" type="button">REFRESH NOW</button>
     <a href="/">← DASHBOARD</a>
   </div>
+  <div class="rewardLegend" id="rewardLegend" aria-label="Work reward progression"><strong>WORK REWARDS</strong><span>Loading calibrated tiers…</span></div>
   <section class="summary" aria-label="Miner summary">
     <div class="metric"><div class="label">WINDOW ACCOUNTS</div><div class="value" id="accounts">—</div></div>
     <div class="metric"><div class="label">ACTIVE</div><div class="value" id="active">—</div></div>
@@ -3274,8 +3381,10 @@ const $=id=>document.getElementById(id);let all=[],revealed=false;
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const num=(v,d=2)=>Number(v||0).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});
 const compact=v=>{const n=Number(v||0);return Number.isFinite(n)?n.toLocaleString(undefined,{notation:"compact",maximumFractionDigits:2}):String(v||0)};
-function render(){const q=$("search").value.trim().toLowerCase();const rows=all.filter(m=>!q||m.identity.toLowerCase().includes(q)||m.tag.toLowerCase().includes(q));$("rows").innerHTML=rows.length?rows.map(m=>`<tr><td data-label="STATUS"><span class="status ${esc(m.status)}">${esc(m.status.toUpperCase())}</span></td><td data-label="PAYOUT IDENTITY" class="identity">${esc(m.identity)}</td><td data-label="WORKER TAG" class="tag">${esc(m.tag)}</td><td data-label="HASHRATE">${num(m.hashrateThs,3)} TH/s</td><td data-label="WINDOW SHARE">${num(m.sharePercent,2)}%</td><td data-label="BEST SHARE">${compact(m.bestShare)}</td><td data-label="WINDOW WORK">${compact(m.work)}</td><td data-label="GATEWAY WORK">${compact(m.ownGatewayWork)}</td><td data-label="PROJECTED PAYOUT">${num(m.projectedPayoutXbt,8)} XBT</td><td data-label="PAYOUT STATUS" class="payable">${m.payable?"PAYABLE":esc(m.unpayableReason||"LOCKED")}</td></tr>`).join(""):`<tr><td colspan="10" class="empty">NO MATCHING MINERS</td></tr>`}
-async function load(){try{const r=await fetch(`/api/admin/miners?reveal=${revealed?1:0}&ts=${Date.now()}`,{cache:"no-store",credentials:"same-origin"});if(!r.ok)throw new Error(`HTTP ${r.status}`);const d=await r.json();all=d.miners||[];const s=d.summary||{};$("accounts").textContent=s.accounts??0;$("active").textContent=s.active??0;$("idle").textContent=s.idle??0;$("hashrate").textContent=num(s.hashrateThs,3)+" TH/s";$("payout").textContent=num(s.projectedPayoutXbt,8)+" XBT";$("freshness").textContent="UPDATED "+new Date(d.generatedAt*1000).toLocaleString()+" // RATUM PAYOUT WINDOW";$("freshness").className="";render()}catch(e){$("rows").innerHTML=`<tr><td colspan="10" class="empty error">ADMIN TELEMETRY UNAVAILABLE // ${esc(e.message)}</td></tr>`;$("freshness").textContent="DATA ERROR";$("freshness").className="error"}}
+function rewardBadges(reward){if(!reward)return"";const items=[];if(reward.cosmic)items.push({...reward.cosmic,special:false});for(const item of(reward.specials||[]))items.push({...item,special:true});return items.length?`<span class="tagRewards" aria-label="Work rewards">${items.map(item=>`<span class="tagReward${item.special?" special":""}" role="img" title="${esc(item.label)}" aria-label="${esc(item.label)}">${esc(item.emoji)}</span>`).join("")}</span>`:""}
+function rewardLegend(scale){const tiers=(scale&&scale.tiers)||[];const cosmic=tiers.map(t=>`<span class="legendTier" title="${esc(t.label)}">${esc(t.emoji)} ${num(t.thresholdPercent,2)}%</span>`).join("");return `<strong>WORK REWARDS</strong>${cosmic}<span class="legendTier">💎 ${num(scale?.diamondThresholdPercent,0)}%</span><span class="legendTier">👑 #1</span>`}
+function render(){const q=$("search").value.trim().toLowerCase();const rows=all.filter(m=>!q||m.identity.toLowerCase().includes(q)||m.tag.toLowerCase().includes(q));$("rows").innerHTML=rows.length?rows.map(m=>`<tr><td data-label="STATUS"><span class="status ${esc(m.status)}">${esc(m.status.toUpperCase())}</span></td><td data-label="PAYOUT IDENTITY" class="identity">${esc(m.identity)}</td><td data-label="WORKER TAG" class="tag">${esc(m.tag)}${rewardBadges(m.reward)}</td><td data-label="HASHRATE">${num(m.hashrateThs,3)} TH/s</td><td data-label="WINDOW SHARE">${num(m.sharePercent,2)}%</td><td data-label="BEST SHARE">${compact(m.bestShare)}</td><td data-label="WINDOW WORK">${compact(m.work)}</td><td data-label="GATEWAY WORK">${compact(m.ownGatewayWork)}</td><td data-label="PROJECTED PAYOUT">${num(m.projectedPayoutXbt,8)} XBT</td><td data-label="PAYOUT STATUS" class="payable">${m.payable?"PAYABLE":esc(m.unpayableReason||"LOCKED")}</td></tr>`).join(""):`<tr><td colspan="10" class="empty">NO MATCHING MINERS</td></tr>`}
+async function load(){try{const r=await fetch(`/api/admin/miners?reveal=${revealed?1:0}&ts=${Date.now()}`,{cache:"no-store",credentials:"same-origin"});if(!r.ok)throw new Error(`HTTP ${r.status}`);const d=await r.json();all=d.miners||[];const s=d.summary||{};$("rewardLegend").innerHTML=rewardLegend(d.rewardScale||{});$("accounts").textContent=s.accounts??0;$("active").textContent=s.active??0;$("idle").textContent=s.idle??0;$("hashrate").textContent=num(s.hashrateThs,3)+" TH/s";$("payout").textContent=num(s.projectedPayoutXbt,8)+" XBT";$("freshness").textContent="UPDATED "+new Date(d.generatedAt*1000).toLocaleString()+" // RATUM PAYOUT WINDOW";$("freshness").className="";render()}catch(e){$("rows").innerHTML=`<tr><td colspan="10" class="empty error">ADMIN TELEMETRY UNAVAILABLE // ${esc(e.message)}</td></tr>`;$("freshness").textContent="DATA ERROR";$("freshness").className="error"}}
 $("search").addEventListener("input",render);$("refresh").addEventListener("click",load);$("reveal").addEventListener("click",()=>{revealed=!revealed;$("reveal").textContent=revealed?"MASK ADDRESSES":"REVEAL ADDRESSES";load()});load();setInterval(()=>{if(!document.hidden)load()},15000);
 </script>
 </body>
@@ -3465,6 +3574,16 @@ class Handler(BaseHTTPRequestHandler):
                 )
 
                 pool_miner_count=len(miners)
+                target_window_work=int(
+                    _number(window.get("target_work",0))
+                )
+                max_miner_work=max(
+                    (
+                        int(_number(candidate.get("work",0)))
+                        for candidate in miners
+                    ),
+                    default=0
+                )
 
                 miner={}
                 account_found=False
@@ -3510,6 +3629,18 @@ class Handler(BaseHTTPRequestHandler):
 
                 payout_sats=int(
                     miner.get("payout_sats",0) or 0
+                )
+                selected_miner_work=int(
+                    _number(miner.get("work",0))
+                )
+                selected_reward=work_reward(
+                    selected_miner_work,
+                    target_window_work,
+                    is_leader=(
+                        account_found and
+                        selected_miner_work == max_miner_work and
+                        max_miner_work > 0
+                    )
                 )
 
                 data={
@@ -3642,6 +3773,12 @@ class Handler(BaseHTTPRequestHandler):
                     "minerTag":
                         miner.get("tag",""),
 
+                    "workReward":
+                        selected_reward,
+
+                    "workTarget":
+                        str(target_window_work),
+
                     "ownGatewayWork":
                         miner.get("own_gateway_work","0"),
 
@@ -3736,7 +3873,7 @@ class Handler(BaseHTTPRequestHandler):
                         miner.get("unpayable_reason"),
 
                     "minerWork":
-                        miner.get("work","0"),
+                        str(selected_miner_work),
 
                     "sharePercent":
                         float(
@@ -3863,7 +4000,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.11"
+                                "Terminus-Umbrel-Client/0.2.12"
                         }
                     )
 
