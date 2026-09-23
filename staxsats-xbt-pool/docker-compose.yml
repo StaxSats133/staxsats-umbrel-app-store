@@ -17,6 +17,7 @@ services:
     command: ["python3", "/app/server.py"]
     environment:
       TERMINUS_STATE_DIR: /data
+      TERMINUS_ADMIN_ENABLED: "true"
     volumes:
       - ${APP_DATA_DIR}/data/server.py:/app/server.py:ro
       - ${APP_DATA_DIR}/data/state:/data
