@@ -26,6 +26,10 @@ COLLECTOR_ENABLED = os.environ.get(
     "TERMINUS_COLLECTOR_ENABLED",
     "true"
 ).lower() not in ("0", "false", "no")
+ADMIN_ENABLED = os.environ.get(
+    "TERMINUS_ADMIN_ENABLED",
+    "false"
+).lower() in ("1", "true", "yes")
 
 
 def _history_connection():
@@ -152,6 +156,75 @@ def collect_history_forever():
             pass
 
         time.sleep(60)
+
+
+def _number(value, default=0.0):
+    try:
+        return float(value or 0)
+    except (TypeError, ValueError):
+        return default
+
+
+def _mask_identity(identity):
+    identity = str(identity or "").strip()
+    if len(identity) <= 18:
+        return identity or "UNKNOWN"
+    return identity[:10] + "…" + identity[-7:]
+
+
+def load_admin_snapshot(reveal=False):
+    """Return read-only per-account telemetry from RATUM Prime."""
+    with urllib.request.urlopen(PRIME, timeout=2.5) as response:
+        prime = json.load(response)
+
+    window = prime.get("window", {})
+    raw_miners = window.get("miners", [])
+    miners = []
+
+    for raw in raw_miners:
+        identity = str(raw.get("identity", "") or "").strip()
+        hashrate_hs = _number(raw.get("hashrate_hs", 0))
+        payout_sats = int(_number(raw.get("payout_sats", 0)))
+        miners.append({
+            "identity": identity if reveal else _mask_identity(identity),
+            "identityMasked": not reveal,
+            "tag": str(raw.get("tag", "") or "UNTAGGED"),
+            "status": "active" if hashrate_hs > 0 else "idle",
+            "hashrateThs": hashrate_hs / 1_000_000_000_000,
+            "sharePercent": _number(raw.get("share_percent", 0)),
+            "work": str(raw.get("work", "0") or "0"),
+            "ownGatewayWork": str(
+                raw.get("own_gateway_work", "0") or "0"
+            ),
+            "bestShare": _number(raw.get("best_share", 0)),
+            "projectedPayoutSats": payout_sats,
+            "projectedPayoutXbt": payout_sats / 100_000_000,
+            "payable": bool(raw.get("payable", False)),
+            "unpayableReason": str(
+                raw.get("unpayable_reason", "") or ""
+            ),
+        })
+
+    miners.sort(
+        key=lambda item: (item["status"] != "active", -item["hashrateThs"])
+    )
+
+    active = sum(1 for miner in miners if miner["status"] == "active")
+    return {
+        "generatedAt": int(time.time()),
+        "scope": "ratum-payout-window",
+        "privacy": "revealed" if reveal else "masked",
+        "summary": {
+            "accounts": len(miners),
+            "active": active,
+            "idle": len(miners) - active,
+            "hashrateThs": sum(m["hashrateThs"] for m in miners),
+            "projectedPayoutXbt": sum(
+                m["projectedPayoutXbt"] for m in miners
+            ),
+        },
+        "miners": miners,
+    }
 
 HTML = r"""<!doctype html>
 <html lang="en">
@@ -1627,6 +1700,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
     text-decoration:none;
 }
 .skipLink:focus{transform:translateY(0)}
+.adminMobileLink{display:none}
 .topNav{
     display:flex;
     flex-wrap:wrap;
@@ -1777,6 +1851,20 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 /* TERMINUS_MOBILE_DECLUTTER_V1 */
 @media(max-width:760px){
     .topNav{display:none}
+    .adminMobileLink{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        min-height:44px;
+        margin:-3px 0 14px;
+        border:1px solid #2c6b56;
+        background:#06141a;
+        color:var(--green);
+        font-size:10px;
+        font-weight:900;
+        letter-spacing:.12em;
+        text-decoration:none;
+    }
     header{margin-bottom:14px}
     .badge{width:52px;height:52px;flex-basis:52px}
     .tagline{margin-top:6px}
@@ -1808,16 +1896,18 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // GATEWAY // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.10</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.11</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
 </header>
+<!-- TERMINUS_ADMIN_MOBILE_LINK -->
 
 <nav class="topNav" aria-label="Primary navigation">
   <a href="#startMining">START MINING</a>
   <a href="#poolStats">LIVE STATS</a>
   <a href="#minerAccounting">MINER LOOKUP</a>
+  <!-- TERMINUS_ADMIN_LINK -->
 </nav>
 
 <main id="mainContent">
@@ -3143,6 +3233,54 @@ setInterval(renderPromoCountdown, 1000);
 </html>
 """
 
+ADMIN_HTML = r"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TERMINUS POOL // ADMIN</title>
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="theme-color" content="#050912">
+<style>
+:root{--bg:#050912;--panel:#08131d;--line:#174655;--cyan:#43f5ff;--green:#72ffb4;--pink:#ff4fb8;--gold:#ffc85c;--text:#e7faff;--muted:#7895a0}
+*{box-sizing:border-box}body{margin:0;color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:radial-gradient(circle at 50% -10%,#10243b 0,var(--bg) 45%);min-height:100vh}.shell{max-width:1440px;margin:auto;padding:28px}.top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:22px}.eyebrow{color:var(--pink);font-size:11px;letter-spacing:.2em;font-weight:900}h1{margin:8px 0 5px;font-size:clamp(28px,5vw,54px);letter-spacing:.05em}.sub{color:var(--muted);line-height:1.55;max-width:780px}.private{border:1px solid #2c6b56;color:var(--green);padding:10px 13px;font-size:11px;white-space:nowrap}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.toolbar input{flex:1;min-width:220px}.toolbar input,.toolbar button,.toolbar a{border:1px solid var(--line);background:#06101a;color:var(--text);padding:12px 14px;font:inherit}.toolbar button,.toolbar a{cursor:pointer;color:var(--cyan);font-weight:900;text-decoration:none}.summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}.metric,.panel{border:1px solid var(--line);background:linear-gradient(145deg,#07131d,#08101a);box-shadow:0 12px 35px #0005}.metric{padding:16px}.label{color:var(--muted);font-size:9px;letter-spacing:.15em}.value{margin-top:8px;font-size:clamp(19px,3vw,28px);font-weight:1000;color:var(--cyan)}.panel{overflow:hidden}.tableWrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:1050px}th,td{text-align:left;padding:13px 14px;border-bottom:1px solid #112c37}th{position:sticky;top:0;background:#091722;color:#7ca8b2;font-size:9px;letter-spacing:.13em}td{font-size:12px}.identity{color:var(--cyan)}.tag{color:var(--green)}.status{display:inline-block;border:1px solid;padding:4px 7px;font-size:9px;letter-spacing:.12em}.status.active{color:var(--green);border-color:#287559}.status.idle{color:#a3abb2;border-color:#4c5860}.payable{color:var(--gold)}.empty{padding:45px;text-align:center;color:var(--muted)}.foot{display:flex;justify-content:space-between;gap:15px;margin-top:12px;color:var(--muted);font-size:10px;line-height:1.5}.error{color:#ff7890}.sr{position:absolute;left:-9999px}@media(max-width:900px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.top{flex-direction:column}.private{white-space:normal}}@media(max-width:520px){.shell{padding:18px 12px}.summary{grid-template-columns:1fr 1fr}.metric:last-child{grid-column:1/-1}.toolbar>*{width:100%}.foot{flex-direction:column}}
+@media(max-width:760px){table{min-width:0}thead{display:none}tbody,tr,td{display:block;width:100%}tr{padding:10px 14px;border-bottom:1px solid var(--line)}td{display:flex;justify-content:space-between;gap:18px;padding:8px 0;border:0;text-align:right;overflow-wrap:anywhere}td:before{content:attr(data-label);color:var(--muted);font-size:9px;letter-spacing:.12em;text-align:left;flex:0 0 38%}.empty{display:block;text-align:center;padding:32px 10px}.empty:before{display:none}}
+</style>
+</head>
+<body>
+<main class="shell">
+  <header class="top">
+    <div><div class="eyebrow">OPERATOR INTELLIGENCE // READ ONLY</div><h1>MINER ADMIN</h1><div class="sub">Accounts represented in the current RATUM payout window. This is account-level telemetry, not a guaranteed physical-device connection list.</div></div>
+    <div class="private">● PRIVATE // UMBREL AUTH REQUIRED</div>
+  </header>
+  <div class="toolbar">
+    <label class="sr" for="search">Filter miners</label><input id="search" type="search" placeholder="Filter by address or worker tag" autocomplete="off">
+    <button id="reveal" type="button">REVEAL ADDRESSES</button>
+    <button id="refresh" type="button">REFRESH NOW</button>
+    <a href="/">← DASHBOARD</a>
+  </div>
+  <section class="summary" aria-label="Miner summary">
+    <div class="metric"><div class="label">WINDOW ACCOUNTS</div><div class="value" id="accounts">—</div></div>
+    <div class="metric"><div class="label">ACTIVE</div><div class="value" id="active">—</div></div>
+    <div class="metric"><div class="label">IDLE</div><div class="value" id="idle">—</div></div>
+    <div class="metric"><div class="label">TOTAL HASHRATE</div><div class="value" id="hashrate">—</div></div>
+    <div class="metric"><div class="label">PROJECTED PAYOUT</div><div class="value" id="payout">—</div></div>
+  </section>
+  <section class="panel"><div class="tableWrap"><table><thead><tr><th>STATUS</th><th>PAYOUT IDENTITY</th><th>WORKER TAG</th><th>HASHRATE</th><th>WINDOW SHARE</th><th>BEST SHARE</th><th>WINDOW WORK</th><th>GATEWAY WORK</th><th>PROJECTED PAYOUT</th><th>PAYOUT STATUS</th></tr></thead><tbody id="rows"><tr><td colspan="10" class="empty">LOADING MINER TELEMETRY…</td></tr></tbody></table></div></section>
+  <div class="foot"><span id="freshness">Awaiting telemetry</span><span>Addresses are masked by default. No disconnect, ban, fee, payout, or configuration controls are available.</span></div>
+</main>
+<script>
+const $=id=>document.getElementById(id);let all=[],revealed=false;
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num=(v,d=2)=>Number(v||0).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});
+const compact=v=>{const n=Number(v||0);return Number.isFinite(n)?n.toLocaleString(undefined,{notation:"compact",maximumFractionDigits:2}):String(v||0)};
+function render(){const q=$("search").value.trim().toLowerCase();const rows=all.filter(m=>!q||m.identity.toLowerCase().includes(q)||m.tag.toLowerCase().includes(q));$("rows").innerHTML=rows.length?rows.map(m=>`<tr><td data-label="STATUS"><span class="status ${esc(m.status)}">${esc(m.status.toUpperCase())}</span></td><td data-label="PAYOUT IDENTITY" class="identity">${esc(m.identity)}</td><td data-label="WORKER TAG" class="tag">${esc(m.tag)}</td><td data-label="HASHRATE">${num(m.hashrateThs,3)} TH/s</td><td data-label="WINDOW SHARE">${num(m.sharePercent,2)}%</td><td data-label="BEST SHARE">${compact(m.bestShare)}</td><td data-label="WINDOW WORK">${compact(m.work)}</td><td data-label="GATEWAY WORK">${compact(m.ownGatewayWork)}</td><td data-label="PROJECTED PAYOUT">${num(m.projectedPayoutXbt,8)} XBT</td><td data-label="PAYOUT STATUS" class="payable">${m.payable?"PAYABLE":esc(m.unpayableReason||"LOCKED")}</td></tr>`).join(""):`<tr><td colspan="10" class="empty">NO MATCHING MINERS</td></tr>`}
+async function load(){try{const r=await fetch(`/api/admin/miners?reveal=${revealed?1:0}&ts=${Date.now()}`,{cache:"no-store",credentials:"same-origin"});if(!r.ok)throw new Error(`HTTP ${r.status}`);const d=await r.json();all=d.miners||[];const s=d.summary||{};$("accounts").textContent=s.accounts??0;$("active").textContent=s.active??0;$("idle").textContent=s.idle??0;$("hashrate").textContent=num(s.hashrateThs,3)+" TH/s";$("payout").textContent=num(s.projectedPayoutXbt,8)+" XBT";$("freshness").textContent="UPDATED "+new Date(d.generatedAt*1000).toLocaleString()+" // RATUM PAYOUT WINDOW";$("freshness").className="";render()}catch(e){$("rows").innerHTML=`<tr><td colspan="10" class="empty error">ADMIN TELEMETRY UNAVAILABLE // ${esc(e.message)}</td></tr>`;$("freshness").textContent="DATA ERROR";$("freshness").className="error"}}
+$("search").addEventListener("input",render);$("refresh").addEventListener("click",load);$("reveal").addEventListener("click",()=>{revealed=!revealed;$("reveal").textContent=revealed?"MASK ADDRESSES":"REVEAL ADDRESSES";load()});load();setInterval(()=>{if(!document.hidden)load()},15000);
+</script>
+</body>
+</html>"""
+
 class Handler(BaseHTTPRequestHandler):
 
     server_version = "TerminusDashboard"
@@ -3153,6 +3291,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def send_security_headers(self):
         self.send_header("X-Content-Type-Options","nosniff")
+        self.send_header("X-Frame-Options","DENY")
         self.send_header("Referrer-Policy","no-referrer")
         self.send_header(
             "Permissions-Policy",
@@ -3170,7 +3309,7 @@ class Handler(BaseHTTPRequestHandler):
             "max-age=31536000"
         )
 
-    def send_json(self,obj,status=200):
+    def send_json(self,obj,status=200,private=False):
         body=json.dumps(obj).encode()
 
         self.send_response(status)
@@ -3179,7 +3318,8 @@ class Handler(BaseHTTPRequestHandler):
             "application/json; charset=utf-8"
         )
         self.send_header("Cache-Control","no-store")
-        self.send_header("Access-Control-Allow-Origin","*")
+        if not private:
+            self.send_header("Access-Control-Allow-Origin","*")
         self.send_header("Content-Length",str(len(body)))
         self.send_security_headers()
         self.end_headers()
@@ -3189,15 +3329,26 @@ class Handler(BaseHTTPRequestHandler):
     def do_HEAD(self):
         parsed = urllib.parse.urlparse(self.path)
 
+        if parsed.path.startswith("/admin") and not ADMIN_ENABLED:
+            self.send_response(404)
+            self.send_security_headers()
+            self.end_headers()
+            return
+
         self.send_response(200)
 
-        if parsed.path in ("/api/stats", "/api/local-stats"):
+        if parsed.path in (
+            "/api/stats",
+            "/api/local-stats",
+            "/api/admin/miners"
+        ):
             self.send_header(
                 "Content-Type",
                 "application/json; charset=utf-8"
             )
             self.send_header("Cache-Control","no-store")
-            self.send_header("Access-Control-Allow-Origin","*")
+            if parsed.path != "/api/admin/miners":
+                self.send_header("Access-Control-Allow-Origin","*")
         else:
             self.send_header("Content-Type","text/html; charset=utf-8")
             self.send_header("Cache-Control","public, max-age=60")
@@ -3208,6 +3359,44 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
 
         parsed = urllib.parse.urlparse(self.path)
+
+        if parsed.path == "/api/admin/miners":
+            if not ADMIN_ENABLED:
+                self.send_json({"error":"not found"},404,private=True)
+                return
+
+            try:
+                query = urllib.parse.parse_qs(parsed.query)
+                reveal = query.get("reveal", ["0"])[0] == "1"
+                self.send_json(
+                    load_admin_snapshot(reveal=reveal),
+                    private=True
+                )
+            except Exception:
+                self.send_json(
+                    {"error":"admin telemetry unavailable"},
+                    502,
+                    private=True
+                )
+            return
+
+        if parsed.path == "/admin":
+            if not ADMIN_ENABLED:
+                self.send_response(404)
+                self.send_security_headers()
+                self.end_headers()
+                return
+
+            body = ADMIN_HTML.encode()
+            self.send_response(200)
+            self.send_header("Content-Type","text/html; charset=utf-8")
+            self.send_header("Cache-Control","no-store")
+            self.send_header("X-Robots-Tag","noindex, nofollow, noarchive")
+            self.send_header("Content-Length",str(len(body)))
+            self.send_security_headers()
+            self.end_headers()
+            self.wfile.write(body)
+            return
 
         if parsed.path in ("/api/stats", "/api/local-stats"):
 
@@ -3674,7 +3863,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.10"
+                                "Terminus-Umbrel-Client/0.2.11"
                         }
                     )
 
@@ -3703,7 +3892,24 @@ class Handler(BaseHTTPRequestHandler):
 
         else:
 
-            body=HTML.encode()
+            page = HTML
+            if ADMIN_ENABLED:
+                page = page.replace(
+                    "<!-- TERMINUS_ADMIN_LINK -->",
+                    '<a href="/admin">ADMIN</a>'
+                )
+                page = page.replace(
+                    "<!-- TERMINUS_ADMIN_MOBILE_LINK -->",
+                    '<a class="adminMobileLink" href="/admin">PRIVATE MINER ADMIN →</a>'
+                )
+            else:
+                page = page.replace("<!-- TERMINUS_ADMIN_LINK -->", "")
+                page = page.replace(
+                    "<!-- TERMINUS_ADMIN_MOBILE_LINK -->",
+                    ""
+                )
+
+            body=page.encode()
 
             self.send_response(200)
             self.send_header(
