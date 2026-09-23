@@ -438,7 +438,7 @@ h1{
 .card.small .value{font-size:18px}
 .card.tiny .value{font-size:13px;line-height:1.5}
 
-.twoCol{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.twoCol{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 
 .access{
   position:relative;
@@ -1695,7 +1695,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 }
 .quickConnectGrid{
     display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-template-columns:repeat(3,minmax(0,1fr));
     gap:12px;
 }
 .quickEndpoint{
@@ -1808,7 +1808,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // GATEWAY // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.9</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.10</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -1913,6 +1913,12 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <div class="quickValue">stratum.terminuspool.xyz:23341</div>
       <button type="button" class="copyBtn" aria-label="Copy SV1 rentals endpoint" data-copy="stratum.terminuspool.xyz:23341" onclick="copyField(this)">COPY SV1 / RENTALS ENDPOINT</button>
       <div class="quickNote">Standard miners and Mining Rig Rentals · Username: <strong>payout_address.worker</strong></div>
+    </div>
+    <div class="quickEndpoint legacy">
+      <div class="quickLabel">SV1 PIGGYBANK // 5% REDISTRIBUTION</div>
+      <div class="quickValue">stratum.terminuspool.xyz:23340</div>
+      <button type="button" class="copyBtn" aria-label="Copy SV1 Piggybank endpoint" data-copy="stratum.terminuspool.xyz:23340" onclick="copyField(this)">COPY SV1 PIGGYBANK ENDPOINT</button>
+      <div class="quickNote">Piggybank redistribution lane · Username: <strong>payout_address.worker</strong> · Password: <strong>x</strong></div>
     </div>
   </div>
 </section>
@@ -2025,6 +2031,30 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       Username: <strong>payout_address.worker</strong><br>
       Grand Opening DATUM fee: <strong>0%</strong><br>
       Standard DATUM operational fee after promo: <strong>1%</strong>.
+    </div>
+  </div>
+
+  <div class="access legacy">
+    <h3>SV1 PIGGYBANK</h3>
+    <div class="mode">PUBLIC SV1 // 5% REDISTRIBUTION LANE</div>
+
+    <div class="accessLabel">PUBLIC SV1 PIGGYBANK ENDPOINT</div>
+    <div class="copyRow">
+      <div class="copyText">stratum.terminuspool.xyz:23340</div>
+      <button
+        type="button"
+        class="copyBtn"
+        aria-label="Copy SV1 Piggybank endpoint"
+        data-copy="stratum.terminuspool.xyz:23340"
+        onclick="copyField(this)"
+      >COPY</button>
+    </div>
+
+    <div class="note">
+      Connect using ordinary <strong>Stratum V1</strong>.<br>
+      Username: <strong>payout_address.worker</strong><br>
+      Password: <strong>x</strong><br>
+      SV1 Piggybank redistribution: <strong>5%</strong>.
     </div>
   </div>
 
@@ -3644,7 +3674,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.9"
+                                "Terminus-Umbrel-Client/0.2.10"
                         }
                     )
 
