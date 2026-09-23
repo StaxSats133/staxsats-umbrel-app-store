@@ -4,7 +4,7 @@ name: Terminus Pool
 tagline: The last word in mining
 icon: https://raw.githubusercontent.com/StaxSats133/staxsats-umbrel-app-store/main/staxsats-xbt-pool/icon.svg
 category: bitcoin
-version: "0.2.9"
+version: "0.2.10"
 port: 8081
 description: >-
   Terminus Pool is an XBT BLAKE2b mining pool dashboard for RATUM Prime and Gateway.
@@ -19,9 +19,9 @@ repo: https://github.com/StaxSats133/staxsats-umbrel-app-store
 support: https://github.com/StaxSats133/staxsats-umbrel-app-store/issues
 gallery: []
 releaseNotes: >-
-  Terminus Pool v0.2.9 replaces miner-facing raw IP addresses with the clean DATUM and
-  SV1/rentals hostnames, while preserving backend relay settings, persistent 24-hour
-  history, and the read-only operator health matrix.
+  Terminus Pool v0.2.10 restores the public SV1 Piggybank 5% redistribution lane on
+  stratum.terminuspool.xyz:23340 alongside DATUM and SV1/rentals, while preserving
+  backend relay settings, persistent 24-hour history, and operator health monitoring.
 dependencies: []
 path: ""
 defaultUsername: ""
