@@ -7,7 +7,6 @@ import time
 import urllib.request
 import urllib.parse
 
-GATEWAY = "http://host.docker.internal:7153/stats.json"
 PRIME = "http://172.17.0.1:28916/stats.json"
 PUBLIC_STATS = os.environ.get(
     "TERMINUS_PUBLIC_STATS",
@@ -254,9 +253,6 @@ def load_admin_snapshot(reveal=False):
                 target_work,
                 is_leader=(miner_work == max_work and max_work > 0)
             ),
-            "ownGatewayWork": str(
-                raw.get("own_gateway_work", "0") or "0"
-            ),
             "bestShare": _number(raw.get("best_share", 0)),
             "projectedPayoutSats": payout_sats,
             "projectedPayoutXbt": payout_sats / 100_000_000,
@@ -306,7 +302,7 @@ HTML = r"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TERMINUS POOL // XBT</title>
-<meta name="description" content="Terminus Pool is a non-custodial, DATUM-first XBT BLAKE2b mining pool with live telemetry and public DATUM and SV1 access.">
+<meta name="description" content="Terminus Pool is a non-custodial, DATUM-native XBT BLAKE2b mining pool with live telemetry and public DATUM access.">
 <meta name="theme-color" content="#050912">
 <link rel="canonical" href="https://terminuspool.xyz/">
 <meta property="og:type" content="website">
@@ -625,7 +621,7 @@ h1{
 .card.small .value{font-size:18px}
 .card.tiny .value{font-size:13px;line-height:1.5}
 
-.twoCol{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.twoCol{display:grid;grid-template-columns:1fr;gap:14px}
 
 .access{
   position:relative;
@@ -736,7 +732,6 @@ h1{
 .access{
   border:1px solid #164653;background:#07121a;padding:20px;min-height:175px
 }
-.access.gateway{box-shadow:inset 3px 0 var(--cyan)}
 .access.primary{box-shadow:inset 3px 0 var(--green)}
 .access.legacy{box-shadow:inset 3px 0 var(--pink)}
 .access h3{margin:0 0 7px;font-size:17px}
@@ -776,7 +771,7 @@ h1{
 }
 .healthMatrix{
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-columns:repeat(3,minmax(0,1fr));
   gap:12px
 }
 .healthItem{
@@ -1112,7 +1107,6 @@ svg{
 #miner,
 #network,
 #window,
-#sv1,
 #access{
     min-width:0;
 }
@@ -1121,7 +1115,6 @@ svg{
 #miner > *,
 #network > *,
 #window > *,
-#sv1 > *,
 #access > *{
     min-width:0;
 }
@@ -1202,7 +1195,6 @@ svg{
     #miner,
     #network,
     #window,
-    #sv1,
     #access{
         display:grid !important;
         grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
@@ -1278,7 +1270,6 @@ svg{
     #telemetry,
     #network,
     #window,
-    #sv1,
     #access{
         grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
     }
@@ -1317,7 +1308,6 @@ svg{
     #miner,
     #network,
     #window,
-    #sv1,
     #access{
         grid-template-columns:1fr !important;
     }
@@ -1883,7 +1873,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 }
 .quickConnectGrid{
     display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-template-columns:1fr;
     gap:12px;
 }
 .quickEndpoint{
@@ -1893,7 +1883,6 @@ a:focus-visible,button:focus-visible,input:focus-visible{
     background:#050d14;
 }
 .quickEndpoint.recommended{border-left:4px solid var(--green)}
-.quickEndpoint.gateway{border-left:4px solid var(--cyan)}
 .quickEndpoint.legacy{border-left:4px solid var(--pink)}
 .quickLabel{
     color:#7a9ba5;
@@ -2008,12 +1997,12 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 
 <header>
   <div class="brand">
-    <div class="badge piggyBrand" title="Terminus Pool // XBT" aria-label="Terminus Pool XBT Piggybank">XBT</div>
+    <div class="badge piggyBrand" title="Terminus Pool // XBT" aria-label="Terminus Pool XBT">XBT</div>
     <div class="brandText">
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
-      <div class="stackline">RATUM PRIME // GATEWAY // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.13</div>
+      <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.14</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -2115,18 +2104,6 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <button type="button" class="copyBtn" aria-label="Copy DATUM endpoint" data-copy="datum.terminuspool.xyz:28915" onclick="copyField(this)">COPY DATUM ENDPOINT</button>
       <div class="quickNote">For DATUM-compatible clients · Username: <strong>payout_address.worker</strong></div>
     </div>
-    <div class="quickEndpoint gateway">
-      <div class="quickLabel">SV1 / RENTALS // STANDARD MINERS</div>
-      <div class="quickValue">stratum.terminuspool.xyz:23341</div>
-      <button type="button" class="copyBtn" aria-label="Copy SV1 rentals endpoint" data-copy="stratum.terminuspool.xyz:23341" onclick="copyField(this)">COPY SV1 / RENTALS ENDPOINT</button>
-      <div class="quickNote">Standard miners and Mining Rig Rentals · Username: <strong>payout_address.worker</strong></div>
-    </div>
-    <div class="quickEndpoint legacy">
-      <div class="quickLabel">SV1 PIGGYBANK // 5% REDISTRIBUTION</div>
-      <div class="quickValue">stratum.terminuspool.xyz:23340</div>
-      <button type="button" class="copyBtn" aria-label="Copy SV1 Piggybank endpoint" data-copy="stratum.terminuspool.xyz:23340" onclick="copyField(this)">COPY SV1 PIGGYBANK ENDPOINT</button>
-      <div class="quickNote">Piggybank redistribution lane · Username: <strong>payout_address.worker</strong> · Password: <strong>x</strong></div>
-    </div>
   </div>
 </section>
 
@@ -2202,9 +2179,6 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 <div class="sectionTitle">NETWORK-UPLINK</div>
 <div id="network" class="grid grid4"></div>
 
-<div class="sectionTitle">SV1-PIGGY-BANK // REDISTRIBUTION</div>
-<div id="window" class="grid grid5"></div>
-
 <div class="sectionTitle" id="connectionDetails">PUBLIC-ACCESS</div>
 
 <div class="twoCol">
@@ -2231,56 +2205,6 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       Grand Opening DATUM fee: <strong>0%</strong><br>
       Promo through <strong>November 5, 2026</strong><br>
       Standard DATUM operational fee after promo: <strong>1%</strong>.
-    </div>
-  </div>
-
-  <div class="access gateway">
-    <h3>SV1 / RENTALS</h3>
-    <div class="mode">STANDARD MINERS // MINING RIG RENTALS</div>
-
-    <div class="accessLabel">PUBLIC SV1 / RENTALS ENDPOINT</div>
-    <div class="copyRow">
-      <div class="copyText">stratum.terminuspool.xyz:23341</div>
-      <button
-        type="button"
-        class="copyBtn"
-        aria-label="Copy SV1 rentals endpoint"
-        data-copy="stratum.terminuspool.xyz:23341"
-        onclick="copyField(this)"
-      >COPY</button>
-    </div>
-
-    <div class="note">
-      Connect using ordinary <strong>Stratum V1</strong>.<br>
-      The gateway translates SV1 traffic into <strong>DATUM</strong> upstream.<br>
-      Ideal for standard miners and <strong>Mining Rig Rentals</strong>.<br>
-      Username: <strong>payout_address.worker</strong><br>
-      Grand Opening DATUM fee: <strong>0%</strong><br>
-      Standard DATUM operational fee after promo: <strong>1%</strong>.
-    </div>
-  </div>
-
-  <div class="access legacy">
-    <h3>SV1 PIGGYBANK</h3>
-    <div class="mode">PUBLIC SV1 // 5% REDISTRIBUTION LANE</div>
-
-    <div class="accessLabel">PUBLIC SV1 PIGGYBANK ENDPOINT</div>
-    <div class="copyRow">
-      <div class="copyText">stratum.terminuspool.xyz:23340</div>
-      <button
-        type="button"
-        class="copyBtn"
-        aria-label="Copy SV1 Piggybank endpoint"
-        data-copy="stratum.terminuspool.xyz:23340"
-        onclick="copyField(this)"
-      >COPY</button>
-    </div>
-
-    <div class="note">
-      Connect using ordinary <strong>Stratum V1</strong>.<br>
-      Username: <strong>payout_address.worker</strong><br>
-      Password: <strong>x</strong><br>
-      SV1 Piggybank redistribution: <strong>5%</strong>.
     </div>
   </div>
 
@@ -3230,21 +3154,10 @@ async function refresh(){
         card("MINER TAG",minerTagMarkup(d.minerTag,d.workReward),"cyan")+
         card("PRIME HASHRATE",num(d.primeHashrate,3)+" TH/s","cyan")+
         card("WINDOW WORK",compact(d.minerWork||0))+
-        card("GATEWAY WORK",compact(d.ownGatewayWork||0))+
 
         card(
             "BEST SHARE",
             bestShareFmt(d.bestShare)
-        )+
-
-        card(
-            '<span class="piggyLabel"><span class="piggyIcon"></span>SV1 PIGGYBANK SHARE</span>',
-            num(d.sv1PiggySharePercent,2)+"%"
-        )+
-
-        card(
-            '<span class="piggyLabel"><span class="piggyIcon"></span>SV1 PIGGYBANK REWARD</span>',
-            num(d.sv1PiggyRewardXbt,8)+" XBT"
         )+
 
         card("WINDOW OWNERSHIP",num(d.sharePercent,2)+"%","purple")+
@@ -3267,39 +3180,6 @@ async function refresh(){
       card("NETWORK DIFFICULTY",(Number(d.difficulty||0)/1e9).toFixed(2)+"G","small")+
       card("COINBASE VALUE",num(d.blockValue,8)+" XBT","gold")+
       card("NETWORK HASHRATE",num(d.networkTh,2)+" TH/s","small");
-
-    const redistributionPct=
-      Number(d.sv1SubsidyBps||0)/100;
-
-    $("window").innerHTML=
-      card(
-        "PUBLIC SV1 WORK",
-        compact(d.sv1PublicWork||0),
-        "cyan"
-      )+
-      card(
-        "SV1 REDISTRIBUTION RATE",
-        num(Number(d.sv1FeeBps||0)/100,2)+"%",
-        "purple"
-      )+
-      card(
-            '<span class="piggyLabel"><span class="piggyIcon"></span>PIGGY BANK</span>',
-        
-        num(Number(d.sv1FeeSats||0)/100000000,8)+" XBT",
-        "gold"
-      )+
-      card(
-        "REASSIGNED WORK",
-        compact(d.sv1ReassignedWork||0),
-        "cyan"
-      )+
-      card(
-        "REDISTRIBUTION STATUS",
-        redistributionPct>=100
-          ? "100% REASSIGNED"
-          : num(redistributionPct,2)+"% REASSIGNED",
-        redistributionPct>=100 ? "ok":"purple"
-      );
 
     $("graphNow").textContent=num(d.hashrate,3)+" TH/s";
     $("graphMiners").textContent=
@@ -3427,7 +3307,7 @@ ADMIN_HTML = r"""<!doctype html>
     <div class="metric"><div class="label">TOTAL HASHRATE</div><div class="value" id="hashrate">—</div></div>
     <div class="metric"><div class="label">PROJECTED PAYOUT</div><div class="value" id="payout">—</div></div>
   </section>
-  <section class="panel"><div class="tableWrap"><table><thead><tr><th>STATUS</th><th>PAYOUT IDENTITY</th><th>WORKER TAG</th><th>HASHRATE</th><th>WINDOW SHARE</th><th>BEST SHARE</th><th>WINDOW WORK</th><th>GATEWAY WORK</th><th>PROJECTED PAYOUT</th><th>PAYOUT STATUS</th></tr></thead><tbody id="rows"><tr><td colspan="10" class="empty">LOADING MINER TELEMETRY…</td></tr></tbody></table></div></section>
+  <section class="panel"><div class="tableWrap"><table><thead><tr><th>STATUS</th><th>PAYOUT IDENTITY</th><th>WORKER TAG</th><th>HASHRATE</th><th>WINDOW SHARE</th><th>BEST SHARE</th><th>WINDOW WORK</th><th>PROJECTED PAYOUT</th><th>PAYOUT STATUS</th></tr></thead><tbody id="rows"><tr><td colspan="9" class="empty">LOADING MINER TELEMETRY…</td></tr></tbody></table></div></section>
   <div class="foot"><span id="freshness">Awaiting telemetry</span><span>Addresses are masked by default. No disconnect, ban, fee, payout, or configuration controls are available.</span></div>
 </main>
 <script>
@@ -3437,8 +3317,8 @@ const num=(v,d=2)=>Number(v||0).toLocaleString(undefined,{minimumFractionDigits:
 const compact=v=>{const n=Number(v||0);return Number.isFinite(n)?n.toLocaleString(undefined,{notation:"compact",maximumFractionDigits:2}):String(v||0)};
 function rewardBadges(reward){if(!reward)return"";const items=[];if(reward.cosmic)items.push({...reward.cosmic,special:false});for(const item of(reward.specials||[]))items.push({...item,special:true});return items.length?`<span class="tagRewards" aria-label="Work rewards">${items.map(item=>`<span class="tagReward${item.special?" special":""}" role="img" title="${esc(item.label)}" aria-label="${esc(item.label)}">${esc(item.emoji)}</span>`).join("")}</span>`:""}
 function rewardLegend(scale){const tiers=(scale&&scale.tiers)||[];const cosmic=tiers.map(t=>`<span class="legendTier" title="${esc(t.label)}">${esc(t.emoji)} ${num(t.thresholdPercent,2)}%</span>`).join("");return `<strong>WORK REWARDS</strong>${cosmic}<span class="legendTier">💎 ${num(scale?.diamondThresholdPercent,0)}%</span><span class="legendTier">👑 #1</span>`}
-function render(){const q=$("search").value.trim().toLowerCase();const rows=all.filter(m=>!q||m.identity.toLowerCase().includes(q)||m.tag.toLowerCase().includes(q));$("rows").innerHTML=rows.length?rows.map(m=>`<tr><td data-label="STATUS"><span class="status ${esc(m.status)}">${esc(m.status.toUpperCase())}</span></td><td data-label="PAYOUT IDENTITY" class="identity">${esc(m.identity)}</td><td data-label="WORKER TAG" class="tag">${esc(m.tag)}${rewardBadges(m.reward)}</td><td data-label="HASHRATE">${num(m.hashrateThs,3)} TH/s</td><td data-label="WINDOW SHARE">${num(m.sharePercent,2)}%</td><td data-label="BEST SHARE">${compact(m.bestShare)}</td><td data-label="WINDOW WORK">${compact(m.work)}</td><td data-label="GATEWAY WORK">${compact(m.ownGatewayWork)}</td><td data-label="PROJECTED PAYOUT">${num(m.projectedPayoutXbt,8)} XBT</td><td data-label="PAYOUT STATUS" class="payable">${m.payable?"PAYABLE":esc(m.unpayableReason||"LOCKED")}</td></tr>`).join(""):`<tr><td colspan="10" class="empty">NO MATCHING MINERS</td></tr>`}
-async function load(){try{const r=await fetch(`/api/admin/miners?reveal=${revealed?1:0}&ts=${Date.now()}`,{cache:"no-store",credentials:"same-origin"});if(!r.ok)throw new Error(`HTTP ${r.status}`);const d=await r.json();all=d.miners||[];const s=d.summary||{};$("rewardLegend").innerHTML=rewardLegend(d.rewardScale||{});$("accounts").textContent=s.accounts??0;$("active").textContent=s.active??0;$("idle").textContent=s.idle??0;$("hashrate").textContent=num(s.hashrateThs,3)+" TH/s";$("payout").textContent=num(s.projectedPayoutXbt,8)+" XBT";$("freshness").textContent="UPDATED "+new Date(d.generatedAt*1000).toLocaleString()+" // RATUM PAYOUT WINDOW";$("freshness").className="";render()}catch(e){$("rows").innerHTML=`<tr><td colspan="10" class="empty error">ADMIN TELEMETRY UNAVAILABLE // ${esc(e.message)}</td></tr>`;$("freshness").textContent="DATA ERROR";$("freshness").className="error"}}
+function render(){const q=$("search").value.trim().toLowerCase();const rows=all.filter(m=>!q||m.identity.toLowerCase().includes(q)||m.tag.toLowerCase().includes(q));$("rows").innerHTML=rows.length?rows.map(m=>`<tr><td data-label="STATUS"><span class="status ${esc(m.status)}">${esc(m.status.toUpperCase())}</span></td><td data-label="PAYOUT IDENTITY" class="identity">${esc(m.identity)}</td><td data-label="WORKER TAG" class="tag">${esc(m.tag)}${rewardBadges(m.reward)}</td><td data-label="HASHRATE">${num(m.hashrateThs,3)} TH/s</td><td data-label="WINDOW SHARE">${num(m.sharePercent,2)}%</td><td data-label="BEST SHARE">${compact(m.bestShare)}</td><td data-label="WINDOW WORK">${compact(m.work)}</td><td data-label="PROJECTED PAYOUT">${num(m.projectedPayoutXbt,8)} XBT</td><td data-label="PAYOUT STATUS" class="payable">${m.payable?"PAYABLE":esc(m.unpayableReason||"LOCKED")}</td></tr>`).join(""):`<tr><td colspan="9" class="empty">NO MATCHING MINERS</td></tr>`}
+async function load(){try{const r=await fetch(`/api/admin/miners?reveal=${revealed?1:0}&ts=${Date.now()}`,{cache:"no-store",credentials:"same-origin"});if(!r.ok)throw new Error(`HTTP ${r.status}`);const d=await r.json();all=d.miners||[];const s=d.summary||{};$("rewardLegend").innerHTML=rewardLegend(d.rewardScale||{});$("accounts").textContent=s.accounts??0;$("active").textContent=s.active??0;$("idle").textContent=s.idle??0;$("hashrate").textContent=num(s.hashrateThs,3)+" TH/s";$("payout").textContent=num(s.projectedPayoutXbt,8)+" XBT";$("freshness").textContent="UPDATED "+new Date(d.generatedAt*1000).toLocaleString()+" // RATUM PAYOUT WINDOW";$("freshness").className="";render()}catch(e){$("rows").innerHTML=`<tr><td colspan="9" class="empty error">ADMIN TELEMETRY UNAVAILABLE // ${esc(e.message)}</td></tr>`;$("freshness").textContent="DATA ERROR";$("freshness").className="error"}}
 $("search").addEventListener("input",render);$("refresh").addEventListener("click",load);$("reveal").addEventListener("click",()=>{revealed=!revealed;$("reveal").textContent=revealed?"MASK ADDRESSES":"REVEAL ADDRESSES";load()});load();setInterval(()=>{if(!document.hidden)load()},15000);
 </script>
 </body>
@@ -3581,13 +3461,6 @@ class Handler(BaseHTTPRequestHandler):
                         normalized_account.split(".",1)[0]
                     )
 
-                gateway=json.load(
-                    urllib.request.urlopen(
-                        GATEWAY,
-                        timeout=1.25
-                    )
-                )
-
                 prime=json.load(
                     urllib.request.urlopen(
                         PRIME,
@@ -3595,19 +3468,12 @@ class Handler(BaseHTTPRequestHandler):
                     )
                 )
 
-                s=gateway.get("stratum",{})
-                accepted=gateway.get("shares_accepted",{})
-                rejected=gateway.get("shares_rejected",{})
-                job=gateway.get("job",{})
-
                 pool=prime.get("pool",{})
                 window=prime.get("window",{})
                 network=prime.get("network",{})
                 blocks=prime.get("blocks",{})
-
-                public_gateway_fee=prime.get(
-                    "public_gateway_fee",{}
-                )
+                prime_connections=prime.get("connections",{})
+                prime_hashrate=prime.get("hashrate",{})
 
                 miners=window.get("miners",[])
 
@@ -3623,9 +3489,10 @@ class Handler(BaseHTTPRequestHandler):
                     except:
                         pass
 
-                pool_hash_th=(
-                    pool_hash_hs/1_000_000_000_000
+                pool_hash_hs=float(
+                    prime_hashrate.get("pool_hs",pool_hash_hs) or 0
                 )
+                pool_hash_th=pool_hash_hs/1_000_000_000_000
 
                 pool_miner_count=len(miners)
                 target_window_work=int(
@@ -3663,22 +3530,18 @@ class Handler(BaseHTTPRequestHandler):
                     miner={}
                     account_found=False
 
-                gateway_hash=float(
-                    s.get("hashrate_ths",0) or 0
-                )
-
                 prime_hash_hs=float(
                     miner.get("hashrate_hs",0) or 0
                 )
 
                 prime_hash_th=prime_hash_hs/1_000_000_000_000
 
-                # Dashboard headline/chart represents the
-                # complete Prime pool, not legacy SV1 Gateway.
+                # Dashboard headline/chart represents the complete
+                # native DATUM pool reported by RATUM Prime.
                 display_hash = pool_hash_th
 
                 network_hashps=float(
-                    s.get("network_hashps",0) or 0
+                    prime_hashrate.get("network_hs",0) or 0
                 )
 
                 payout_sats=int(
@@ -3713,59 +3576,15 @@ class Handler(BaseHTTPRequestHandler):
                     "coinbaseTag":
                         pool.get("coinbase_tag",""),
 
-                    "sv1Tag":
-                        public_gateway_fee.get(
-                            "public_gateway_tag",""
-                        ),
-
-                    "sv1FeeBps":
-                        public_gateway_fee.get(
-                            "fee_bps",0
-                        ),
-
-                    "sv1SubsidyBps":
-                        public_gateway_fee.get(
-                            "subsidy_bps",0
-                        ),
-
-                    "sv1PublicWork":
-                        public_gateway_fee.get(
-                            "public_gateway_work","0"
-                        ),
-
-                    "sv1FeeWork":
-                        public_gateway_fee.get(
-                            "fee_work","0"
-                        ),
-
-                    "sv1FeeSats":
-                        public_gateway_fee.get(
-                            "fee_sats",0
-                        ),
-
-                    "sv1ReassignedWork":
-                        public_gateway_fee.get(
-                            "reassigned_work","0"
-                        ),
-
-                    "sv1ReassignedSats":
-                        public_gateway_fee.get(
-                            "reassigned_sats",0
-                        ),
-
-                    "sv1OwnGatewayWork":
-                        public_gateway_fee.get(
-                            "own_gateway_work","0"
-                        ),
-
                     "status":
-                        gateway.get("status","Unknown"),
-
-                    "uptime":
-                        gateway.get("uptime","N/A"),
+                        (
+                            "Connected and Ready"
+                            if int(network.get("tip_height",0) or 0) > 0
+                            else "Prime Degraded"
+                        ),
 
                     "connections":
-                        s.get("connections",0),
+                        prime_connections.get("open",0),
 
                     "hashrate":
                         display_hash,
@@ -3776,41 +3595,19 @@ class Handler(BaseHTTPRequestHandler):
                     "primeHashrate":
                         prime_hash_th,
 
-                    "accepted":
-                        accepted.get("count",0),
-
-                    "rejected":
-                        rejected.get("count",0),
-
                     "shareDifficulty":
-                        (
-                            accepted.get("diff",0)
-                            or prime.get("pool",{}).get(
-                                "min_difficulty",0
-                            )
-                        ),
+                        pool.get("min_difficulty",0),
 
                     "height":
-                        job.get(
-                            "height",
-                            network.get("tip_height",0)
-                        ),
+                        network.get("tip_height",0),
 
                     "difficulty":
-                        job.get(
-                            "difficulty",
-                            network.get("difficulty",0)
-                        ),
+                        network.get("difficulty",0),
 
                     "blockValue":
-                        job.get(
-                            "value_btc",
-                            (
-                                network.get(
-                                    "coinbase_value",0
-                                ) or 0
-                            )/100000000
-                        ),
+                        (
+                            network.get("coinbase_value",0) or 0
+                        )/100000000,
 
                     "networkTh":
                         network_hashps/1_000_000_000_000,
@@ -3833,95 +3630,12 @@ class Handler(BaseHTTPRequestHandler):
                     "workTarget":
                         str(target_window_work),
 
-                    "ownGatewayWork":
-                        miner.get("own_gateway_work","0"),
-
                     "bestShare":
                         float(
                             miner.get(
                                 "best_share",0
                             ) or 0
                         ),
-
-                    "sv1PiggySharePercent":
-                        (
-                            int(
-                                miner.get(
-                                    "own_gateway_work",0
-                                ) or 0
-                            )
-                            /
-                            int(
-                                public_gateway_fee.get(
-                                    "own_gateway_work",0
-                                ) or 0
-                            )
-                            * 100.0
-                        )
-                        if int(
-                            public_gateway_fee.get(
-                                "own_gateway_work",0
-                            ) or 0
-                        ) > 0
-                        else 0.0,
-
-                    "sv1PiggyRewardSats":
-                        round(
-                            int(
-                                public_gateway_fee.get(
-                                    "reassigned_sats",0
-                                ) or 0
-                            )
-                            *
-                            int(
-                                miner.get(
-                                    "own_gateway_work",0
-                                ) or 0
-                            )
-                            /
-                            int(
-                                public_gateway_fee.get(
-                                    "own_gateway_work",0
-                                ) or 0
-                            )
-                        )
-                        if int(
-                            public_gateway_fee.get(
-                                "own_gateway_work",0
-                            ) or 0
-                        ) > 0
-                        else 0,
-
-                    "sv1PiggyRewardXbt":
-                        (
-                            round(
-                                int(
-                                    public_gateway_fee.get(
-                                        "reassigned_sats",0
-                                    ) or 0
-                                )
-                                *
-                                int(
-                                    miner.get(
-                                        "own_gateway_work",0
-                                    ) or 0
-                                )
-                                /
-                                int(
-                                    public_gateway_fee.get(
-                                        "own_gateway_work",0
-                                    ) or 0
-                                )
-                            )
-                            / 100000000
-                        )
-                        if int(
-                            public_gateway_fee.get(
-                                "own_gateway_work",0
-                            ) or 0
-                        ) > 0
-                        else 0.0,
-
 
                     "unpayableReason":
                         miner.get("unpayable_reason"),
@@ -3958,9 +3672,9 @@ class Handler(BaseHTTPRequestHandler):
                         "ts": int(time.time()),
                         "hashrate": display_hash,
                         "miners": pool_miner_count,
-                        "connections": s.get("connections",0),
-                        "accepted": accepted.get("count",0),
-                        "rejected": rejected.get("count",0),
+                        "connections": prime_connections.get("open",0),
+                        "accepted": 0,
+                        "rejected": 0,
                         "height": data.get("height",0),
                     }]
                     history_summary = {
@@ -3970,9 +3684,6 @@ class Handler(BaseHTTPRequestHandler):
                         "lowHashrate": display_hash,
                     }
 
-                gateway_ready = "ready" in str(
-                    gateway.get("status", "")
-                ).lower()
                 chain_height = int(data.get("height",0) or 0)
 
                 data["history24h"] = history_points
@@ -3989,17 +3700,6 @@ class Handler(BaseHTTPRequestHandler):
                         "detail": (
                             str(pool_miner_count) +
                             " miners represented in payout window"
-                        ),
-                    },
-                    {
-                        "name": "SV1 GATEWAY",
-                        "status": (
-                            "healthy" if gateway_ready else "degraded"
-                        ),
-                        "detail": (
-                            str(s.get("connections",0)) +
-                            " active connections // " +
-                            str(gateway.get("status","Unknown"))
                         ),
                     },
                     {
@@ -4042,7 +3742,7 @@ class Handler(BaseHTTPRequestHandler):
                     return
 
                 # Public-client mode: on a normal Umbrel install there
-                # is no local RATUM Prime/Gateway. Fall back to the
+                # is no local RATUM Prime. Fall back to the
                 # public Terminus relay while preserving account lookup.
                 try:
                     public_url = PUBLIC_STATS
@@ -4054,7 +3754,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.13"
+                                "Terminus-Umbrel-Client/0.2.14"
                         }
                     )
 
