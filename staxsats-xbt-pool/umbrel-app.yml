@@ -23,7 +23,9 @@ releaseNotes: >-
   observed hashing during the rolling last 24 hours. Rankings use 24-hour average
   hashrate, payout addresses are replaced by opaque aliases, and buffered live/recent/
   seen states prevent display flicker. Worker tags now use durable 24-hour consensus
-  with hysteresis, fixing upstream tag changes in admin and miner lookup views.
+  with hysteresis, fixing upstream tag changes in admin and miner lookup views. Live
+  Work-in-Window cosmic rewards now appear beside leaderboard tags, with the reward
+  legend directly below the leaderboard.
 dependencies: []
 path: ""
 defaultUsername: ""
