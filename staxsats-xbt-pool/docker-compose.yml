@@ -5,7 +5,7 @@ services:
     environment:
       APP_HOST: staxsats-xbt-pool-dashboard
       APP_PORT: 8080
-      PROXY_AUTH_WHITELIST: "/api/stats,/api/local-stats,/api/leaderboard"
+      PROXY_AUTH_WHITELIST: "/api/stats,/api/local-stats"
       JWT_SECRET: ${JWT_SECRET}
     networks:
       - umbrel_main_network
