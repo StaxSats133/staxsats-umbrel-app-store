@@ -91,10 +91,21 @@ def _history_connection():
             hashrate_hs REAL NOT NULL,
             work REAL NOT NULL,
             best_share REAL NOT NULL,
+            target_work REAL NOT NULL DEFAULT 0,
             PRIMARY KEY (minute, identity_hash)
         )
         """
     )
+    activity_columns = {
+        row[1] for row in connection.execute(
+            "PRAGMA table_info(miner_activity)"
+        ).fetchall()
+    }
+    if "target_work" not in activity_columns:
+        connection.execute(
+            "ALTER TABLE miner_activity "
+            "ADD COLUMN target_work REAL NOT NULL DEFAULT 0"
+        )
     connection.execute(
         """
         CREATE INDEX IF NOT EXISTS miner_activity_identity_minute
@@ -244,7 +255,7 @@ def _clean_worker_tag(value):
     return tag or "UNTAGGED"
 
 
-def record_miner_activity(raw_miners):
+def record_miner_activity(raw_miners, target_work=0):
     """Record privacy-safe activity and dampen upstream tag flapping."""
     minute = int(time.time()) // 60 * 60
     cutoff = minute - MINER_ACTIVITY_RETENTION_SECONDS
@@ -262,13 +273,14 @@ def record_miner_activity(raw_miners):
                     """
                     INSERT INTO miner_activity (
                         minute, identity_hash, worker_tag,
-                        hashrate_hs, work, best_share
-                    ) VALUES (?, ?, ?, ?, ?, ?)
+                        hashrate_hs, work, best_share, target_work
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(minute, identity_hash) DO UPDATE SET
                         worker_tag=excluded.worker_tag,
                         hashrate_hs=excluded.hashrate_hs,
                         work=excluded.work,
-                        best_share=excluded.best_share
+                        best_share=excluded.best_share,
+                        target_work=excluded.target_work
                     """,
                     (
                         minute,
@@ -277,6 +289,7 @@ def record_miner_activity(raw_miners):
                         max(0.0, _number(raw.get("hashrate_hs", 0))),
                         max(0.0, _number(raw.get("work", 0))),
                         max(0.0, _number(raw.get("best_share", 0))),
+                        max(0.0, _number(target_work, 0)),
                     )
                 )
 
@@ -390,7 +403,24 @@ def load_public_leaderboard(limit=100):
                     MAX(activity.hashrate_hs),
                     SUM(CASE WHEN activity.hashrate_hs > 0 THEN 1 ELSE 0 END),
                     MAX(CASE WHEN activity.hashrate_hs > 0 THEN activity.minute END),
-                    MAX(activity.best_share)
+                    MAX(activity.best_share),
+                    (
+                        SELECT latest.work
+                        FROM miner_activity AS latest
+                        WHERE latest.identity_hash = activity.identity_hash
+                          AND latest.minute >= ?
+                        ORDER BY latest.minute DESC
+                        LIMIT 1
+                    ),
+                    (
+                        SELECT latest.target_work
+                        FROM miner_activity AS latest
+                        WHERE latest.identity_hash = activity.identity_hash
+                          AND latest.minute >= ?
+                        ORDER BY latest.minute DESC
+                        LIMIT 1
+                    ),
+                    MAX(activity.minute)
                 FROM miner_activity AS activity
                 LEFT JOIN miner_profile AS profile
                   ON profile.identity_hash = activity.identity_hash
@@ -402,12 +432,15 @@ def load_public_leaderboard(limit=100):
                          MAX(activity.hashrate_hs) DESC
                 LIMIT ?
                 """,
-                (cutoff, int(limit))
+                (cutoff, cutoff, cutoff, int(limit))
             ).fetchall()
 
     miners = []
     for rank, row in enumerate(rows, 1):
-        identity_hash, tag, total_hs, peak_hs, active_minutes, last_active, best = row
+        (
+            identity_hash, tag, total_hs, peak_hs, active_minutes,
+            last_active, best, latest_work, latest_target, last_observed
+        ) = row
         inactive_for = max(0, now - int(last_active))
         if inactive_for <= LEADERBOARD_LIVE_GRACE_SECONDS:
             status = "live"
@@ -428,7 +461,36 @@ def load_public_leaderboard(limit=100):
             "activeMinutes": int(active_minutes or 0),
             "lastActiveAt": int(last_active),
             "bestShare": _number(best),
+            "latestWork": max(0, int(_number(latest_work, 0))),
+            "latestTargetWork": max(0, int(_number(latest_target, 0))),
+            "lastObservedAt": int(last_observed),
         })
+
+    current_cutoff = now - 180
+    current_max_work = max(
+        (
+            miner["latestWork"] for miner in miners
+            if miner["lastObservedAt"] >= current_cutoff
+        ),
+        default=0
+    )
+    for miner in miners:
+        is_current = miner["lastObservedAt"] >= current_cutoff
+        latest_work = miner.pop("latestWork")
+        latest_target = miner.pop("latestTargetWork")
+        miner["reward"] = work_reward(
+            latest_work,
+            latest_target,
+            is_leader=(
+                is_current and current_max_work > 0 and
+                latest_work == current_max_work
+            )
+        ) if is_current else {
+            "cosmic": None,
+            "specials": [],
+            "targetPercent": 0,
+        }
+        miner.pop("lastObservedAt", None)
 
     return {
         "generatedAt": now,
@@ -2522,6 +2584,25 @@ a:focus-visible,button:focus-visible,input:focus-visible{
   <div class="leaderboardFoot"><span id="leaderboardFreshness">AWAITING ACTIVITY SAMPLES</span><span>LIVE ≤10 MIN // RECENT ≤60 MIN // SEEN WITHIN 24H</span></div>
 </section>
 
+<div class="publicRewardLegend" aria-label="Work in Window reward progression">
+  <div class="publicRewardLegendHead">
+    <div class="publicRewardLegendTitle">WORK-IN-WINDOW // COSMIC REWARDS</div>
+    <div class="publicRewardLegendBasis">% OF FULL RATUM TARGET WINDOW</div>
+  </div>
+  <div class="publicRewardTiers">
+    <div class="publicRewardTier"><span role="img" aria-label="Spark">✨</span>0.25%</div>
+    <div class="publicRewardTier"><span role="img" aria-label="Star">⭐</span>0.75%</div>
+    <div class="publicRewardTier"><span role="img" aria-label="Bright Star">🌟</span>2%</div>
+    <div class="publicRewardTier"><span role="img" aria-label="Comet">☄️</span>5%</div>
+    <div class="publicRewardTier"><span role="img" aria-label="Moon">🌙</span>10%</div>
+    <div class="publicRewardTier"><span role="img" aria-label="Orbit">🪐</span>20%</div>
+    <div class="publicRewardTier"><span role="img" aria-label="Galaxy">🌌</span>40%</div>
+    <div class="publicRewardTier special"><span role="img" aria-label="Diamond Work">💎</span>75%</div>
+    <div class="publicRewardTier special"><span role="img" aria-label="Current leader">👑</span>#1</div>
+  </div>
+  <div class="publicRewardNote">BADGES UPDATE FROM LIVE WORK IN THE CURRENT PAYOUT WINDOW. 👑 MARKS THE CURRENT WORK LEADER; 💎 IS RESERVED FOR EXCEPTIONAL WINDOW CONTRIBUTION.</div>
+</div>
+
 <div class="sectionTitle">POOL-TELEMETRY</div>
 <div id="telemetry" class="grid grid6"></div>
 
@@ -2547,25 +2628,6 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 
 <div id="accountHint" class="accountHint" role="status" aria-live="polite">
   SEARCH YOUR PAYOUT ADDRESS TO VIEW ACCOUNTING
-</div>
-
-<div class="publicRewardLegend" aria-label="Work in Window reward progression">
-  <div class="publicRewardLegendHead">
-    <div class="publicRewardLegendTitle">WORK-IN-WINDOW // COSMIC REWARDS</div>
-    <div class="publicRewardLegendBasis">% OF FULL RATUM TARGET WINDOW</div>
-  </div>
-  <div class="publicRewardTiers">
-    <div class="publicRewardTier"><span role="img" aria-label="Spark">✨</span>0.25%</div>
-    <div class="publicRewardTier"><span role="img" aria-label="Star">⭐</span>0.75%</div>
-    <div class="publicRewardTier"><span role="img" aria-label="Bright Star">🌟</span>2%</div>
-    <div class="publicRewardTier"><span role="img" aria-label="Comet">☄️</span>5%</div>
-    <div class="publicRewardTier"><span role="img" aria-label="Moon">🌙</span>10%</div>
-    <div class="publicRewardTier"><span role="img" aria-label="Orbit">🪐</span>20%</div>
-    <div class="publicRewardTier"><span role="img" aria-label="Galaxy">🌌</span>40%</div>
-    <div class="publicRewardTier special"><span role="img" aria-label="Diamond Work">💎</span>75%</div>
-    <div class="publicRewardTier special"><span role="img" aria-label="Current leader">👑</span>#1</div>
-  </div>
-  <div class="publicRewardNote">BADGES UPDATE FROM LIVE WORK IN THE CURRENT PAYOUT WINDOW. 👑 MARKS THE CURRENT WORK LEADER; 💎 IS RESERVED FOR EXCEPTIONAL WINDOW CONTRIBUTION.</div>
 </div>
 
 <div id="miner" class="grid grid4" style="display:none"></div>
@@ -2804,7 +2866,7 @@ async function loadLeaderboard(){
   if(!rows)return;
   try{
     const response=await fetch(
-      "/api/leaderboard?ts="+Date.now(),
+      "/api/stats?view=leaderboard&ts="+Date.now(),
       {cache:"no-store"}
     );
     if(!response.ok)throw new Error("HTTP "+response.status);
@@ -2813,7 +2875,7 @@ async function loadLeaderboard(){
     rows.innerHTML=miners.length?miners.map(miner=>`
       <tr>
         <td data-label="RANK" class="leaderRank">#${Number(miner.rank||0)}</td>
-        <td data-label="MINER"><div class="leaderTag">${escapeHtml(miner.tag||"UNTAGGED")}</div><div class="leaderAlias">${escapeHtml(miner.alias||"REDACTED")}</div></td>
+        <td data-label="MINER"><div class="leaderTag">${escapeHtml(miner.tag||"UNTAGGED")}${workRewardMarkup(miner.reward)}</div><div class="leaderAlias">${escapeHtml(miner.alias||"REDACTED")}</div></td>
         <td data-label="STATE"><span class="leaderStatus ${escapeHtml(miner.status||"seen")}">${escapeHtml(String(miner.status||"seen").toUpperCase())}</span></td>
         <td data-label="24H AVG">${num(miner.averageHashrateThs,3)} TH/s</td>
         <td data-label="24H PEAK">${num(miner.peakHashrateThs,3)} TH/s</td>
@@ -3868,7 +3930,16 @@ class Handler(BaseHTTPRequestHandler):
                 )
             return
 
-        if parsed.path == "/api/leaderboard":
+        leaderboard_query = urllib.parse.parse_qs(parsed.query)
+        leaderboard_request = (
+            parsed.path == "/api/leaderboard" or
+            (
+                parsed.path in ("/api/stats", "/api/local-stats") and
+                leaderboard_query.get("view", [""])[0] == "leaderboard"
+            )
+        )
+
+        if leaderboard_request:
             try:
                 leaderboard = load_public_leaderboard()
                 if leaderboard.get("miners"):
@@ -3890,15 +3961,9 @@ class Handler(BaseHTTPRequestHandler):
                     pass
 
             try:
-                parsed_public = urllib.parse.urlsplit(PUBLIC_STATS)
-                public_url = urllib.parse.urlunsplit((
-                    parsed_public.scheme,
-                    parsed_public.netloc,
-                    "/api/leaderboard",
-                    "",
-                    "",
-                ))
-                if public_url == "/api/leaderboard":
+                separator = "&" if "?" in PUBLIC_STATS else "?"
+                public_url = PUBLIC_STATS + separator + "view=leaderboard"
+                if not urllib.parse.urlsplit(public_url).scheme:
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
@@ -3983,7 +4048,10 @@ class Handler(BaseHTTPRequestHandler):
                     parsed.path == "/api/local-stats" and
                     query.get("collector", ["0"])[0] == "1"
                 ):
-                    record_miner_activity(miners)
+                    record_miner_activity(
+                        miners,
+                        window.get("target_work", 0)
+                    )
 
                 # Pool-wide telemetry comes from every miner
                 # currently represented in Prime's window.
