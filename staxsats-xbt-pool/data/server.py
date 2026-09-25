@@ -21,6 +21,12 @@ STATE_DIR = os.environ.get(
 HISTORY_DB = os.path.join(STATE_DIR, "terminus-history.sqlite3")
 HISTORY_LOCK = threading.Lock()
 HISTORY_RETENTION_SECONDS = 8 * 24 * 60 * 60
+MINER_ACTIVITY_RETENTION_SECONDS = 25 * 60 * 60
+LEADERBOARD_WINDOW_SECONDS = 24 * 60 * 60
+TAG_SWITCH_MIN_SAMPLES = 5
+TAG_SWITCH_RATIO = 1.25
+LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
+LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
 COLLECTOR_PATH = os.environ.get(
     "TERMINUS_COLLECTOR_PATH",
     "/api/local-stats"
@@ -72,6 +78,34 @@ def _history_connection():
             identity_hash TEXT PRIMARY KEY,
             best_share REAL NOT NULL,
             first_seen_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS miner_activity (
+            minute INTEGER NOT NULL,
+            identity_hash TEXT NOT NULL,
+            worker_tag TEXT NOT NULL,
+            hashrate_hs REAL NOT NULL,
+            work REAL NOT NULL,
+            best_share REAL NOT NULL,
+            PRIMARY KEY (minute, identity_hash)
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS miner_activity_identity_minute
+        ON miner_activity (identity_hash, minute)
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS miner_profile (
+            identity_hash TEXT PRIMARY KEY,
+            stable_tag TEXT NOT NULL,
             updated_at INTEGER NOT NULL
         )
         """
@@ -205,6 +239,208 @@ def _identity_fingerprint(identity):
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
+def _clean_worker_tag(value):
+    tag = " ".join(str(value or "").strip().split())[:64]
+    return tag or "UNTAGGED"
+
+
+def record_miner_activity(raw_miners):
+    """Record privacy-safe activity and dampen upstream tag flapping."""
+    minute = int(time.time()) // 60 * 60
+    cutoff = minute - MINER_ACTIVITY_RETENTION_SECONDS
+    consensus_cutoff = minute - LEADERBOARD_WINDOW_SECONDS
+    observed_hashes = []
+
+    with HISTORY_LOCK:
+        with _history_connection() as connection:
+            for raw in raw_miners:
+                identity_hash = _identity_fingerprint(raw.get("identity", ""))
+                if not identity_hash:
+                    continue
+                observed_hashes.append(identity_hash)
+                connection.execute(
+                    """
+                    INSERT INTO miner_activity (
+                        minute, identity_hash, worker_tag,
+                        hashrate_hs, work, best_share
+                    ) VALUES (?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(minute, identity_hash) DO UPDATE SET
+                        worker_tag=excluded.worker_tag,
+                        hashrate_hs=excluded.hashrate_hs,
+                        work=excluded.work,
+                        best_share=excluded.best_share
+                    """,
+                    (
+                        minute,
+                        identity_hash,
+                        _clean_worker_tag(raw.get("tag", "")),
+                        max(0.0, _number(raw.get("hashrate_hs", 0))),
+                        max(0.0, _number(raw.get("work", 0))),
+                        max(0.0, _number(raw.get("best_share", 0))),
+                    )
+                )
+
+            connection.execute(
+                "DELETE FROM miner_activity WHERE minute < ?",
+                (cutoff,)
+            )
+
+            for identity_hash in set(observed_hashes):
+                counts = connection.execute(
+                    """
+                    SELECT worker_tag, COUNT(*) AS samples, MAX(minute) AS latest
+                    FROM miner_activity
+                    WHERE identity_hash = ?
+                      AND minute >= ?
+                      AND hashrate_hs > 0
+                    GROUP BY worker_tag
+                    ORDER BY samples DESC, latest DESC, worker_tag ASC
+                    """,
+                    (identity_hash, consensus_cutoff)
+                ).fetchall()
+                if not counts:
+                    continue
+
+                winner, winner_count, _ = counts[0]
+                profile = connection.execute(
+                    "SELECT stable_tag FROM miner_profile WHERE identity_hash = ?",
+                    (identity_hash,)
+                ).fetchone()
+
+                if not profile:
+                    connection.execute(
+                        """
+                        INSERT INTO miner_profile (
+                            identity_hash, stable_tag, updated_at
+                        ) VALUES (?, ?, ?)
+                        """,
+                        (identity_hash, winner, minute)
+                    )
+                    continue
+
+                stable_tag = profile[0]
+                if winner == stable_tag:
+                    continue
+
+                stable_count = next(
+                    (row[1] for row in counts if row[0] == stable_tag),
+                    0
+                )
+                if (
+                    winner_count >= TAG_SWITCH_MIN_SAMPLES and
+                    winner_count >= max(1, stable_count) * TAG_SWITCH_RATIO
+                ):
+                    connection.execute(
+                        """
+                        UPDATE miner_profile
+                        SET stable_tag = ?, updated_at = ?
+                        WHERE identity_hash = ?
+                        """,
+                        (winner, minute, identity_hash)
+                    )
+
+
+def load_stable_tags(raw_miners):
+    pairs = [
+        (str(raw.get("identity", "") or "").strip(),
+         _identity_fingerprint(raw.get("identity", "")))
+        for raw in raw_miners
+    ]
+    pairs = [(identity, fingerprint) for identity, fingerprint in pairs
+             if identity and fingerprint]
+    if not pairs:
+        return {}
+
+    keys = [fingerprint for _, fingerprint in pairs]
+    placeholders = ",".join("?" for _ in keys)
+    with HISTORY_LOCK:
+        with _history_connection() as connection:
+            rows = connection.execute(
+                "SELECT identity_hash, stable_tag FROM miner_profile "
+                f"WHERE identity_hash IN ({placeholders})",
+                keys
+            ).fetchall()
+    by_hash = {row[0]: row[1] for row in rows}
+    return {
+        identity: by_hash.get(fingerprint, "")
+        for identity, fingerprint in pairs
+    }
+
+
+def load_public_leaderboard(limit=100):
+    """Return only pseudonymous accounts active during the rolling 24h."""
+    now = int(time.time())
+    cutoff = now - LEADERBOARD_WINDOW_SECONDS
+    with HISTORY_LOCK:
+        with _history_connection() as connection:
+            sample_minutes = connection.execute(
+                """
+                SELECT COUNT(DISTINCT minute)
+                FROM miner_activity
+                WHERE minute >= ?
+                """,
+                (cutoff,)
+            ).fetchone()[0] or 0
+            rows = connection.execute(
+                """
+                SELECT
+                    activity.identity_hash,
+                    COALESCE(profile.stable_tag, 'UNTAGGED'),
+                    SUM(activity.hashrate_hs),
+                    MAX(activity.hashrate_hs),
+                    SUM(CASE WHEN activity.hashrate_hs > 0 THEN 1 ELSE 0 END),
+                    MAX(CASE WHEN activity.hashrate_hs > 0 THEN activity.minute END),
+                    MAX(activity.best_share)
+                FROM miner_activity AS activity
+                LEFT JOIN miner_profile AS profile
+                  ON profile.identity_hash = activity.identity_hash
+                WHERE activity.minute >= ?
+                GROUP BY activity.identity_hash, profile.stable_tag
+                HAVING MAX(CASE WHEN activity.hashrate_hs > 0
+                                THEN activity.minute END) IS NOT NULL
+                ORDER BY SUM(activity.hashrate_hs) DESC,
+                         MAX(activity.hashrate_hs) DESC
+                LIMIT ?
+                """,
+                (cutoff, int(limit))
+            ).fetchall()
+
+    miners = []
+    for rank, row in enumerate(rows, 1):
+        identity_hash, tag, total_hs, peak_hs, active_minutes, last_active, best = row
+        inactive_for = max(0, now - int(last_active))
+        if inactive_for <= LEADERBOARD_LIVE_GRACE_SECONDS:
+            status = "live"
+        elif inactive_for <= LEADERBOARD_RECENT_GRACE_SECONDS:
+            status = "recent"
+        else:
+            status = "seen"
+        miners.append({
+            "rank": rank,
+            "alias": "MINER-" + identity_hash[:8].upper(),
+            "tag": _clean_worker_tag(tag),
+            "status": status,
+            "averageHashrateThs": (
+                _number(total_hs) / max(1, int(sample_minutes)) /
+                1_000_000_000_000
+            ),
+            "peakHashrateThs": _number(peak_hs) / 1_000_000_000_000,
+            "activeMinutes": int(active_minutes or 0),
+            "lastActiveAt": int(last_active),
+            "bestShare": _number(best),
+        })
+
+    return {
+        "generatedAt": now,
+        "windowHours": 24,
+        "liveGraceMinutes": LEADERBOARD_LIVE_GRACE_SECONDS // 60,
+        "recentGraceMinutes": LEADERBOARD_RECENT_GRACE_SECONDS // 60,
+        "ranking": "average-hashrate",
+        "privacy": "opaque-aliases-no-payout-addresses",
+        "miners": miners,
+    }
+
+
 def sync_all_time_best_shares(raw_miners):
     """Persist and return the highest RATUM best share per identity."""
     now = int(time.time())
@@ -307,6 +543,7 @@ def load_admin_snapshot(reveal=False):
 
     window = prime.get("window", {})
     raw_miners = window.get("miners", [])
+    stable_tags = load_stable_tags(raw_miners)
     all_time_best, all_time_tracking_since = (
         sync_all_time_best_shares(raw_miners)
     )
@@ -326,7 +563,9 @@ def load_admin_snapshot(reveal=False):
         miners.append({
             "identity": identity if reveal else _mask_identity(identity),
             "identityMasked": not reveal,
-            "tag": str(raw.get("tag", "") or "UNTAGGED"),
+            "tag": stable_tags.get(identity) or _clean_worker_tag(
+                raw.get("tag", "")
+            ),
             "status": "active" if hashrate_hs > 0 else "idle",
             "hashrateThs": hashrate_hs / 1_000_000_000_000,
             "sharePercent": _number(raw.get("share_percent", 0)),
@@ -1871,6 +2110,54 @@ body{
     }
 }
 
+/* TERMINUS_LEADERBOARD_V1 */
+.leaderboardPanel{
+    margin:0 0 26px;
+    border:1px solid #174655;
+    border-radius:14px;
+    overflow:hidden;
+    background:linear-gradient(145deg,#07131d,#08101a);
+    box-shadow:0 14px 40px rgba(0,0,0,.25);
+}
+.leaderboardHead{
+    display:flex;
+    justify-content:space-between;
+    gap:18px;
+    align-items:flex-end;
+    padding:17px 19px;
+    border-bottom:1px solid #153744;
+}
+.leaderboardTitle{color:var(--cyan);font-size:15px;font-weight:1000;letter-spacing:.12em}
+.leaderboardSub{margin-top:5px;color:#7895a0;font-size:9px;line-height:1.55;letter-spacing:.06em}
+.leaderboardPrivacy{color:var(--green);font-size:9px;font-weight:900;letter-spacing:.1em;text-align:right}
+.leaderboardTableWrap{overflow:auto}
+.leaderboardTable{width:100%;border-collapse:collapse;min-width:900px}
+.leaderboardTable th,.leaderboardTable td{padding:12px 14px;border-bottom:1px solid #112c37;text-align:left}
+.leaderboardTable th{background:#091722;color:#7ca8b2;font-size:8px;letter-spacing:.14em}
+.leaderboardTable td{font-size:11px}
+.leaderRank{color:var(--gold);font-weight:1000;font-size:15px}
+.leaderAlias{color:var(--cyan);font-size:9px;margin-top:3px;letter-spacing:.08em}
+.leaderTag{color:var(--green);font-weight:900}
+.leaderStatus{display:inline-block;border:1px solid;padding:4px 7px;font-size:8px;letter-spacing:.12em}
+.leaderStatus.live{color:var(--green);border-color:#287559}
+.leaderStatus.recent{color:var(--gold);border-color:#80642b}
+.leaderStatus.seen{color:#a3abb2;border-color:#4c5860}
+.leaderboardEmpty{padding:34px!important;text-align:center!important;color:#7895a0}
+.leaderboardFoot{display:flex;justify-content:space-between;gap:14px;padding:11px 16px;color:#7895a0;font-size:8px;line-height:1.5}
+@media(max-width:760px){
+    .leaderboardHead{align-items:flex-start;flex-direction:column}
+    .leaderboardPrivacy{text-align:left}
+    .leaderboardTable{min-width:0}
+    .leaderboardTable thead{display:none}
+    .leaderboardTable tbody,.leaderboardTable tr,.leaderboardTable td{display:block;width:100%}
+    .leaderboardTable tr{padding:10px 14px;border-bottom:1px solid #174655}
+    .leaderboardTable td{display:flex;justify-content:space-between;gap:16px;padding:7px 0;border:0;text-align:right;overflow-wrap:anywhere}
+    .leaderboardTable td:before{content:attr(data-label);color:#7895a0;font-size:8px;letter-spacing:.12em;text-align:left;flex:0 0 38%}
+    .leaderboardTable .leaderboardEmpty{display:block;text-align:center!important;padding:28px 8px!important}
+    .leaderboardTable .leaderboardEmpty:before{display:none}
+    .leaderboardFoot{flex-direction:column}
+}
+
 /* TERMINUS_UX_V1 */
 html{scroll-behavior:smooth}
 body{overflow-x:hidden}
@@ -2091,7 +2378,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.15</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.16</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -2216,6 +2503,24 @@ a:focus-visible,button:focus-visible,input:focus-visible{
   </svg>
   <div id="historySummary" class="historySummary" aria-label="24-hour pool summary"></div>
 </div>
+
+<div class="sectionTitle" id="leaderboard">24H-HASHING-LEADERBOARD</div>
+<section class="leaderboardPanel" aria-labelledby="leaderboardTitle">
+  <div class="leaderboardHead">
+    <div>
+      <div class="leaderboardTitle" id="leaderboardTitle">ACTIVE MINERS // ROLLING 24 HOURS</div>
+      <div class="leaderboardSub">RANKED BY 24H AVERAGE HASHRATE // LIVE STATUS HAS A 10-MINUTE BUFFER</div>
+    </div>
+    <div class="leaderboardPrivacy">PAYOUT ADDRESSES REDACTED // OPAQUE ALIASES ONLY</div>
+  </div>
+  <div class="leaderboardTableWrap">
+    <table class="leaderboardTable">
+      <thead><tr><th>RANK</th><th>MINER</th><th>STATE</th><th>24H AVG</th><th>24H PEAK</th><th>ACTIVE MIN</th><th>BEST SHARE</th><th>LAST ACTIVE</th></tr></thead>
+      <tbody id="leaderboardRows"><tr><td colspan="8" class="leaderboardEmpty">BUILDING 24H ACTIVITY WINDOW…</td></tr></tbody>
+    </table>
+  </div>
+  <div class="leaderboardFoot"><span id="leaderboardFreshness">AWAITING ACTIVITY SAMPLES</span><span>LIVE ≤10 MIN // RECENT ≤60 MIN // SEEN WITHIN 24H</span></div>
+</section>
 
 <div class="sectionTitle">POOL-TELEMETRY</div>
 <div id="telemetry" class="grid grid6"></div>
@@ -2483,6 +2788,46 @@ function bestShareFmt(v){
     if(n>=1e3)  return (n/1e3).toFixed(2)+"K";
 
     return n.toFixed(2);
+}
+
+function relativeAge(timestamp){
+  const seconds=Math.max(0,Math.floor(Date.now()/1000-Number(timestamp||0)));
+  if(seconds<60)return "JUST NOW";
+  const minutes=Math.floor(seconds/60);
+  if(minutes<60)return minutes+" MIN AGO";
+  const hours=Math.floor(minutes/60);
+  return hours+" HR AGO";
+}
+
+async function loadLeaderboard(){
+  const rows=$("leaderboardRows");
+  if(!rows)return;
+  try{
+    const response=await fetch(
+      "/api/leaderboard?ts="+Date.now(),
+      {cache:"no-store"}
+    );
+    if(!response.ok)throw new Error("HTTP "+response.status);
+    const data=await response.json();
+    const miners=data.miners||[];
+    rows.innerHTML=miners.length?miners.map(miner=>`
+      <tr>
+        <td data-label="RANK" class="leaderRank">#${Number(miner.rank||0)}</td>
+        <td data-label="MINER"><div class="leaderTag">${escapeHtml(miner.tag||"UNTAGGED")}</div><div class="leaderAlias">${escapeHtml(miner.alias||"REDACTED")}</div></td>
+        <td data-label="STATE"><span class="leaderStatus ${escapeHtml(miner.status||"seen")}">${escapeHtml(String(miner.status||"seen").toUpperCase())}</span></td>
+        <td data-label="24H AVG">${num(miner.averageHashrateThs,3)} TH/s</td>
+        <td data-label="24H PEAK">${num(miner.peakHashrateThs,3)} TH/s</td>
+        <td data-label="ACTIVE MIN">${num(miner.activeMinutes,0)}</td>
+        <td data-label="BEST SHARE">${bestShareFmt(miner.bestShare)}</td>
+        <td data-label="LAST ACTIVE">${relativeAge(miner.lastActiveAt)}</td>
+      </tr>`).join(""):`<tr><td colspan="8" class="leaderboardEmpty">BUILDING 24H ACTIVITY WINDOW // FIRST SAMPLE ARRIVES WITHIN ONE MINUTE</td></tr>`;
+    $("leaderboardFreshness").textContent=
+      "UPDATED "+new Date(Number(data.generatedAt||0)*1000).toLocaleTimeString()+
+      " // "+miners.length+" ACTIVE-IN-24H";
+  }catch(error){
+    rows.innerHTML=`<tr><td colspan="8" class="leaderboardEmpty">LEADERBOARD TELEMETRY TEMPORARILY UNAVAILABLE</td></tr>`;
+    $("leaderboardFreshness").textContent="LEADERBOARD DATA ERROR";
+  }
 }
 
 function card(label,value,cls=""){
@@ -3298,14 +3643,21 @@ async function refresh(){
 injectVisualFx();
 initSkyFx();
 refresh();
+loadLeaderboard();
 
 const REFRESH_MS=10000;
 let refreshTimer=setInterval(()=>{
   if(!document.hidden) refresh();
 },REFRESH_MS);
+let leaderboardTimer=setInterval(()=>{
+  if(!document.hidden) loadLeaderboard();
+},30000);
 
 document.addEventListener("visibilitychange",()=>{
-  if(!document.hidden) refresh();
+  if(!document.hidden){
+    refresh();
+    loadLeaderboard();
+  }
 });
 
 /* TERMINUS_GRAND_OPENING_PROMO_COUNTDOWN
@@ -3475,6 +3827,7 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path in (
             "/api/stats",
             "/api/local-stats",
+            "/api/leaderboard",
             "/api/admin/miners"
         ):
             self.send_header(
@@ -3512,6 +3865,58 @@ class Handler(BaseHTTPRequestHandler):
                     {"error":"admin telemetry unavailable"},
                     502,
                     private=True
+                )
+            return
+
+        if parsed.path == "/api/leaderboard":
+            try:
+                leaderboard = load_public_leaderboard()
+                if leaderboard.get("miners"):
+                    self.send_json(leaderboard)
+                    return
+            except Exception:
+                leaderboard = None
+
+            # The authoritative Pi may legitimately have an empty table
+            # during the first collector minute. Return that empty local
+            # response instead of bouncing through the VPS and back.
+            if COLLECTOR_ENABLED:
+                try:
+                    with urllib.request.urlopen(PRIME, timeout=0.75) as response:
+                        response.read(1)
+                    self.send_json(leaderboard or load_public_leaderboard())
+                    return
+                except Exception:
+                    pass
+
+            try:
+                parsed_public = urllib.parse.urlsplit(PUBLIC_STATS)
+                public_url = urllib.parse.urlunsplit((
+                    parsed_public.scheme,
+                    parsed_public.netloc,
+                    "/api/leaderboard",
+                    "",
+                    "",
+                ))
+                if public_url == "/api/leaderboard":
+                    raise ValueError("public leaderboard upstream unavailable")
+                req = urllib.request.Request(
+                    public_url,
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.16"}
+                )
+                with urllib.request.urlopen(req, timeout=8) as response:
+                    upstream = json.load(response)
+                upstream["dataSource"] = "public-relay"
+                self.send_json(upstream)
+            except Exception:
+                self.send_json(
+                    leaderboard or {
+                        "generatedAt": int(time.time()),
+                        "windowHours": 24,
+                        "ranking": "average-hashrate",
+                        "privacy": "opaque-aliases-no-payout-addresses",
+                        "miners": [],
+                    }
                 )
             return
 
@@ -3568,11 +3973,17 @@ class Handler(BaseHTTPRequestHandler):
                 prime_hashrate=prime.get("hashrate",{})
 
                 miners=window.get("miners",[])
+                stable_tags=load_stable_tags(miners)
                 # The Pi's one-minute collector reaches this path even when
                 # the admin page is closed, keeping all-time maxima durable.
                 # The public VPS has no local Prime endpoint and cannot write
                 # this private per-account state.
                 sync_all_time_best_shares(miners)
+                if (
+                    parsed.path == "/api/local-stats" and
+                    query.get("collector", ["0"])[0] == "1"
+                ):
+                    record_miner_activity(miners)
 
                 # Pool-wide telemetry comes from every miner
                 # currently represented in Prime's window.
@@ -3718,8 +4129,11 @@ class Handler(BaseHTTPRequestHandler):
                     "identity":
                         miner.get("identity",""),
 
-                    "minerTag":
-                        miner.get("tag",""),
+                    "minerTag": (
+                        stable_tags.get(
+                            str(miner.get("identity", "") or "").strip()
+                        ) or _clean_worker_tag(miner.get("tag", ""))
+                    ) if account_found else "",
 
                     "workReward":
                         selected_reward,
@@ -3851,7 +4265,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.14"
+                                "Terminus-Umbrel-Client/0.2.16"
                         }
                     )
 
