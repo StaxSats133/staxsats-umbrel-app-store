@@ -4714,6 +4714,24 @@ class Handler(BaseHTTPRequestHandler):
                     ) as r:
                         public_data = json.load(r)
 
+                    if response_view == "live":
+                        public_data.pop("history24h", None)
+                        public_data.pop("hashHistory", None)
+                    elif response_view == "history":
+                        public_data = {
+                            "generatedAt": public_data.get(
+                                "lastUpdated", int(time.time())
+                            ),
+                            "history24h": public_data.get("history24h", []),
+                            "hashHistory": public_data.get("hashHistory", []),
+                            "historySummary": public_data.get(
+                                "historySummary", {}
+                            ),
+                            "historyPersistent": public_data.get(
+                                "historyPersistent", False
+                            ),
+                        }
+
                     public_data["dataSource"] = "public-relay"
 
                     self.send_json(public_data)
