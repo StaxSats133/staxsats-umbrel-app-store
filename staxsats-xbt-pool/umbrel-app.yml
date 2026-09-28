@@ -4,7 +4,7 @@ name: Terminus Pool
 tagline: The last word in mining
 icon: https://raw.githubusercontent.com/StaxSats133/staxsats-umbrel-app-store/main/staxsats-xbt-pool/icon.svg
 category: bitcoin
-version: "0.2.16"
+version: "0.2.17"
 port: 8081
 description: >-
   Terminus Pool is an XBT BLAKE2b mining pool dashboard for RATUM Prime and DATUM.
@@ -19,13 +19,10 @@ repo: https://github.com/StaxSats133/staxsats-umbrel-app-store
 support: https://github.com/StaxSats133/staxsats-umbrel-app-store/issues
 gallery: []
 releaseNotes: >-
-  Terminus Pool v0.2.16 adds a privacy-safe public leaderboard for miner accounts
-  observed hashing during the rolling last 24 hours. Rankings use 24-hour average
-  hashrate, payout addresses are replaced by opaque aliases, and buffered live/recent/
-  seen states prevent display flicker. Worker tags now use durable 24-hour consensus
-  with hysteresis, fixing upstream tag changes in admin and miner lookup views. Live
-  Work-in-Window cosmic rewards now appear beside leaderboard tags, with the reward
-  legend directly below the leaderboard.
+  Terminus Pool v0.2.17 adds a responsive First Block milestone section commemorating
+  XBT block 974025, mined on September 25, 2026. It presents the verified coinbase tag,
+  discovery time, block hash, and coinbase transaction ID with copyable on-chain proof
+  while preserving the v0.2.16 privacy-safe leaderboard and stable worker tags.
 dependencies: []
 path: ""
 defaultUsername: ""
