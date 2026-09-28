@@ -2172,6 +2172,148 @@ body{
     }
 }
 
+/* TERMINUS_FIRST_BLOCK_V1 */
+.firstBlock{
+    margin:0 0 26px;
+    padding:22px;
+    border:1px solid rgba(255,200,92,.42);
+    border-radius:14px;
+    background:
+        radial-gradient(circle at 88% 22%,rgba(255,79,184,.12),transparent 30%),
+        linear-gradient(135deg,rgba(11,23,34,.99),rgba(12,13,29,.99));
+    box-shadow:
+        inset 0 1px 0 rgba(255,200,92,.08),
+        0 14px 42px rgba(0,0,0,.28);
+    position:relative;
+    overflow:hidden;
+}
+.firstBlock:before{
+    content:"";
+    position:absolute;
+    left:0;top:0;bottom:0;width:4px;
+    background:linear-gradient(var(--gold),var(--pink),var(--cyan));
+    box-shadow:0 0 18px rgba(255,200,92,.55);
+}
+.firstBlockHead{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:24px;
+    align-items:start;
+}
+.firstBlockKicker{
+    color:var(--gold);
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.19em;
+}
+.firstBlockTitle{
+    margin-top:8px;
+    color:var(--text);
+    font-size:clamp(25px,3.6vw,43px);
+    line-height:1.04;
+    font-weight:1000;
+    letter-spacing:.035em;
+}
+.firstBlockText{
+    margin-top:11px;
+    max-width:790px;
+    color:#aec8cf;
+    font-size:12px;
+    line-height:1.65;
+}
+.firstBlockText strong{color:var(--green)}
+.firstBlockHeight{
+    min-width:230px;
+    padding:16px 18px;
+    border:1px solid rgba(255,200,92,.28);
+    background:#050b12cc;
+    text-align:right;
+}
+.firstBlockHeightLabel{
+    color:#8c7b59;
+    font-size:8px;
+    font-weight:900;
+    letter-spacing:.16em;
+}
+.firstBlockHeightValue{
+    margin-top:5px;
+    color:var(--gold);
+    font-size:30px;
+    font-weight:1000;
+    letter-spacing:.05em;
+    text-shadow:0 0 18px rgba(255,200,92,.2);
+}
+.firstBlockFacts{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:9px;
+    margin-top:18px;
+}
+.firstBlockFact{
+    padding:12px 13px;
+    border:1px solid #173b47;
+    background:#050c13b8;
+}
+.firstBlockFact span{
+    display:block;
+    color:#688690;
+    font-size:8px;
+    font-weight:900;
+    letter-spacing:.13em;
+}
+.firstBlockFact strong{
+    display:block;
+    margin-top:6px;
+    color:var(--cyan);
+    font-size:11px;
+    line-height:1.4;
+}
+.firstBlockProof{
+    margin-top:12px;
+    border:1px solid #173641;
+    background:#040a10a8;
+}
+.firstBlockProof summary{
+    padding:12px 14px;
+    color:var(--green);
+    cursor:pointer;
+    font-size:9px;
+    font-weight:900;
+    letter-spacing:.13em;
+}
+.firstBlockProof[open] summary{border-bottom:1px solid #173641}
+.firstBlockProofGrid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    padding:13px;
+}
+.firstBlockProofItem{min-width:0}
+.firstBlockProofLabel{
+    margin-bottom:6px;
+    color:#688690;
+    font-size:8px;
+    letter-spacing:.13em;
+}
+.firstBlockProofValue{
+    color:#a9cbd3;
+    font-size:9px;
+    line-height:1.5;
+    overflow-wrap:anywhere;
+}
+.firstBlockProof .copyBtn{
+    width:100%;
+    margin-top:9px;
+    min-height:38px;
+}
+@media(max-width:760px){
+    .firstBlock{padding:18px 16px 17px}
+    .firstBlockHead{grid-template-columns:1fr;gap:15px}
+    .firstBlockHeight{min-width:0;text-align:left}
+    .firstBlockFacts{grid-template-columns:1fr}
+    .firstBlockProofGrid{grid-template-columns:1fr}
+}
+
 /* TERMINUS_LEADERBOARD_V1 */
 .leaderboardPanel{
     margin:0 0 26px;
@@ -2440,7 +2582,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.16</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.17</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -2525,6 +2667,47 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       </div>
     </div>
   </div>
+</section>
+
+<section class="firstBlock" id="firstBlock" aria-labelledby="firstBlockTitle">
+  <div class="firstBlockHead">
+    <div>
+      <div class="firstBlockKicker">CHAIN MILESTONE // SEPTEMBER 25, 2026</div>
+      <div class="firstBlockTitle" id="firstBlockTitle">TERMINUS FOUND ITS FIRST BLOCK</div>
+      <div class="firstBlockText">
+        At 03:04:10 UTC, Terminus Pool mined XBT block <strong>974025</strong>—our
+        first confirmed block and the opening entry in the pool's on-chain story.
+        Its coinbase carries the ASCII tag <strong>TerminusPool</strong>, permanently
+        identifying the pool that found it.
+      </div>
+    </div>
+    <div class="firstBlockHeight" aria-label="First Terminus block height 974025">
+      <div class="firstBlockHeightLabel">FIRST TERMINUS BLOCK</div>
+      <div class="firstBlockHeightValue">#974025</div>
+    </div>
+  </div>
+
+  <div class="firstBlockFacts" aria-label="First block facts">
+    <div class="firstBlockFact"><span>FOUND</span><strong>SEP 25, 2026 // 03:04:10 UTC</strong></div>
+    <div class="firstBlockFact"><span>COINBASE IDENTITY</span><strong>TerminusPool</strong></div>
+    <div class="firstBlockFact"><span>STATUS</span><strong>CONFIRMED // NODE VERIFIED</strong></div>
+  </div>
+
+  <details class="firstBlockProof">
+    <summary>VERIFY ON-CHAIN PROOF</summary>
+    <div class="firstBlockProofGrid">
+      <div class="firstBlockProofItem">
+        <div class="firstBlockProofLabel">BLOCK HASH</div>
+        <div class="firstBlockProofValue">0000000000000000ca51b2ad2a4c3eda9926172dba42b778824cf3381631550c</div>
+        <button type="button" class="copyBtn" aria-label="Copy first block hash" data-copy="0000000000000000ca51b2ad2a4c3eda9926172dba42b778824cf3381631550c" onclick="copyField(this)">COPY BLOCK HASH</button>
+      </div>
+      <div class="firstBlockProofItem">
+        <div class="firstBlockProofLabel">COINBASE TXID</div>
+        <div class="firstBlockProofValue">45dfb3d101ec588b7e9308797ba796c1694aba596b3c23d35f515dc9152ee1a6</div>
+        <button type="button" class="copyBtn" aria-label="Copy first block coinbase transaction ID" data-copy="45dfb3d101ec588b7e9308797ba796c1694aba596b3c23d35f515dc9152ee1a6" onclick="copyField(this)">COPY COINBASE TXID</button>
+      </div>
+    </div>
+  </details>
 </section>
 
 <section class="quickConnect" id="startMining" aria-labelledby="startMiningTitle">
