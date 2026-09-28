@@ -14,13 +14,25 @@ services:
   dashboard:
     image: python:3.12-alpine
     restart: unless-stopped
+    init: true
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
     command: ["python3", "/app/server.py"]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/robots.txt"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     environment:
       TERMINUS_STATE_DIR: /data
       TERMINUS_ADMIN_ENABLED: "false"
     volumes:
       - ${APP_DATA_DIR}/data/server.py:/app/server.py:ro
       - ${APP_DATA_DIR}/data/state:/data
+    tmpfs:
+      - /tmp:size=16m,mode=1777
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:

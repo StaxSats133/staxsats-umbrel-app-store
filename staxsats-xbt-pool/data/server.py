@@ -1,4 +1,6 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from contextlib import contextmanager
+import gzip
 import hashlib
 import json
 import os
@@ -8,11 +10,16 @@ import time
 import urllib.request
 import urllib.parse
 
-PRIME = "http://172.17.0.1:28916/stats.json"
+PRIME = os.environ.get(
+    "TERMINUS_PRIME_URL",
+    "http://172.17.0.1:28916/stats.json"
+)
 PUBLIC_STATS = os.environ.get(
     "TERMINUS_PUBLIC_STATS",
     "https://terminuspool.xyz/api/stats"
 )
+BIND_HOST = os.environ.get("TERMINUS_BIND_HOST", "0.0.0.0")
+PORT = int(os.environ.get("TERMINUS_PORT", "8080"))
 
 STATE_DIR = os.environ.get(
     "TERMINUS_STATE_DIR",
@@ -27,6 +34,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
+RELEASE_VERSION = "0.2.18"
 COLLECTOR_PATH = os.environ.get(
     "TERMINUS_COLLECTOR_PATH",
     "/api/local-stats"
@@ -42,6 +50,27 @@ ADMIN_ENABLED = os.environ.get(
     os.path.join(STATE_DIR, "owner-admin.enabled")
 )
 
+ROBOTS_TXT = """User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/admin/
+Sitemap: https://terminuspool.xyz/sitemap.xml
+"""
+SITEMAP_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://terminuspool.xyz/</loc><changefreq>daily</changefreq></url>
+</urlset>
+"""
+FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<rect width="64" height="64" rx="12" fill="#050912"/>
+<path d="M14 16h36v9H37v25H27V25H14z" fill="#43f5ff"/>
+</svg>"""
+NOT_FOUND_HTML = """<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>404 // Terminus Pool</title></head>
+<body style="margin:0;display:grid;place-items:center;min-height:100vh;background:#050912;color:#e7faff;font-family:monospace">
+<main><h1 style="color:#ff4fb8">404 // SIGNAL LOST</h1><p>The requested Terminus route does not exist.</p><a style="color:#43f5ff" href="/">RETURN TO TERMINUS POOL</a></main></body></html>"""
+
 WORK_REWARD_TIERS = (
     (0.40, "🌌", "GALAXY"),
     (0.20, "🪐", "ORBIT"),
@@ -54,74 +83,80 @@ WORK_REWARD_TIERS = (
 DIAMOND_WORK_RATIO = 0.75
 
 
+@contextmanager
 def _history_connection():
     os.makedirs(STATE_DIR, exist_ok=True)
     connection = sqlite3.connect(HISTORY_DB, timeout=3)
-    connection.execute("PRAGMA journal_mode=WAL")
-    connection.execute("PRAGMA synchronous=NORMAL")
-    connection.execute(
-        """
-        CREATE TABLE IF NOT EXISTS pool_history (
-            minute INTEGER PRIMARY KEY,
-            hashrate REAL NOT NULL,
-            miners INTEGER NOT NULL,
-            connections INTEGER NOT NULL,
-            accepted INTEGER NOT NULL,
-            rejected INTEGER NOT NULL,
-            height INTEGER NOT NULL
-        )
-        """
-    )
-    connection.execute(
-        """
-        CREATE TABLE IF NOT EXISTS miner_best_share (
-            identity_hash TEXT PRIMARY KEY,
-            best_share REAL NOT NULL,
-            first_seen_at INTEGER NOT NULL,
-            updated_at INTEGER NOT NULL
-        )
-        """
-    )
-    connection.execute(
-        """
-        CREATE TABLE IF NOT EXISTS miner_activity (
-            minute INTEGER NOT NULL,
-            identity_hash TEXT NOT NULL,
-            worker_tag TEXT NOT NULL,
-            hashrate_hs REAL NOT NULL,
-            work REAL NOT NULL,
-            best_share REAL NOT NULL,
-            target_work REAL NOT NULL DEFAULT 0,
-            PRIMARY KEY (minute, identity_hash)
-        )
-        """
-    )
-    activity_columns = {
-        row[1] for row in connection.execute(
-            "PRAGMA table_info(miner_activity)"
-        ).fetchall()
-    }
-    if "target_work" not in activity_columns:
+    try:
+        connection.execute("PRAGMA journal_mode=WAL")
+        connection.execute("PRAGMA synchronous=NORMAL")
         connection.execute(
-            "ALTER TABLE miner_activity "
-            "ADD COLUMN target_work REAL NOT NULL DEFAULT 0"
+            """
+            CREATE TABLE IF NOT EXISTS pool_history (
+                minute INTEGER PRIMARY KEY,
+                hashrate REAL NOT NULL,
+                miners INTEGER NOT NULL,
+                connections INTEGER NOT NULL,
+                accepted INTEGER NOT NULL,
+                rejected INTEGER NOT NULL,
+                height INTEGER NOT NULL
+            )
+            """
         )
-    connection.execute(
-        """
-        CREATE INDEX IF NOT EXISTS miner_activity_identity_minute
-        ON miner_activity (identity_hash, minute)
-        """
-    )
-    connection.execute(
-        """
-        CREATE TABLE IF NOT EXISTS miner_profile (
-            identity_hash TEXT PRIMARY KEY,
-            stable_tag TEXT NOT NULL,
-            updated_at INTEGER NOT NULL
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS miner_best_share (
+                identity_hash TEXT PRIMARY KEY,
+                best_share REAL NOT NULL,
+                first_seen_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+            )
+            """
         )
-        """
-    )
-    return connection
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS miner_activity (
+                minute INTEGER NOT NULL,
+                identity_hash TEXT NOT NULL,
+                worker_tag TEXT NOT NULL,
+                hashrate_hs REAL NOT NULL,
+                work REAL NOT NULL,
+                best_share REAL NOT NULL,
+                target_work REAL NOT NULL DEFAULT 0,
+                PRIMARY KEY (minute, identity_hash)
+            )
+            """
+        )
+        activity_columns = {
+            row[1] for row in connection.execute(
+                "PRAGMA table_info(miner_activity)"
+            ).fetchall()
+        }
+        if "target_work" not in activity_columns:
+            connection.execute(
+                "ALTER TABLE miner_activity "
+                "ADD COLUMN target_work REAL NOT NULL DEFAULT 0"
+            )
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS miner_activity_identity_minute
+            ON miner_activity (identity_hash, minute)
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS miner_profile (
+                identity_hash TEXT PRIMARY KEY,
+                stable_tag TEXT NOT NULL,
+                updated_at INTEGER NOT NULL
+            )
+            """
+        )
+        connection.commit()
+        yield connection
+        connection.commit()
+    finally:
+        connection.close()
 
 
 def record_history(sample):
@@ -206,6 +241,26 @@ def load_history(hours=24, max_points=288):
     }
 
     return points, summary
+
+
+def load_history_summary(hours=24):
+    cutoff = int(time.time()) - (hours * 60 * 60)
+    with HISTORY_LOCK:
+        with _history_connection() as connection:
+            row = connection.execute(
+                """
+                SELECT COUNT(*), AVG(hashrate), MAX(hashrate), MIN(hashrate)
+                FROM pool_history
+                WHERE minute >= ?
+                """,
+                (cutoff,)
+            ).fetchone()
+    return {
+        "samples": int(row[0] or 0),
+        "averageHashrate": float(row[1] or 0),
+        "peakHashrate": float(row[2] or 0),
+        "lowHashrate": float(row[3] or 0),
+    }
 
 
 def collect_history_forever():
@@ -699,7 +754,8 @@ HTML = r"""<!doctype html>
 <meta property="og:title" content="Terminus Pool // XBT">
 <meta property="og:description" content="Non-custodial, DATUM-first XBT BLAKE2b mining with live pool telemetry.">
 <meta property="og:url" content="https://terminuspool.xyz/">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://raw.githubusercontent.com/StaxSats133/staxsats-umbrel-app-store/main/staxsats-xbt-pool/icon.svg">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Terminus Pool // XBT">
 <meta name="twitter:description" content="Non-custodial, DATUM-first XBT BLAKE2b mining with live pool telemetry.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23050912'/%3E%3Cpath d='M14 16h36v9H37v25H27V25H14z' fill='%2343f5ff'/%3E%3C/svg%3E">
@@ -900,6 +956,9 @@ h1{
   margin:36px 0 15px;color:var(--pink);
   letter-spacing:.22em;font-size:12px;font-weight:900
 }
+.advancedFold{border:0;padding:0;margin:0}
+.advancedFold>summary{display:none}
+.advancedFold[open]>.advancedFoldBody{display:block}
 .sectionTitle:before{content:"";width:4px;height:17px;background:var(--green)}
 .sectionTitle:after{content:"";height:1px;flex:1;background:linear-gradient(90deg,#5d284c,transparent)}
 
@@ -1261,6 +1320,13 @@ footer{
   .hero{height:350px}
 }
 @media(max-width:760px){
+    .advancedFold{margin:24px 0 0;border:1px solid #174655;background:#06101a}
+    .advancedFold>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;color:var(--pink);font-size:11px;font-weight:900;letter-spacing:.12em;cursor:pointer;list-style:none}
+    .advancedFold>summary::-webkit-details-marker{display:none}
+    .advancedFold>summary:after{content:"+";color:var(--cyan);font-size:18px}
+    .advancedFold[open]>summary:after{content:"−"}
+    .advancedFold>.advancedFoldBody{padding:0 14px 16px}
+    .advancedFold .sectionTitle{margin-top:18px!important}
   .shell{padding:20px 14px 45px}
   header{align-items:flex-start}
   .badge{width:58px;height:58px;flex-basis:58px;font-size:18px}
@@ -2582,7 +2648,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.17</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.18</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -2789,8 +2855,13 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 <div class="sectionTitle">POOL-TELEMETRY</div>
 <div id="telemetry" class="grid grid6"></div>
 
-<div class="sectionTitle">OPERATOR-HEALTH // READ-ONLY</div>
-<div id="healthMatrix" class="healthMatrix" aria-live="polite"></div>
+<details class="advancedFold" open>
+  <summary>ADVANCED OPERATOR HEALTH</summary>
+  <div class="advancedFoldBody">
+    <div class="sectionTitle">OPERATOR-HEALTH // READ-ONLY</div>
+    <div id="healthMatrix" class="healthMatrix" aria-live="polite"></div>
+  </div>
+</details>
 
 <div class="sectionTitle" id="minerAccounting">MINER-ACCOUNTING</div>
 
@@ -2814,9 +2885,6 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 </div>
 
 <div id="miner" class="grid grid4" style="display:none"></div>
-
-<div class="sectionTitle">NETWORK-UPLINK</div>
-<div id="network" class="grid grid4"></div>
 
 <div class="sectionTitle" id="connectionDetails">PUBLIC-ACCESS</div>
 
@@ -2848,6 +2916,12 @@ a:focus-visible,button:focus-visible,input:focus-visible{
   </div>
 
 </div>
+
+<details class="advancedFold" open>
+  <summary>ADVANCED NETWORK + POOL IDENTITY</summary>
+  <div class="advancedFoldBody">
+    <div class="sectionTitle">NETWORK-UPLINK</div>
+    <div id="network" class="grid grid4"></div>
 
 <div class="access identityAccess">
   <h3>POOL IDENTITY // RATUM PRIME</h3>
@@ -2902,6 +2976,8 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 
   </div>
 </div>
+</div>
+</details>
 
 <div id="blockBanner" class="blockBanner"></div>
 </main>
@@ -3736,6 +3812,7 @@ async function refresh(){
   try{
     const params=new URLSearchParams();
     params.set("ts",Date.now().toString());
+    params.set("view","live");
 
     if(accountAddress){
       params.set("address",accountAddress);
@@ -3864,7 +3941,7 @@ async function refresh(){
     $("graphMiners").textContent=
       num(d.poolMiners,0)+" POOL MINERS";
 
-    drawGraph(d.hashHistory||[]);
+    if(Array.isArray(d.hashHistory)) drawGraph(d.hashHistory);
 
     if(Number(d.blocks)>0){
       $("blockBanner").style.display="block";
@@ -3885,9 +3962,40 @@ async function refresh(){
   }
 }
 
+async function loadHistory(){
+  try{
+    const response=await fetch(
+      "/api/stats?view=history&ts="+Date.now(),
+      {cache:"no-store"}
+    );
+    if(!response.ok)throw new Error("HTTP "+response.status);
+    const data=await response.json();
+    drawGraph(data.hashHistory||[]);
+    const summary=data.historySummary||{};
+    $("historySummary").innerHTML=
+      historyMetric("24H AVERAGE",num(summary.averageHashrate,3)+" TH/s")+
+      historyMetric("24H PEAK",num(summary.peakHashrate,3)+" TH/s")+
+      historyMetric("24H LOW",num(summary.lowHashrate,3)+" TH/s")+
+      historyMetric("PERSISTENT SAMPLES",num(summary.samples,0));
+  }catch(error){
+    if(!$("historySummary").textContent.trim()){
+      $("historySummary").innerHTML=historyMetric("24H HISTORY","TEMPORARILY UNAVAILABLE");
+    }
+  }
+}
+
+function initAdvancedFolds(){
+  if(!window.matchMedia("(max-width:760px)").matches)return;
+  document.querySelectorAll(".advancedFold").forEach(fold=>{
+    fold.removeAttribute("open");
+  });
+}
+
 injectVisualFx();
 initSkyFx();
+initAdvancedFolds();
 refresh();
+loadHistory();
 loadLeaderboard();
 
 const REFRESH_MS=10000;
@@ -3897,10 +4005,14 @@ let refreshTimer=setInterval(()=>{
 let leaderboardTimer=setInterval(()=>{
   if(!document.hidden) loadLeaderboard();
 },30000);
+let historyTimer=setInterval(()=>{
+  if(!document.hidden) loadHistory();
+},300000);
 
 document.addEventListener("visibilitychange",()=>{
   if(!document.hidden){
     refresh();
+    loadHistory();
     loadLeaderboard();
   }
 });
@@ -4042,7 +4154,13 @@ class Handler(BaseHTTPRequestHandler):
         )
 
     def send_json(self,obj,status=200,private=False):
-        body=json.dumps(obj).encode()
+        body=json.dumps(obj,separators=(",", ":")).encode()
+        compressed = (
+            len(body) >= 1024 and
+            "gzip" in self.headers.get("Accept-Encoding", "").lower()
+        )
+        if compressed:
+            body = gzip.compress(body, compresslevel=6)
 
         self.send_response(status)
         self.send_header(
@@ -4050,6 +4168,9 @@ class Handler(BaseHTTPRequestHandler):
             "application/json; charset=utf-8"
         )
         self.send_header("Cache-Control","no-store")
+        self.send_header("Vary","Accept-Encoding")
+        if compressed:
+            self.send_header("Content-Encoding","gzip")
         if not private:
             self.send_header("Access-Control-Allow-Origin","*")
         self.send_header("Content-Length",str(len(body)))
@@ -4058,18 +4179,54 @@ class Handler(BaseHTTPRequestHandler):
 
         self.wfile.write(body)
 
+    def send_text(self, text, content_type, status=200, cache="public, max-age=3600"):
+        body = text.encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Cache-Control", cache)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_security_headers()
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_HEAD(self):
         parsed = urllib.parse.urlparse(self.path)
 
-        if parsed.path.startswith("/admin") and not ADMIN_ENABLED:
+        if (
+            parsed.path.startswith("/admin") or
+            parsed.path == "/api/admin/miners"
+        ) and not ADMIN_ENABLED:
             self.send_response(404)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.send_security_headers()
+            self.end_headers()
+            return
+
+        known_paths = {
+            "/", "/index.html", "/robots.txt", "/sitemap.xml",
+            "/favicon.ico", "/favicon.svg", "/admin",
+            "/api/stats", "/api/local-stats", "/api/leaderboard",
+            "/api/admin/miners",
+        }
+        if parsed.path not in known_paths:
+            self.send_response(404)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_security_headers()
             self.end_headers()
             return
 
         self.send_response(200)
 
-        if parsed.path in (
+        if parsed.path == "/robots.txt":
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.send_header("Cache-Control", "public, max-age=3600")
+        elif parsed.path == "/sitemap.xml":
+            self.send_header("Content-Type", "application/xml; charset=utf-8")
+            self.send_header("Cache-Control", "public, max-age=3600")
+        elif parsed.path in ("/favicon.ico", "/favicon.svg"):
+            self.send_header("Content-Type", "image/svg+xml; charset=utf-8")
+            self.send_header("Cache-Control", "public, max-age=3600")
+        elif parsed.path in (
             "/api/stats",
             "/api/local-stats",
             "/api/leaderboard",
@@ -4092,6 +4249,16 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
 
         parsed = urllib.parse.urlparse(self.path)
+
+        if parsed.path == "/robots.txt":
+            self.send_text(ROBOTS_TXT, "text/plain; charset=utf-8")
+            return
+        if parsed.path == "/sitemap.xml":
+            self.send_text(SITEMAP_XML, "application/xml; charset=utf-8")
+            return
+        if parsed.path in ("/favicon.ico", "/favicon.svg"):
+            self.send_text(FAVICON_SVG, "image/svg+xml; charset=utf-8")
+            return
 
         if parsed.path == "/api/admin/miners":
             if not ADMIN_ENABLED:
@@ -4150,7 +4317,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.16"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.18"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -4191,6 +4358,22 @@ class Handler(BaseHTTPRequestHandler):
             try:
 
                 query = urllib.parse.parse_qs(parsed.query)
+                response_view = query.get("view", [""])[0]
+
+                if response_view == "history":
+                    if not COLLECTOR_ENABLED:
+                        raise RuntimeError("local history is relay-only")
+                    history_points, history_summary = load_history()
+                    self.send_json({
+                        "generatedAt": int(time.time()),
+                        "history24h": history_points,
+                        "hashHistory": [
+                            point["hashrate"] for point in history_points
+                        ],
+                        "historySummary": history_summary,
+                        "historyPersistent": True,
+                    })
+                    return
 
                 account_query = (
                     query.get("address", [""])[0] or ""
@@ -4427,7 +4610,11 @@ class Handler(BaseHTTPRequestHandler):
                 history_persistent = True
                 try:
                     record_history(data)
-                    history_points, history_summary = load_history()
+                    if response_view == "live":
+                        history_points = []
+                        history_summary = load_history_summary()
+                    else:
+                        history_points, history_summary = load_history()
                 except Exception:
                     history_persistent = False
                     history_points = [{
@@ -4448,10 +4635,11 @@ class Handler(BaseHTTPRequestHandler):
 
                 chain_height = int(data.get("height",0) or 0)
 
-                data["history24h"] = history_points
-                data["hashHistory"] = [
-                    point["hashrate"] for point in history_points
-                ]
+                if response_view != "live":
+                    data["history24h"] = history_points
+                    data["hashHistory"] = [
+                        point["hashrate"] for point in history_points
+                    ]
                 data["historySummary"] = history_summary
                 data["historyPersistent"] = history_persistent
                 data["lastUpdated"] = int(time.time())
@@ -4516,7 +4704,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.16"
+                                "Terminus-Umbrel-Client/0.2.18"
                         }
                     )
 
@@ -4543,7 +4731,7 @@ class Handler(BaseHTTPRequestHandler):
                         502
                     )
 
-        else:
+        elif parsed.path in ("/", "/index.html"):
 
             page = HTML
             if ADMIN_ENABLED:
@@ -4579,6 +4767,14 @@ class Handler(BaseHTTPRequestHandler):
 
             self.wfile.write(body)
 
+        else:
+            self.send_text(
+                NOT_FOUND_HTML,
+                "text/html; charset=utf-8",
+                status=404,
+                cache="no-store"
+            )
+
 if __name__ == "__main__":
     if COLLECTOR_ENABLED:
         threading.Thread(
@@ -4587,7 +4783,7 @@ if __name__ == "__main__":
             name="terminus-history-collector"
         ).start()
 
-    HTTPServer(
-        ("0.0.0.0",8080),
+    ThreadingHTTPServer(
+        (BIND_HOST, PORT),
         Handler
     ).serve_forever()
