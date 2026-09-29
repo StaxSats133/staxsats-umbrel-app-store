@@ -44,7 +44,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.23"
+RELEASE_VERSION = "0.2.24"
 COLLECTOR_PATH = os.environ.get(
     "TERMINUS_COLLECTOR_PATH",
     "/api/local-stats"
@@ -972,6 +972,21 @@ h1{
 }
 .roadLamp.left:after{left:11px}
 .roadLamp.right:after{right:11px}
+.hitchhiker{
+  position:absolute;z-index:11;left:calc(50% + 96px);bottom:67px;
+  width:28px;height:44px;opacity:0;pointer-events:none;
+  image-rendering:pixelated;
+  filter:drop-shadow(0 0 3px rgba(60,239,220,.42)) drop-shadow(4px 3px 0 rgba(0,0,0,.45));
+  animation:hitchhikerVisit 29s steps(1,end) 4s infinite
+}
+.hitchhikerSprite{
+  display:block;width:100%;height:100%;overflow:visible;
+  image-rendering:pixelated;shape-rendering:crispEdges
+}
+.hitchThumb{
+  transform-box:fill-box;transform-origin:left center;
+  animation:hitchThumbWave .9s steps(2,end) infinite
+}
 .car{
   position:absolute;z-index:12;left:50%;bottom:16px;
   transform:translateX(-50%);
@@ -1023,6 +1038,16 @@ h1{
   100%{opacity:0;transform:translate(245px,178px) scale(1.55)}
 }
 
+@keyframes hitchhikerVisit{
+  0%,14%{opacity:.96;transform:translateY(0)}
+  15%,100%{opacity:0;transform:translateY(2px)}
+}
+
+@keyframes hitchThumbWave{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-1px)}
+}
+
 @keyframes bitcoinGlowPulse{
   0%,100%{opacity:.72}
   50%{opacity:1}
@@ -1034,10 +1059,10 @@ h1{
 }
 
 @media(prefers-reduced-motion:reduce){
-  .car,.car:before,.car:after,.road:before,.roadLamp,.bitcoinGlow{
+  .car,.car:before,.car:after,.road:before,.roadLamp,.hitchhiker,.hitchThumb,.bitcoinGlow{
     animation:none !important
   }
-  .roadLamp{display:none}
+  .roadLamp,.hitchhiker{display:none}
 }
 
 .sectionTitle{
@@ -1460,6 +1485,7 @@ footer{
   }
   .road{left:15%;right:15%;height:129px}
   .roadLamp{height:48px}
+  .hitchhiker{left:calc(50% + 65px);bottom:62px;width:22px;height:35px}
   .car{width:94px;height:34px;bottom:14px}
   .grid6,.grid5,.grid4{grid-template-columns:repeat(2,1fr)}
   .card{min-height:100px;padding:14px}
@@ -2743,7 +2769,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.23</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.24</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -2796,6 +2822,25 @@ a:focus-visible,button:focus-visible,input:focus-visible{
     <span class="roadLamp left"></span>
     <span class="roadLamp right"></span>
     <span class="roadLamp left"></span>
+  </div>
+  <div class="hitchhiker" aria-hidden="true">
+    <svg class="hitchhikerSprite" viewBox="0 0 16 24" focusable="false">
+      <rect fill="#07101b" x="6" y="1" width="5" height="5"/>
+      <rect fill="#d99162" x="7" y="2" width="3" height="4"/>
+      <rect fill="#173548" x="4" y="6" width="8" height="9"/>
+      <rect fill="#12cbbd" x="5" y="7" width="5" height="2"/>
+      <rect fill="#ff3ba6" x="5" y="10" width="6" height="4"/>
+      <rect fill="#07101b" x="3" y="7" width="2" height="8"/>
+      <g class="hitchThumb">
+        <rect fill="#d99162" x="11" y="7" width="4" height="2"/>
+        <rect fill="#d99162" x="14" y="6" width="2" height="2"/>
+      </g>
+      <rect fill="#07101b" x="4" y="15" width="3" height="8"/>
+      <rect fill="#07101b" x="9" y="15" width="3" height="8"/>
+      <rect fill="#3c6a78" x="3" y="22" width="4" height="2"/>
+      <rect fill="#3c6a78" x="9" y="22" width="4" height="2"/>
+      <rect fill="#5a243f" x="2" y="8" width="2" height="7"/>
+    </svg>
   </div>
   <div class="car"></div>
 
@@ -4524,7 +4569,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.23"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.24"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -4582,7 +4627,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.23"
+                                "Terminus-Umbrel-Client/0.2.24"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -4968,7 +5013,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.23"
+                                "Terminus-Umbrel-Client/0.2.24"
                         }
                     )
 
