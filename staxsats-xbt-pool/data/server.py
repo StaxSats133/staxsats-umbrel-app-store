@@ -44,7 +44,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.20"
+RELEASE_VERSION = "0.2.21"
 COLLECTOR_PATH = os.environ.get(
     "TERMINUS_COLLECTOR_PATH",
     "/api/local-stats"
@@ -2712,7 +2712,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.20</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.21</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -3268,11 +3268,17 @@ function updateWindowBitcoin(progress,work,target){
     ? Math.min(100,Math.max(0,numeric))
     : 0;
   windowBitcoinProgress=bounded;
-  const travel=window.matchMedia("(max-width:520px)").matches?75:150;
+  const progressRatio=bounded/100;
+  const mobileRise=window.matchMedia("(max-width:520px)").matches;
+  const visualProgress=bounded<=0
+    ? 0
+    : Math.pow(progressRatio,mobileRise?.45:.65)*100;
+  const travel=mobileRise?75:150;
   coin.style.setProperty(
     "--bitcoin-offset",
-    ((1-bounded/100)*travel).toFixed(2)+"px"
+    ((1-visualProgress/100)*travel).toFixed(2)+"px"
   );
+  coin.dataset.visualProgress=visualProgress.toFixed(2);
   coin.style.filter=
     `drop-shadow(0 0 ${(14+bounded*.22).toFixed(1)}px rgba(255,154,46,${(.42+bounded*.004).toFixed(2)}))`;
   const label=
@@ -3321,49 +3327,93 @@ function injectVisualFx(){
         opacity:.9;
     }
     .skyMoonGlow{
+        display:block !important;
         position:absolute;
-        right:68px;
-        top:54px;
-        width:118px;
-        height:118px;
-        border-radius:50%;
+        right:32px !important;
+        top:20px !important;
+        width:90px !important;
+        height:90px !important;
+        border-radius:0 !important;
         background:radial-gradient(circle,
-            rgba(67,245,255,.18) 0%,
-            rgba(170,114,255,.10) 42%,
-            rgba(0,0,0,0) 72%);
-        filter:blur(12px);
-        animation:moonGlow 5.5s ease-in-out infinite;
+            rgba(67,245,255,.16) 0%,
+            rgba(170,114,255,.08) 42%,
+            rgba(0,0,0,0) 72%) !important;
+        filter:blur(9px);
+        animation:moonGlow 5.5s steps(4,end) infinite;
     }
     .skyMoon{
+        display:block !important;
         position:absolute;
-        right:84px;
-        top:66px;
-        width:78px;
-        height:78px;
-        border-radius:50%;
-        background:
-            radial-gradient(circle at 30% 30%,
-                rgba(255,255,255,.92) 0%,
-                rgba(226,245,255,.92) 32%,
-                rgba(165,218,255,.78) 68%,
-                rgba(98,176,255,.56) 100%);
-        box-shadow:
-            0 0 18px rgba(67,245,255,.35),
-            0 0 42px rgba(170,114,255,.18);
-        opacity:.92;
+        right:54px !important;
+        top:40px !important;
+        width:46px !important;
+        height:54px !important;
+        border-radius:0 !important;
+        overflow:hidden !important;
+        clip-path:polygon(
+            30% 0,70% 0,70% 7%,83% 7%,83% 15%,91% 15%,91% 28%,100% 28%,
+            100% 72%,91% 72%,91% 85%,83% 85%,83% 93%,70% 93%,70% 100%,
+            30% 100%,30% 93%,17% 93%,17% 85%,9% 85%,9% 72%,0 72%,0 28%,
+            9% 28%,9% 15%,17% 15%,17% 7%,30% 7%
+        ) !important;
+        background:linear-gradient(135deg,#f4ffff 0 28%,#b9edff 28% 68%,#63b9ee 68%) !important;
+        box-shadow:none !important;
+        filter:drop-shadow(0 0 5px rgba(67,245,255,.72)) drop-shadow(0 0 12px rgba(170,114,255,.32));
+        opacity:.96 !important;
+        image-rendering:pixelated;
+    }
+    .skyMoon:before{
+        content:"" !important;
+        position:absolute !important;
+        left:12px !important;
+        top:0 !important;
+        width:46px !important;
+        height:54px !important;
+        border-radius:0 !important;
+        clip-path:inherit !important;
+        background:linear-gradient(180deg,#07101d,#091020) !important;
+        box-shadow:none !important;
+        z-index:3 !important;
     }
     .skyMoon:after{
-        content:"";
-        position:absolute;
-        width:26px;
-        height:26px;
-        border-radius:50%;
-        left:20px;
-        top:18px;
-        background:rgba(120,149,160,.15);
-        box-shadow:
-            20px 12px 0 4px rgba(120,149,160,.12),
-            10px 34px 0 1px rgba(120,149,160,.10);
+        content:"" !important;
+        position:absolute !important;
+        width:4px !important;
+        height:4px !important;
+        left:8px !important;
+        top:16px !important;
+        border-radius:0 !important;
+        background:rgba(75,151,194,.55) !important;
+        box-shadow:4px 22px 0 rgba(75,151,194,.42) !important;
+        z-index:2 !important;
+    }
+    @media(max-width:520px){
+        .skyMoonGlow{
+            display:block !important;
+            right:0 !important;
+            top:10px !important;
+            width:64px !important;
+            height:64px !important;
+        }
+        .skyMoon{
+            display:block !important;
+            right:16px !important;
+            top:28px !important;
+            width:32px !important;
+            height:38px !important;
+        }
+        .skyMoon:before{
+            left:8px !important;
+            width:32px !important;
+            height:38px !important;
+        }
+        .skyMoon:after{
+            width:3px !important;
+            height:3px !important;
+            left:6px !important;
+            top:11px !important;
+            box-shadow:3px 15px 0 rgba(75,151,194,.42) !important;
+        }
     }
     .skyStar{
         position:absolute;
@@ -4443,7 +4493,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.20"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.21"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -4501,7 +4551,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.20"
+                                "Terminus-Umbrel-Client/0.2.21"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -4887,7 +4937,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.20"
+                                "Terminus-Umbrel-Client/0.2.21"
                         }
                     )
 
