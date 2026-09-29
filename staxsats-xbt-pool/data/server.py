@@ -44,7 +44,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.25"
+RELEASE_VERSION = "0.2.26"
 COLLECTOR_PATH = os.environ.get(
     "TERMINUS_COLLECTOR_PATH",
     "/api/local-stats"
@@ -956,8 +956,8 @@ h1{
 }
 .roadLamp.left{animation:roadLampLeft 4.8s linear infinite}
 .roadLamp.right{animation:roadLampRight 4.8s linear infinite}
-.roadLamp:nth-child(2){animation-delay:-1.65s}
-.roadLamp:nth-child(3){animation-delay:-3.3s}
+.roadLamp.pair2{animation-delay:-1.6s}
+.roadLamp.pair3{animation-delay:-3.2s}
 .roadLamp:before{
   content:"";position:absolute;top:0;width:18px;height:3px;
   background:linear-gradient(90deg,#173443,#3ea8aa 58%,#101d29);
@@ -2773,7 +2773,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.25</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.26</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -2823,9 +2823,12 @@ a:focus-visible,button:focus-visible,input:focus-visible{
   <div class="horizon"></div>
   <div class="road"></div>
   <div class="roadsideLights" aria-hidden="true">
-    <span class="roadLamp left"></span>
-    <span class="roadLamp right"></span>
-    <span class="roadLamp left"></span>
+    <span class="roadLamp left pair1"></span>
+    <span class="roadLamp right pair1"></span>
+    <span class="roadLamp left pair2"></span>
+    <span class="roadLamp right pair2"></span>
+    <span class="roadLamp left pair3"></span>
+    <span class="roadLamp right pair3"></span>
   </div>
   <div class="hitchhiker" aria-hidden="true">
     <svg class="hitchhikerSprite" viewBox="0 0 16 24" focusable="false">
@@ -4573,7 +4576,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.25"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.26"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -4631,7 +4634,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.25"
+                                "Terminus-Umbrel-Client/0.2.26"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -5017,7 +5020,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.25"
+                                "Terminus-Umbrel-Client/0.2.26"
                         }
                     )
 

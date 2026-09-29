@@ -29,7 +29,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.25")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.26")
         self.assertIn("Sitemap: https://terminuspool.xyz/sitemap.xml", self.server.ROBOTS_TXT)
         self.assertIn("https://terminuspool.xyz/", self.server.SITEMAP_XML)
         self.assertIn("404 // SIGNAL LOST", self.server.NOT_FOUND_HTML)
@@ -42,7 +42,10 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn("moonSprite", self.server.HTML)
         self.assertIn("skyMoonGlow", self.server.HTML)
         self.assertIn('class="roadsideLights"', self.server.HTML)
-        self.assertEqual(self.server.HTML.count('class="roadLamp '), 3)
+        self.assertEqual(self.server.HTML.count('class="roadLamp '), 6)
+        self.assertEqual(self.server.HTML.count("pair1"), 2)
+        self.assertEqual(self.server.HTML.count("pair2"), 3)
+        self.assertEqual(self.server.HTML.count("pair3"), 3)
         self.assertIn("@keyframes roadLampLeft", self.server.HTML)
         self.assertIn("@keyframes roadLampRight", self.server.HTML)
         self.assertNotIn("streetLightPair", self.server.HTML)
