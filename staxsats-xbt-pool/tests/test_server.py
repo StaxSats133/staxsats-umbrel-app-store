@@ -12,6 +12,8 @@ SERVER_PATH = os.path.join(
 def load_server(state_dir):
     os.environ["TERMINUS_STATE_DIR"] = state_dir
     os.environ["TERMINUS_ADMIN_ENABLED"] = "false"
+    os.environ.pop("TERMINUS_TELEMETRY_MODE", None)
+    os.environ.pop("TERMINUS_COLLECTOR_ENABLED", None)
     spec = importlib.util.spec_from_file_location("terminus_server", SERVER_PATH)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -27,7 +29,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.18")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.19")
         self.assertIn("Sitemap: https://terminuspool.xyz/sitemap.xml", self.server.ROBOTS_TXT)
         self.assertIn("https://terminuspool.xyz/", self.server.SITEMAP_XML)
         self.assertIn("404 // SIGNAL LOST", self.server.NOT_FOUND_HTML)
@@ -62,6 +64,19 @@ class TerminusServerTests(unittest.TestCase):
 
     def test_admin_disabled_by_default(self):
         self.assertFalse(self.server.ADMIN_ENABLED)
+
+    def test_community_install_uses_public_telemetry(self):
+        self.assertFalse(self.server.OWNER_INSTANCE)
+        self.assertFalse(self.server.LOCAL_TELEMETRY_ENABLED)
+        self.assertFalse(self.server.COLLECTOR_ENABLED)
+
+    def test_owner_marker_enables_local_telemetry(self):
+        with tempfile.TemporaryDirectory() as state_dir:
+            open(os.path.join(state_dir, "owner-admin.enabled"), "w").close()
+            server = load_server(state_dir)
+            self.assertTrue(server.OWNER_INSTANCE)
+            self.assertTrue(server.LOCAL_TELEMETRY_ENABLED)
+            self.assertTrue(server.COLLECTOR_ENABLED)
 
 
 if __name__ == "__main__":

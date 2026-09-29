@@ -25,6 +25,16 @@ STATE_DIR = os.environ.get(
     "TERMINUS_STATE_DIR",
     os.path.join(os.path.dirname(__file__), "state")
 )
+OWNER_MARKER_PATH = os.path.join(STATE_DIR, "owner-admin.enabled")
+TELEMETRY_MODE = os.environ.get(
+    "TERMINUS_TELEMETRY_MODE",
+    "auto"
+).strip().lower()
+OWNER_INSTANCE = (
+    TELEMETRY_MODE == "local" or
+    os.path.isfile(OWNER_MARKER_PATH)
+)
+LOCAL_TELEMETRY_ENABLED = OWNER_INSTANCE
 HISTORY_DB = os.path.join(STATE_DIR, "terminus-history.sqlite3")
 HISTORY_LOCK = threading.Lock()
 HISTORY_RETENTION_SECONDS = 8 * 24 * 60 * 60
@@ -34,20 +44,20 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.18"
+RELEASE_VERSION = "0.2.19"
 COLLECTOR_PATH = os.environ.get(
     "TERMINUS_COLLECTOR_PATH",
     "/api/local-stats"
 )
 COLLECTOR_ENABLED = os.environ.get(
     "TERMINUS_COLLECTOR_ENABLED",
-    "true"
+    "true" if OWNER_INSTANCE else "false"
 ).lower() not in ("0", "false", "no")
 ADMIN_ENABLED = os.environ.get(
     "TERMINUS_ADMIN_ENABLED",
     "false"
 ).lower() in ("1", "true", "yes") or os.path.isfile(
-    os.path.join(STATE_DIR, "owner-admin.enabled")
+    OWNER_MARKER_PATH
 )
 
 ROBOTS_TXT = """User-agent: *
@@ -2648,7 +2658,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.18</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.19</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -4317,7 +4327,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.18"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.19"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -4354,6 +4364,57 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if parsed.path in ("/api/stats", "/api/local-stats"):
+
+            # Community Store installs are public Terminus clients, not
+            # authoritative pool collectors. Always use the public relay on
+            # those installs, even if an unrelated or empty service happens
+            # to answer on the conventional local RATUM port. The owner's Pi
+            # is identified by its durable private marker (or an explicit
+            # local telemetry override) and continues to read RATUM directly.
+            if (
+                parsed.path == "/api/stats" and
+                not LOCAL_TELEMETRY_ENABLED
+            ):
+                try:
+                    query = urllib.parse.parse_qs(parsed.query)
+                    response_view = query.get("view", [""])[0]
+                    public_url = PUBLIC_STATS
+                    if parsed.query:
+                        public_url += "?" + parsed.query
+                    req = urllib.request.Request(
+                        public_url,
+                        headers={
+                            "User-Agent":
+                                "Terminus-Umbrel-Client/0.2.19"
+                        }
+                    )
+                    with urllib.request.urlopen(req, timeout=8) as response:
+                        public_data = json.load(response)
+                    if response_view == "live":
+                        public_data.pop("history24h", None)
+                        public_data.pop("hashHistory", None)
+                    elif response_view == "history":
+                        public_data = {
+                            "generatedAt": public_data.get(
+                                "lastUpdated", int(time.time())
+                            ),
+                            "history24h": public_data.get("history24h", []),
+                            "hashHistory": public_data.get("hashHistory", []),
+                            "historySummary": public_data.get(
+                                "historySummary", {}
+                            ),
+                            "historyPersistent": public_data.get(
+                                "historyPersistent", False
+                            ),
+                        }
+                    public_data["dataSource"] = "public-relay"
+                    self.send_json(public_data)
+                except Exception:
+                    self.send_json(
+                        {"error": "public stats unavailable"},
+                        502
+                    )
+                return
 
             try:
 
@@ -4704,7 +4765,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.18"
+                                "Terminus-Umbrel-Client/0.2.19"
                         }
                     )
 
