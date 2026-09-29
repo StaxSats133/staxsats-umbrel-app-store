@@ -29,10 +29,19 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.19")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.20")
         self.assertIn("Sitemap: https://terminuspool.xyz/sitemap.xml", self.server.ROBOTS_TXT)
         self.assertIn("https://terminuspool.xyz/", self.server.SITEMAP_XML)
         self.assertIn("404 // SIGNAL LOST", self.server.NOT_FOUND_HTML)
+        self.assertIn('id="windowBitcoin"', self.server.HTML)
+        self.assertNotIn('class="sun"', self.server.HTML)
+
+    def test_window_work_progress_is_bounded(self):
+        self.assertEqual(self.server.window_work_progress(0, 0), 0)
+        self.assertEqual(self.server.window_work_progress(50, 100), 50)
+        self.assertEqual(self.server.window_work_progress(100, 100), 100)
+        self.assertEqual(self.server.window_work_progress(150, 100), 100)
+        self.assertEqual(self.server.window_work_progress(-5, 100), 0)
 
     def test_history_summary_and_points(self):
         self.server.record_history({

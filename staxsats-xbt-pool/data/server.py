@@ -44,7 +44,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.19"
+RELEASE_VERSION = "0.2.20"
 COLLECTOR_PATH = os.environ.get(
     "TERMINUS_COLLECTOR_PATH",
     "/api/local-stats"
@@ -663,6 +663,15 @@ def work_reward(work, target_work, is_leader=False):
     }
 
 
+def window_work_progress(work, target_work):
+    """Return bounded aggregate payout-window completion percentage."""
+    work_value = max(0.0, _number(work, 0))
+    target_value = max(0.0, _number(target_work, 0))
+    if target_value <= 0:
+        return 0.0
+    return min(100.0, (work_value / target_value) * 100.0)
+
+
 def load_admin_snapshot(reveal=False):
     """Return read-only per-account telemetry from RATUM Prime."""
     with urllib.request.urlopen(PRIME, timeout=2.5) as response:
@@ -868,13 +877,50 @@ h1{
   background-position:13px 17px,71px 34px,122px 8px;
   opacity:.75
 }
-.sun{
-  position:absolute;z-index:2;width:175px;height:175px;
-  left:66%;top:84px;border-radius:50%;
-  background:repeating-linear-gradient(
-    to bottom,#ffcf6b 0,#ffcf6b 13px,#ff7b9d 14px,#ff4fa9 20px,#341d54 21px,#341d54 24px
+.windowBitcoin{
+  --bitcoin-offset:150px;
+  position:absolute;z-index:2;width:164px;height:164px;
+  left:67%;top:52px;
+  transform:translateX(-50%) translateY(var(--bitcoin-offset));
+  transition:transform 1.4s cubic-bezier(.2,.78,.2,1),filter .8s ease;
+  filter:drop-shadow(0 0 14px rgba(255,154,46,.42));
+  will-change:transform;
+}
+.bitcoinPixelFace{
+  position:absolute;inset:0;
+  display:grid;place-items:center;
+  clip-path:polygon(
+    25% 0,75% 0,75% 4%,88% 4%,88% 12%,96% 12%,96% 25%,100% 25%,
+    100% 75%,96% 75%,96% 88%,88% 88%,88% 96%,75% 96%,75% 100%,
+    25% 100%,25% 96%,12% 96%,12% 88%,4% 88%,4% 75%,0 75%,0 25%,
+    4% 25%,4% 12%,12% 12%,12% 4%,25% 4%
   );
-  box-shadow:0 0 50px #ff4fa966
+  background:#a94716;
+  box-shadow:inset 0 0 0 8px #ff8b24;
+}
+.bitcoinPixelFace:before{
+  content:"";position:absolute;inset:12px;
+  clip-path:inherit;
+  background:
+    linear-gradient(135deg,#ffd66b 0 24%,#ffae32 24% 62%,#e6631d 62% 100%);
+  box-shadow:inset 0 0 0 7px rgba(120,43,18,.5)
+}
+.bitcoinPixelFace:after{
+  content:"";position:absolute;
+  width:14px;height:14px;left:34px;top:31px;
+  background:#fff0a0;
+  box-shadow:14px 0 #ffe37b,0 14px #ffd260;
+  opacity:.72
+}
+.bitcoinGlyph{
+  position:relative;z-index:1;width:94px;height:116px;
+  shape-rendering:crispEdges;
+  filter:drop-shadow(5px 5px 0 rgba(100,37,20,.42));
+}
+.bitcoinGlyph rect{fill:#fff2b0}
+.mountainGround{
+  position:absolute;z-index:3;left:0;right:0;bottom:0;height:94px;
+  background:linear-gradient(180deg,#08152d 0,#071124 38%,#050a16 100%)
 }
 .mountainBack,.mountainFront{
   position:absolute;left:-3%;width:106%;bottom:92px;z-index:4;
@@ -1366,7 +1412,14 @@ footer{
   .hero{height:300px}
   .heroTitle{font-size:28px}
   .heroSub{font-size:10px}
-  .sun{width:105px;height:105px;top:72px;left:65%}
+  .windowBitcoin{
+    width:100px;height:100px;top:70px;left:82%;
+  }
+  .bitcoinPixelFace{box-shadow:inset 0 0 0 5px #ff8b24}
+  .bitcoinPixelFace:before{inset:8px;box-shadow:inset 0 0 0 4px rgba(120,43,18,.5)}
+  .bitcoinPixelFace:after{width:9px;height:9px;left:23px;top:20px;box-shadow:9px 0 #ffe37b,0 9px #ffd260}
+  .bitcoinGlyph{width:58px;height:72px;filter:drop-shadow(3px 3px 0 rgba(100,37,20,.42))}
+  .mountainGround{height:72px}
   .mountainBack{
     height:112px;bottom:89px;
     clip-path:polygon(0 78%,10% 58%,23% 68%,36% 49%,49% 69%,62% 52%,76% 70%,89% 55%,100% 66%,100% 100%,0 100%)
@@ -1963,10 +2016,7 @@ body{
         font-size:clamp(38px,5.5vw,56px) !important;
     }
 
-    .sun{
-        right:auto !important;
-        left:66% !important;
-    }
+    .windowBitcoin{left:67% !important;}
 
     .poolHashrateGraph{
         min-height:265px !important;
@@ -1975,6 +2025,10 @@ body{
     .graphTop{
         gap:12px !important;
     }
+}
+
+@media(max-width:520px){
+    .skyMoon,.skyMoonGlow{display:none !important;}
 }
 
 /* very narrow desktop / tablet */
@@ -2658,7 +2712,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.19</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.20</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -2675,7 +2729,21 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 <main id="mainContent">
 <section class="hero" aria-labelledby="heroTitle">
   <div class="stars"></div>
-  <div class="sun"></div>
+  <div class="windowBitcoin" id="windowBitcoin" role="img" aria-label="Current payout window work progress: waiting for telemetry">
+    <div class="bitcoinPixelFace" aria-hidden="true">
+      <svg class="bitcoinGlyph" viewBox="0 0 16 20" aria-hidden="true" focusable="false">
+        <rect x="6" y="1" width="2" height="18"/>
+        <rect x="9" y="1" width="2" height="3"/>
+        <rect x="9" y="16" width="2" height="3"/>
+        <rect x="4" y="3" width="7" height="3"/>
+        <rect x="4" y="8" width="8" height="3"/>
+        <rect x="4" y="14" width="7" height="3"/>
+        <rect x="10" y="5" width="3" height="4"/>
+        <rect x="11" y="10" width="3" height="5"/>
+      </svg>
+    </div>
+  </div>
+  <div class="mountainGround"></div>
   <div class="mountainBack"></div>
   <div class="mountainFront"></div>
   <div class="horizon"></div>
@@ -3187,6 +3255,40 @@ function historyMetric(label,value){
     <div class="value">${value}</div>
   </div>`;
 }
+
+let windowBitcoinProgress=0;
+let windowBitcoinLastWork=0;
+let windowBitcoinLastTarget=0;
+
+function updateWindowBitcoin(progress,work,target){
+  const coin=$("windowBitcoin");
+  if(!coin)return;
+  const numeric=Number(progress);
+  const bounded=Number.isFinite(numeric)
+    ? Math.min(100,Math.max(0,numeric))
+    : 0;
+  windowBitcoinProgress=bounded;
+  const travel=window.matchMedia("(max-width:520px)").matches?75:150;
+  coin.style.setProperty(
+    "--bitcoin-offset",
+    ((1-bounded/100)*travel).toFixed(2)+"px"
+  );
+  coin.style.filter=
+    `drop-shadow(0 0 ${(14+bounded*.22).toFixed(1)}px rgba(255,154,46,${(.42+bounded*.004).toFixed(2)}))`;
+  const label=
+    `Current payout window work progress: ${bounded.toFixed(2)}%. `+
+    `${compact(work||0)} of ${compact(target||0)} target work.`;
+  coin.setAttribute("aria-label",label);
+  coin.title=label;
+}
+
+window.addEventListener("resize",()=>{
+  updateWindowBitcoin(
+    windowBitcoinProgress,
+    windowBitcoinLastWork,
+    windowBitcoinLastTarget
+  );
+});
 
 
 function injectVisualFx(){
@@ -3837,6 +3939,20 @@ async function refresh(){
     const d=await r.json();
     const ready=String(d.status||"").includes("Ready");
 
+    windowBitcoinLastWork=d.windowWork||0;
+    windowBitcoinLastTarget=d.workTarget||0;
+    const reportedWindowProgress=Number(d.windowProgressPercent);
+    const fallbackWindowProgress=Number(windowBitcoinLastTarget)>0
+      ? Number(windowBitcoinLastWork)/Number(windowBitcoinLastTarget)*100
+      : 0;
+    updateWindowBitcoin(
+      Number.isFinite(reportedWindowProgress)
+        ? reportedWindowProgress
+        : fallbackWindowProgress,
+      windowBitcoinLastWork,
+      windowBitcoinLastTarget
+    );
+
     const pubkey=d.primePubkey||"";
     const payoutScript=d.poolPayoutScript||"";
     const tag=d.coinbaseTag||"";
@@ -4327,7 +4443,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.19"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.20"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -4385,7 +4501,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.19"
+                                "Terminus-Umbrel-Client/0.2.20"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -4621,6 +4737,12 @@ class Handler(BaseHTTPRequestHandler):
                     "windowWork":
                         window.get("work","0"),
 
+                    "windowProgressPercent":
+                        window_work_progress(
+                            window.get("work", 0),
+                            target_window_work
+                        ),
+
                     "identity":
                         miner.get("identity",""),
 
@@ -4765,7 +4887,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.19"
+                                "Terminus-Umbrel-Client/0.2.20"
                         }
                     )
 
