@@ -44,7 +44,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.24"
+RELEASE_VERSION = "0.2.25"
 COLLECTOR_PATH = os.environ.get(
     "TERMINUS_COLLECTOR_PATH",
     "/api/local-stats"
@@ -973,11 +973,12 @@ h1{
 .roadLamp.left:after{left:11px}
 .roadLamp.right:after{right:11px}
 .hitchhiker{
-  position:absolute;z-index:11;left:calc(50% + 96px);bottom:67px;
+  position:absolute;z-index:11;left:50%;bottom:76px;
   width:28px;height:44px;opacity:0;pointer-events:none;
+  transform-origin:50% 100%;will-change:transform,opacity;
   image-rendering:pixelated;
   filter:drop-shadow(0 0 3px rgba(60,239,220,.42)) drop-shadow(4px 3px 0 rgba(0,0,0,.45));
-  animation:hitchhikerVisit 29s steps(1,end) 4s infinite
+  animation:hitchhikerPass 360s linear 180s infinite
 }
 .hitchhikerSprite{
   display:block;width:100%;height:100%;overflow:visible;
@@ -1038,9 +1039,12 @@ h1{
   100%{opacity:0;transform:translate(245px,178px) scale(1.55)}
 }
 
-@keyframes hitchhikerVisit{
-  0%,14%{opacity:.96;transform:translateY(0)}
-  15%,100%{opacity:0;transform:translateY(2px)}
+@keyframes hitchhikerPass{
+  0%{opacity:0;transform:translate(18px,0) scale(.1)}
+  .08%{opacity:.25}
+  .72%{opacity:.96}
+  1.42%{opacity:.96}
+  1.6%,100%{opacity:0;transform:translate(245px,178px) scale(1.55)}
 }
 
 @keyframes hitchThumbWave{
@@ -1485,7 +1489,7 @@ footer{
   }
   .road{left:15%;right:15%;height:129px}
   .roadLamp{height:48px}
-  .hitchhiker{left:calc(50% + 65px);bottom:62px;width:22px;height:35px}
+  .hitchhiker{left:50%;bottom:76px;width:22px;height:35px}
   .car{width:94px;height:34px;bottom:14px}
   .grid6,.grid5,.grid4{grid-template-columns:repeat(2,1fr)}
   .card{min-height:100px;padding:14px}
@@ -2769,7 +2773,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.24</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.25</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -4569,7 +4573,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.24"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.25"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -4627,7 +4631,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.24"
+                                "Terminus-Umbrel-Client/0.2.25"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -5013,7 +5017,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.24"
+                                "Terminus-Umbrel-Client/0.2.25"
                         }
                     )
 

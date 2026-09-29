@@ -4,7 +4,7 @@ name: Terminus Pool
 tagline: The last word in mining
 icon: https://raw.githubusercontent.com/StaxSats133/staxsats-umbrel-app-store/main/staxsats-xbt-pool/icon.svg
 category: bitcoin
-version: "0.2.24"
+version: "0.2.25"
 port: 8081
 description: >-
   Terminus Pool is an XBT BLAKE2b mining pool dashboard for RATUM Prime and DATUM.
@@ -19,8 +19,9 @@ repo: https://github.com/StaxSats133/staxsats-umbrel-app-store
 support: https://github.com/StaxSats133/staxsats-umbrel-app-store/issues
 gallery: []
 releaseNotes: >-
-  Terminus Pool v0.2.24 adds a rare 16-bit roadside hitchhiker Easter egg with
-  a tiny animated thumb, safe car clearance, and reduced-motion accessibility.
+  Terminus Pool v0.2.25 turns the roadside hitchhiker into a true perspective
+  pass-by Easter egg, appearing ten times per hour with no page-load appearance,
+  safe car layering, and reduced-motion accessibility.
 dependencies: []
 path: ""
 defaultUsername: ""
