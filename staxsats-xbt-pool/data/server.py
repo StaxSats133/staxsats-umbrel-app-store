@@ -44,7 +44,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.21"
+RELEASE_VERSION = "0.2.22"
 COLLECTOR_PATH = os.environ.get(
     "TERMINUS_COLLECTOR_PATH",
     "/api/local-stats"
@@ -879,45 +879,31 @@ h1{
 }
 .windowBitcoin{
   --bitcoin-offset:150px;
+  --bitcoin-glow-alpha:.52;
+  --bitcoin-glow-scale:1;
   position:absolute;z-index:2;width:164px;height:164px;
-  left:67%;top:52px;
+  left:62%;top:52px;
   transform:translateX(-50%) translateY(var(--bitcoin-offset));
-  transition:transform 1.4s cubic-bezier(.2,.78,.2,1),filter .8s ease;
-  filter:drop-shadow(0 0 14px rgba(255,154,46,.42));
+  transition:transform 1.4s cubic-bezier(.2,.78,.2,1);
   will-change:transform;
 }
-.bitcoinPixelFace{
-  position:absolute;inset:0;
-  display:grid;place-items:center;
-  clip-path:polygon(
-    25% 0,75% 0,75% 4%,88% 4%,88% 12%,96% 12%,96% 25%,100% 25%,
-    100% 75%,96% 75%,96% 88%,88% 88%,88% 96%,75% 96%,75% 100%,
-    25% 100%,25% 96%,12% 96%,12% 88%,4% 88%,4% 75%,0 75%,0 25%,
-    4% 25%,4% 12%,12% 12%,12% 4%,25% 4%
-  );
-  background:#a94716;
-  box-shadow:inset 0 0 0 8px #ff8b24;
+.bitcoinGlow{
+  position:absolute;z-index:0;inset:-32%;pointer-events:none;
+  background:radial-gradient(circle,
+    rgba(255,211,92,var(--bitcoin-glow-alpha)) 0 18%,
+    rgba(255,126,36,.24) 38%,
+    rgba(255,68,166,.09) 56%,transparent 72%);
+  filter:blur(9px);
+  transform:scale(var(--bitcoin-glow-scale));
+  transition:opacity .8s ease,transform .8s ease;
+  animation:bitcoinGlowPulse 3.4s steps(8,end) infinite
 }
-.bitcoinPixelFace:before{
-  content:"";position:absolute;inset:12px;
-  clip-path:inherit;
-  background:
-    linear-gradient(135deg,#ffd66b 0 24%,#ffae32 24% 62%,#e6631d 62% 100%);
-  box-shadow:inset 0 0 0 7px rgba(120,43,18,.5)
+.bitcoinSprite{
+  position:absolute;z-index:1;inset:0;width:100%;height:100%;
+  overflow:visible;image-rendering:pixelated;shape-rendering:crispEdges;
+  filter:drop-shadow(5px 6px 0 rgba(91,32,10,.66))
+         drop-shadow(0 0 5px rgba(255,190,69,.72))
 }
-.bitcoinPixelFace:after{
-  content:"";position:absolute;
-  width:14px;height:14px;left:34px;top:31px;
-  background:#fff0a0;
-  box-shadow:14px 0 #ffe37b,0 14px #ffd260;
-  opacity:.72
-}
-.bitcoinGlyph{
-  position:relative;z-index:1;width:94px;height:116px;
-  shape-rendering:crispEdges;
-  filter:drop-shadow(5px 5px 0 rgba(100,37,20,.42));
-}
-.bitcoinGlyph rect{fill:#fff2b0}
 .mountainGround{
   position:absolute;z-index:3;left:0;right:0;bottom:0;height:94px;
   background:linear-gradient(180deg,#08152d 0,#071124 38%,#050a16 100%)
@@ -958,6 +944,40 @@ h1{
   content:"";position:absolute;inset:0;
   background:linear-gradient(90deg,#00ffe522,transparent 22%,transparent 78%,#00ffe522)
 }
+.streetlights{
+  --lamp-spread:120px;
+  position:absolute;z-index:10;inset:0;overflow:hidden;pointer-events:none
+}
+.streetLightPair{
+  position:absolute;left:50%;bottom:76px;width:1px;height:1px;
+  opacity:0;transform-origin:50% 100%;
+  animation:streetlightRush 3.2s linear infinite;
+  will-change:transform,opacity
+}
+.streetLightPair:nth-child(2){animation-delay:-.8s}
+.streetLightPair:nth-child(3){animation-delay:-1.6s}
+.streetLightPair:nth-child(4){animation-delay:-2.4s}
+.streetLamp{
+  position:absolute;bottom:0;width:5px;height:58px;
+  background:linear-gradient(90deg,#07101d 0 20%,#4ae8e7 20% 42%,#102739 42% 100%);
+  border-bottom:4px solid #07101d;
+  box-shadow:2px 0 0 #09111d,-2px 0 0 rgba(68,236,236,.24)
+}
+.streetLamp.left{right:var(--lamp-spread)}
+.streetLamp.right{left:var(--lamp-spread);transform:scaleX(-1)}
+.streetLamp:before{
+  content:"";position:absolute;top:0;right:0;width:23px;height:5px;
+  background:linear-gradient(#45d6dc 0 40%,#102738 40% 100%);
+  box-shadow:-3px 4px 0 #08111d
+}
+.streetLamp:after{
+  content:"";position:absolute;top:4px;right:17px;width:10px;height:6px;
+  background:#fff1a3;
+  box-shadow:
+    0 0 0 2px #32cfda,
+    0 0 8px 4px rgba(72,246,255,.72),
+    0 0 22px 9px rgba(255,213,105,.2)
+}
 .car{
   position:absolute;z-index:12;left:50%;bottom:16px;
   transform:translateX(-50%);
@@ -996,15 +1016,28 @@ h1{
   to{background-position:0 27px}
 }
 
+@keyframes streetlightRush{
+  0%{opacity:0;transform:translateX(-50%) translateY(0) scale(.11)}
+  8%{opacity:.35}
+  72%{opacity:.94}
+  100%{opacity:0;transform:translateX(-50%) translateY(190px) scale(1.42)}
+}
+
+@keyframes bitcoinGlowPulse{
+  0%,100%{opacity:.72}
+  50%{opacity:1}
+}
+
 @keyframes tailPulse{
   0%,100%{opacity:.78;filter:brightness(.9)}
   50%{opacity:1;filter:brightness(1.35)}
 }
 
 @media(prefers-reduced-motion:reduce){
-  .car,.car:before,.car:after,.road:before{
+  .car,.car:before,.car:after,.road:before,.streetLightPair,.bitcoinGlow{
     animation:none !important
   }
+  .streetLightPair{display:none}
 }
 
 .sectionTitle{
@@ -1413,12 +1446,9 @@ footer{
   .heroTitle{font-size:28px}
   .heroSub{font-size:10px}
   .windowBitcoin{
-    width:100px;height:100px;top:70px;left:82%;
+    width:104px;height:104px;top:70px;left:78%;
   }
-  .bitcoinPixelFace{box-shadow:inset 0 0 0 5px #ff8b24}
-  .bitcoinPixelFace:before{inset:8px;box-shadow:inset 0 0 0 4px rgba(120,43,18,.5)}
-  .bitcoinPixelFace:after{width:9px;height:9px;left:23px;top:20px;box-shadow:9px 0 #ffe37b,0 9px #ffd260}
-  .bitcoinGlyph{width:58px;height:72px;filter:drop-shadow(3px 3px 0 rgba(100,37,20,.42))}
+  .bitcoinSprite{filter:drop-shadow(3px 4px 0 rgba(91,32,10,.66)) drop-shadow(0 0 4px rgba(255,190,69,.72))}
   .mountainGround{height:72px}
   .mountainBack{
     height:112px;bottom:89px;
@@ -1429,6 +1459,8 @@ footer{
     clip-path:polygon(0 72%,13% 57%,27% 69%,40% 53%,54% 72%,67% 56%,81% 69%,92% 58%,100% 66%,100% 100%,0 100%)
   }
   .road{left:15%;right:15%;height:129px}
+  .streetlights{--lamp-spread:72px}
+  .streetLamp{height:48px}
   .car{width:94px;height:34px;bottom:14px}
   .grid6,.grid5,.grid4{grid-template-columns:repeat(2,1fr)}
   .card{min-height:100px;padding:14px}
@@ -2712,7 +2744,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.21</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.22</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -2730,24 +2762,43 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 <section class="hero" aria-labelledby="heroTitle">
   <div class="stars"></div>
   <div class="windowBitcoin" id="windowBitcoin" role="img" aria-label="Current payout window work progress: waiting for telemetry">
-    <div class="bitcoinPixelFace" aria-hidden="true">
-      <svg class="bitcoinGlyph" viewBox="0 0 16 20" aria-hidden="true" focusable="false">
-        <rect x="6" y="1" width="2" height="18"/>
-        <rect x="9" y="1" width="2" height="3"/>
-        <rect x="9" y="16" width="2" height="3"/>
-        <rect x="4" y="3" width="7" height="3"/>
-        <rect x="4" y="8" width="8" height="3"/>
-        <rect x="4" y="14" width="7" height="3"/>
-        <rect x="10" y="5" width="3" height="4"/>
-        <rect x="11" y="10" width="3" height="5"/>
+    <div class="bitcoinGlow" aria-hidden="true"></div>
+    <svg class="bitcoinSprite" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+      <path fill="#7a2709" d="M10 0h12v2h4v2h2v3h2v5h2v8h-2v5h-2v3h-2v2h-4v2H10v-2H6v-2H4v-3H2v-5H0v-8h2V7h2V4h2V2h4z"/>
+      <path fill="#d95412" d="M10 2h12v2h4v3h2v5h2v8h-2v5h-2v3h-4v2H10v-2H6v-3H4v-5H2v-8h2V7h2V4h4z"/>
+      <path fill="#f7931a" d="M10 4h12v2h4v4h2v12h-2v4h-4v2H10v-2H6v-4H4V10h2V6h4z"/>
+      <path fill="#ffbd3f" d="M10 6h10v2h4v4h2v8h-2v4h-4v2H10v-2H8v-3H6V12h2V8h2z"/>
+      <path fill="#ffe18a" d="M10 7h8v2h-5v2H9v8H7v-7h2V9h1z"/>
+      <path fill="#c84c10" d="M24 12h2v8h-2v4h-4v2h-5v-2h5v-2h2v-4h2z"/>
+      <g fill="#fff4b0">
+        <rect x="13" y="7" width="2" height="19"/>
+        <rect x="17" y="7" width="2" height="4"/>
+        <rect x="17" y="22" width="2" height="4"/>
+        <rect x="10" y="10" width="10" height="3"/>
+        <rect x="10" y="15" width="11" height="3"/>
+        <rect x="10" y="21" width="10" height="3"/>
+        <rect x="19" y="12" width="3" height="4"/>
+        <rect x="20" y="17" width="3" height="5"/>
+      </g>
+      <g fill="#ffd66b">
+        <rect x="10" y="13" width="3" height="2"/>
+        <rect x="10" y="18" width="3" height="3"/>
+        <rect x="19" y="10" width="2" height="2"/>
+      </g>
+      <g fill="#fff8d4"><rect x="9" y="8" width="2" height="2"/><rect x="7" y="11" width="2" height="4"/></g>
       </svg>
-    </div>
   </div>
   <div class="mountainGround"></div>
   <div class="mountainBack"></div>
   <div class="mountainFront"></div>
   <div class="horizon"></div>
   <div class="road"></div>
+  <div class="streetlights" aria-hidden="true">
+    <div class="streetLightPair"><span class="streetLamp left"></span><span class="streetLamp right"></span></div>
+    <div class="streetLightPair"><span class="streetLamp left"></span><span class="streetLamp right"></span></div>
+    <div class="streetLightPair"><span class="streetLamp left"></span><span class="streetLamp right"></span></div>
+    <div class="streetLightPair"><span class="streetLamp left"></span><span class="streetLamp right"></span></div>
+  </div>
   <div class="car"></div>
 
   <div class="heroText">
@@ -3279,8 +3330,14 @@ function updateWindowBitcoin(progress,work,target){
     ((1-visualProgress/100)*travel).toFixed(2)+"px"
   );
   coin.dataset.visualProgress=visualProgress.toFixed(2);
-  coin.style.filter=
-    `drop-shadow(0 0 ${(14+bounded*.22).toFixed(1)}px rgba(255,154,46,${(.42+bounded*.004).toFixed(2)}))`;
+  coin.style.setProperty(
+    "--bitcoin-glow-alpha",
+    Math.min(.82,.48+bounded*.0034).toFixed(2)
+  );
+  coin.style.setProperty(
+    "--bitcoin-glow-scale",
+    (1+bounded*.0018).toFixed(2)
+  );
   const label=
     `Current payout window work progress: ${bounded.toFixed(2)}%. `+
     `${compact(work||0)} of ${compact(target||0)} target work.`;
@@ -3329,90 +3386,54 @@ function injectVisualFx(){
     .skyMoonGlow{
         display:block !important;
         position:absolute;
-        right:32px !important;
-        top:20px !important;
-        width:90px !important;
-        height:90px !important;
+        right:-8px !important;
+        top:6px !important;
+        width:132px !important;
+        height:132px !important;
         border-radius:0 !important;
         background:radial-gradient(circle,
-            rgba(67,245,255,.16) 0%,
-            rgba(170,114,255,.08) 42%,
+            rgba(186,244,255,.34) 0 12%,
+            rgba(67,245,255,.19) 30%,
+            rgba(170,114,255,.10) 50%,
             rgba(0,0,0,0) 72%) !important;
         filter:blur(9px);
-        animation:moonGlow 5.5s steps(4,end) infinite;
+        animation:moonGlow 5.5s steps(8,end) infinite;
     }
     .skyMoon{
         display:block !important;
         position:absolute;
-        right:54px !important;
-        top:40px !important;
-        width:46px !important;
-        height:54px !important;
+        right:18px !important;
+        top:34px !important;
+        width:76px !important;
+        height:76px !important;
         border-radius:0 !important;
-        overflow:hidden !important;
-        clip-path:polygon(
-            30% 0,70% 0,70% 7%,83% 7%,83% 15%,91% 15%,91% 28%,100% 28%,
-            100% 72%,91% 72%,91% 85%,83% 85%,83% 93%,70% 93%,70% 100%,
-            30% 100%,30% 93%,17% 93%,17% 85%,9% 85%,9% 72%,0 72%,0 28%,
-            9% 28%,9% 15%,17% 15%,17% 7%,30% 7%
-        ) !important;
-        background:linear-gradient(135deg,#f4ffff 0 28%,#b9edff 28% 68%,#63b9ee 68%) !important;
+        overflow:visible !important;
+        clip-path:none !important;
+        background:transparent !important;
         box-shadow:none !important;
-        filter:drop-shadow(0 0 5px rgba(67,245,255,.72)) drop-shadow(0 0 12px rgba(170,114,255,.32));
-        opacity:.96 !important;
+        filter:drop-shadow(4px 5px 0 rgba(19,42,69,.68)) drop-shadow(0 0 7px rgba(130,224,255,.72));
+        opacity:1 !important;
         image-rendering:pixelated;
     }
-    .skyMoon:before{
-        content:"" !important;
-        position:absolute !important;
-        left:12px !important;
-        top:0 !important;
-        width:46px !important;
-        height:54px !important;
-        border-radius:0 !important;
-        clip-path:inherit !important;
-        background:linear-gradient(180deg,#07101d,#091020) !important;
-        box-shadow:none !important;
-        z-index:3 !important;
-    }
-    .skyMoon:after{
-        content:"" !important;
-        position:absolute !important;
-        width:4px !important;
-        height:4px !important;
-        left:8px !important;
-        top:16px !important;
-        border-radius:0 !important;
-        background:rgba(75,151,194,.55) !important;
-        box-shadow:4px 22px 0 rgba(75,151,194,.42) !important;
-        z-index:2 !important;
+    .skyMoon:before,.skyMoon:after{display:none !important}
+    .moonSprite{
+        display:block;width:100%;height:100%;overflow:visible;
+        image-rendering:pixelated;shape-rendering:crispEdges
     }
     @media(max-width:520px){
         .skyMoonGlow{
             display:block !important;
-            right:0 !important;
-            top:10px !important;
-            width:64px !important;
-            height:64px !important;
+            right:-2px !important;
+            top:5px !important;
+            width:86px !important;
+            height:86px !important;
         }
         .skyMoon{
             display:block !important;
-            right:16px !important;
-            top:28px !important;
-            width:32px !important;
-            height:38px !important;
-        }
-        .skyMoon:before{
-            left:8px !important;
-            width:32px !important;
-            height:38px !important;
-        }
-        .skyMoon:after{
-            width:3px !important;
-            height:3px !important;
-            left:6px !important;
-            top:11px !important;
-            box-shadow:3px 15px 0 rgba(75,151,194,.42) !important;
+            right:15px !important;
+            top:16px !important;
+            width:46px !important;
+            height:46px !important;
         }
     }
     .skyStar{
@@ -3485,6 +3506,18 @@ function initSkyFx(){
 
     const moon=document.createElement("div");
     moon.className="skyMoon";
+    moon.setAttribute("aria-hidden","true");
+    moon.innerHTML=`
+      <svg class="moonSprite" viewBox="0 0 32 32" focusable="false">
+        <path fill="#173c63" d="M11 1h10v2h4v2h3v4h2v14h-2v4h-3v2h-4v2H11v-2H7v-2H4v-4H2V9h2V5h3V3h4z"/>
+        <path fill="#6fb9df" d="M10 3h9v2h3v2h2v3h2v12h-2v3h-2v2h-3v2h-9v-2H7v-3H5V9h2V6h3z"/>
+        <path fill="#bdeeff" d="M9 5h8v2h-4v2h-3v3H8v10h2v3h3v2H9v-2H7v-3H5V10h2V7h2z"/>
+        <path fill="#efffff" d="M9 7h4v2h-3v3H8v7H6v-8h2V8h1z"/>
+        <path fill="#08101f" d="M17 1h10v2h4v2h3v4h2v14h-2v4h-3v2h-4v2H17v-2h-4v-2h-3v-4H8V9h2V5h3V3h4z"/>
+        <rect fill="#4c8eb8" x="7" y="15" width="2" height="3"/>
+        <rect fill="#77c9e8" x="10" y="23" width="3" height="2"/>
+        <rect fill="#d9f8ff" x="9" y="9" width="2" height="2"/>
+      </svg>`;
     layer.appendChild(moon);
 
     for(let i=0;i<28;i++){
@@ -4493,7 +4526,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.21"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.22"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -4551,7 +4584,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.21"
+                                "Terminus-Umbrel-Client/0.2.22"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -4937,7 +4970,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.21"
+                                "Terminus-Umbrel-Client/0.2.22"
                         }
                     )
 
