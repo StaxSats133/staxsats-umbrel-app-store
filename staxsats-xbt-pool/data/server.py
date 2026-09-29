@@ -44,7 +44,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.22"
+RELEASE_VERSION = "0.2.23"
 COLLECTOR_PATH = os.environ.get(
     "TERMINUS_COLLECTOR_PATH",
     "/api/local-stats"
@@ -944,40 +944,34 @@ h1{
   content:"";position:absolute;inset:0;
   background:linear-gradient(90deg,#00ffe522,transparent 22%,transparent 78%,#00ffe522)
 }
-.streetlights{
-  --lamp-spread:120px;
+.roadsideLights{
   position:absolute;z-index:10;inset:0;overflow:hidden;pointer-events:none
 }
-.streetLightPair{
-  position:absolute;left:50%;bottom:76px;width:1px;height:1px;
-  opacity:0;transform-origin:50% 100%;
-  animation:streetlightRush 3.2s linear infinite;
-  will-change:transform,opacity
+.roadLamp{
+  position:absolute;left:50%;bottom:76px;width:4px;height:66px;
+  opacity:0;transform-origin:50% 100%;will-change:transform,opacity;
+  background:linear-gradient(90deg,#06101c 0 25%,#24515c 25% 50%,#0a1b29 50% 100%);
+  border-bottom:3px solid #050a11;
+  filter:drop-shadow(0 0 2px rgba(67,225,225,.34))
 }
-.streetLightPair:nth-child(2){animation-delay:-.8s}
-.streetLightPair:nth-child(3){animation-delay:-1.6s}
-.streetLightPair:nth-child(4){animation-delay:-2.4s}
-.streetLamp{
-  position:absolute;bottom:0;width:5px;height:58px;
-  background:linear-gradient(90deg,#07101d 0 20%,#4ae8e7 20% 42%,#102739 42% 100%);
-  border-bottom:4px solid #07101d;
-  box-shadow:2px 0 0 #09111d,-2px 0 0 rgba(68,236,236,.24)
+.roadLamp.left{animation:roadLampLeft 4.8s linear infinite}
+.roadLamp.right{animation:roadLampRight 4.8s linear infinite}
+.roadLamp:nth-child(2){animation-delay:-1.65s}
+.roadLamp:nth-child(3){animation-delay:-3.3s}
+.roadLamp:before{
+  content:"";position:absolute;top:0;width:18px;height:3px;
+  background:linear-gradient(90deg,#173443,#3ea8aa 58%,#101d29);
+  box-shadow:0 2px 0 #050a12
 }
-.streetLamp.left{right:var(--lamp-spread)}
-.streetLamp.right{left:var(--lamp-spread);transform:scaleX(-1)}
-.streetLamp:before{
-  content:"";position:absolute;top:0;right:0;width:23px;height:5px;
-  background:linear-gradient(#45d6dc 0 40%,#102738 40% 100%);
-  box-shadow:-3px 4px 0 #08111d
+.roadLamp.left:before{left:0}
+.roadLamp.right:before{right:0}
+.roadLamp:after{
+  content:"";position:absolute;top:3px;width:7px;height:3px;
+  background:#ffe7a1;
+  box-shadow:0 0 5px 2px rgba(255,219,128,.58),0 8px 18px 7px rgba(255,196,82,.12)
 }
-.streetLamp:after{
-  content:"";position:absolute;top:4px;right:17px;width:10px;height:6px;
-  background:#fff1a3;
-  box-shadow:
-    0 0 0 2px #32cfda,
-    0 0 8px 4px rgba(72,246,255,.72),
-    0 0 22px 9px rgba(255,213,105,.2)
-}
+.roadLamp.left:after{left:11px}
+.roadLamp.right:after{right:11px}
 .car{
   position:absolute;z-index:12;left:50%;bottom:16px;
   transform:translateX(-50%);
@@ -1016,11 +1010,17 @@ h1{
   to{background-position:0 27px}
 }
 
-@keyframes streetlightRush{
-  0%{opacity:0;transform:translateX(-50%) translateY(0) scale(.11)}
-  8%{opacity:.35}
-  72%{opacity:.94}
-  100%{opacity:0;transform:translateX(-50%) translateY(190px) scale(1.42)}
+@keyframes roadLampLeft{
+  0%{opacity:0;transform:translate(-18px,0) scale(.1)}
+  10%{opacity:.28}
+  74%{opacity:.72}
+  100%{opacity:0;transform:translate(-245px,178px) scale(1.55)}
+}
+@keyframes roadLampRight{
+  0%{opacity:0;transform:translate(18px,0) scale(.1)}
+  10%{opacity:.28}
+  74%{opacity:.72}
+  100%{opacity:0;transform:translate(245px,178px) scale(1.55)}
 }
 
 @keyframes bitcoinGlowPulse{
@@ -1034,10 +1034,10 @@ h1{
 }
 
 @media(prefers-reduced-motion:reduce){
-  .car,.car:before,.car:after,.road:before,.streetLightPair,.bitcoinGlow{
+  .car,.car:before,.car:after,.road:before,.roadLamp,.bitcoinGlow{
     animation:none !important
   }
-  .streetLightPair{display:none}
+  .roadLamp{display:none}
 }
 
 .sectionTitle{
@@ -1459,8 +1459,7 @@ footer{
     clip-path:polygon(0 72%,13% 57%,27% 69%,40% 53%,54% 72%,67% 56%,81% 69%,92% 58%,100% 66%,100% 100%,0 100%)
   }
   .road{left:15%;right:15%;height:129px}
-  .streetlights{--lamp-spread:72px}
-  .streetLamp{height:48px}
+  .roadLamp{height:48px}
   .car{width:94px;height:34px;bottom:14px}
   .grid6,.grid5,.grid4{grid-template-columns:repeat(2,1fr)}
   .card{min-height:100px;padding:14px}
@@ -2744,7 +2743,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.22</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.23</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -2793,11 +2792,10 @@ a:focus-visible,button:focus-visible,input:focus-visible{
   <div class="mountainFront"></div>
   <div class="horizon"></div>
   <div class="road"></div>
-  <div class="streetlights" aria-hidden="true">
-    <div class="streetLightPair"><span class="streetLamp left"></span><span class="streetLamp right"></span></div>
-    <div class="streetLightPair"><span class="streetLamp left"></span><span class="streetLamp right"></span></div>
-    <div class="streetLightPair"><span class="streetLamp left"></span><span class="streetLamp right"></span></div>
-    <div class="streetLightPair"><span class="streetLamp left"></span><span class="streetLamp right"></span></div>
+  <div class="roadsideLights" aria-hidden="true">
+    <span class="roadLamp left"></span>
+    <span class="roadLamp right"></span>
+    <span class="roadLamp left"></span>
   </div>
   <div class="car"></div>
 
@@ -4526,7 +4524,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.22"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.23"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -4584,7 +4582,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.22"
+                                "Terminus-Umbrel-Client/0.2.23"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -4970,7 +4968,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.22"
+                                "Terminus-Umbrel-Client/0.2.23"
                         }
                     )
 
