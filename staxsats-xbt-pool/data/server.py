@@ -45,7 +45,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.28"
+RELEASE_VERSION = "0.2.29"
 NEOXEX_XBT_TICKER_URL = os.environ.get(
     "TERMINUS_XBT_TICKER_URL",
     "https://neoxa.exchange/api/exchange/ticker/BTCB2_USDC"
@@ -160,7 +160,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.28",
+                    "User-Agent": "TerminusPool-Market/0.2.29",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -932,12 +932,22 @@ h1{
 .live.bad{color:#ff7890;border-color:#7d2736}
 
 .hero{
+  --daylight-level:0;
+  --night-level:1;
   height:390px;position:relative;overflow:hidden;
   border:1px solid #164956;border-radius:10px;
   background:
     radial-gradient(circle at 68% 27%,rgba(198,75,184,.15),transparent 28%),
     linear-gradient(#07101d,#0a1021 48%,#100d26);
   box-shadow:inset 0 0 80px #0009,0 16px 70px #0007
+}
+.daylightSky{
+  position:absolute;z-index:0;inset:0;pointer-events:none;
+  opacity:var(--daylight-level);
+  background:
+    radial-gradient(circle at 62% 72%,rgba(255,239,158,.92) 0 6%,rgba(255,175,85,.60) 17%,transparent 42%),
+    linear-gradient(180deg,#53aeea 0%,#75c8ed 42%,#ffd69a 79%,#ff9f68 100%);
+  transition:opacity 1.4s cubic-bezier(.2,.78,.2,1);
 }
 .hero:after{
   content:"";position:absolute;inset:0;pointer-events:none;z-index:20;
@@ -960,14 +970,15 @@ h1{
 .heroMicro{margin-top:12px;color:#7895a0;font-size:11px;letter-spacing:.12em}
 
 .stars{
-  position:absolute;inset:0 0 45% 0;
+  position:absolute;z-index:1;inset:0 0 45% 0;
   background-image:
     radial-gradient(circle,#fff 1px,transparent 1.5px),
     radial-gradient(circle,#9df7ff 1px,transparent 1.7px),
     radial-gradient(circle,#fff 1.4px,transparent 2px);
   background-size:113px 83px,167px 119px,241px 151px;
   background-position:13px 17px,71px 34px,122px 8px;
-  opacity:.75
+  opacity:calc(.75 * var(--night-level));
+  transition:opacity 1.4s cubic-bezier(.2,.78,.2,1)
 }
 .windowBitcoin{
   --bitcoin-offset:150px;
@@ -998,10 +1009,14 @@ h1{
 }
 .mountainGround{
   position:absolute;z-index:3;left:0;right:0;bottom:0;height:94px;
-  background:linear-gradient(180deg,#08152d 0,#071124 38%,#050a16 100%)
+  background:linear-gradient(180deg,#08152d 0,#071124 38%,#050a16 100%);
+  filter:brightness(calc(1 + var(--daylight-level) * .26));
+  transition:filter 1.4s cubic-bezier(.2,.78,.2,1)
 }
 .mountainBack,.mountainFront{
   position:absolute;left:-3%;width:106%;bottom:92px;z-index:4;
+  filter:brightness(calc(1 + var(--daylight-level) * .34)) saturate(calc(1 + var(--daylight-level) * .12));
+  transition:filter 1.4s cubic-bezier(.2,.78,.2,1);
 }
 .mountainBack{
   height:150px;background:#171738;
@@ -2361,7 +2376,7 @@ body{
 .marketKicker{color:#72ffb4;font-size:9px;font-weight:900;letter-spacing:.16em}
 .marketPair{margin-top:5px;color:#e7faff;font-size:18px;font-weight:1000;letter-spacing:.08em}
 .marketPair span{color:#678792;font-size:11px}
-.marketPrice{color:#43f5ff;font-size:clamp(25px,3vw,38px);font-weight:1000;font-variant-numeric:tabular-nums;text-shadow:0 0 20px rgba(67,245,255,.2);white-space:nowrap}
+.marketPrice{color:var(--gold);font-size:clamp(25px,3vw,38px);font-weight:1000;font-variant-numeric:tabular-nums;text-shadow:0 0 20px rgba(255,200,92,.28);white-space:nowrap}
 .marketStats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .marketStat{padding:8px 10px;border-left:1px solid rgba(67,245,255,.18)}
 .marketStatLabel{display:block;color:#647f89;font-size:8px;font-weight:900;letter-spacing:.12em}
@@ -2934,7 +2949,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.28</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.29</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -2950,33 +2965,33 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 
 <main id="mainContent">
 <section class="hero" aria-labelledby="heroTitle">
+  <div class="daylightSky" aria-hidden="true"></div>
   <div class="stars"></div>
   <div class="windowBitcoin" id="windowBitcoin" role="img" aria-label="Current payout window work progress: waiting for telemetry">
     <div class="bitcoinGlow" aria-hidden="true"></div>
-    <svg class="bitcoinSprite" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-      <path fill="#7a2709" d="M10 0h12v2h4v2h2v3h2v5h2v8h-2v5h-2v3h-2v2h-4v2H10v-2H6v-2H4v-3H2v-5H0v-8h2V7h2V4h2V2h4z"/>
-      <path fill="#d95412" d="M10 2h12v2h4v3h2v5h2v8h-2v5h-2v3h-4v2H10v-2H6v-3H4v-5H2v-8h2V7h2V4h4z"/>
-      <path fill="#f7931a" d="M10 4h12v2h4v4h2v12h-2v4h-4v2H10v-2H6v-4H4V10h2V6h4z"/>
-      <path fill="#ffbd3f" d="M10 6h10v2h4v4h2v8h-2v4h-4v2H10v-2H8v-3H6V12h2V8h2z"/>
-      <path fill="#ffe18a" d="M10 7h8v2h-5v2H9v8H7v-7h2V9h1z"/>
-      <path fill="#c84c10" d="M24 12h2v8h-2v4h-4v2h-5v-2h5v-2h2v-4h2z"/>
-      <g fill="#fff4b0">
-        <rect x="13" y="7" width="2" height="19"/>
-        <rect x="17" y="7" width="2" height="4"/>
-        <rect x="17" y="22" width="2" height="4"/>
-        <rect x="10" y="10" width="10" height="3"/>
-        <rect x="10" y="15" width="11" height="3"/>
-        <rect x="10" y="21" width="10" height="3"/>
-        <rect x="19" y="12" width="3" height="4"/>
-        <rect x="20" y="17" width="3" height="5"/>
+    <svg class="bitcoinSprite celestial32" viewBox="0 0 48 48" aria-hidden="true" focusable="false" data-pixel-style="32-bit">
+      <path fill="#5b1b08" d="M15 1h18v2h6v3h4v4h3v6h2v16h-2v6h-3v4h-4v3h-6v2H15v-2H9v-3H5v-4H2v-6H0V16h2v-6h3V6h4V3h6z"/>
+      <path fill="#9d3109" d="M15 3h18v2h6v3h3v4h3v6h1v12h-1v6h-3v4h-3v3h-6v2H15v-2H9v-3H6v-4H3v-6H2V18h1v-6h3V8h3V5h6z"/>
+      <path fill="#df5a10" d="M15 5h18v2h5v3h4v5h2v18h-2v5h-4v3h-5v2H15v-2h-5v-3H6v-5H4V15h2v-5h4V7h5z"/>
+      <path fill="#f7931a" d="M15 7h17v2h6v4h3v6h1v10h-1v6h-3v4h-6v2H15v-2h-5v-4H7v-6H6V19h1v-6h3V9h5z"/>
+      <path fill="#ffb52e" d="M14 9h16v2h6v4h3v6h1v8h-2v6h-4v3h-6v1H15v-2h-5v-4H8V18h2v-5h4z"/>
+      <path fill="#ffd56a" d="M13 11h13v2h6v3h3v6h2v7h-2v4h-4v3h-6v1H14v-2h-4V17h2v-4h1z"/>
+      <path fill="#fff0a3" d="M13 12h10v2h-6v2h-4v4h-2v8H9V19h2v-5h2z"/>
+      <path fill="#c7470c" d="M37 18h3v13h-2v5h-4v3h-6v2H18v-2h10v-2h4v-3h3v-5h2z"/>
+      <g fill="#b63b0a"><rect x="8" y="28" width="3" height="5"/><rect x="12" y="36" width="5" height="3"/><rect x="32" y="12" width="4" height="3"/></g>
+      <g fill="#d46a16">
+        <rect x="17" y="12" width="4" height="25"/><rect x="27" y="11" width="4" height="6"/><rect x="27" y="32" width="4" height="6"/>
+        <rect x="14" y="17" width="17" height="4"/><rect x="14" y="24" width="19" height="4"/><rect x="14" y="32" width="18" height="4"/>
+        <rect x="31" y="19" width="4" height="7"/><rect x="32" y="27" width="4" height="6"/>
       </g>
-      <g fill="#ffd66b">
-        <rect x="10" y="13" width="3" height="2"/>
-        <rect x="10" y="18" width="3" height="3"/>
-        <rect x="19" y="10" width="2" height="2"/>
+      <g fill="#fff7c9">
+        <rect x="19" y="10" width="4" height="28"/><rect x="27" y="10" width="4" height="7"/><rect x="27" y="33" width="4" height="6"/>
+        <rect x="15" y="16" width="16" height="4"/><rect x="15" y="23" width="18" height="4"/><rect x="15" y="31" width="17" height="4"/>
+        <rect x="31" y="18" width="4" height="7"/><rect x="32" y="26" width="4" height="7"/>
       </g>
-      <g fill="#fff8d4"><rect x="9" y="8" width="2" height="2"/><rect x="7" y="11" width="2" height="4"/></g>
-      </svg>
+      <g fill="#fffde8"><rect x="12" y="14" width="3" height="3"/><rect x="9" y="18" width="3" height="7"/><rect x="14" y="10" width="4" height="2"/><rect x="16" y="13" width="2" height="2"/></g>
+      <g fill="#ffcb4c"><rect x="15" y="20" width="4" height="3"/><rect x="15" y="27" width="4" height="4"/><rect x="31" y="15" width="3" height="3"/></g>
+    </svg>
   </div>
   <div class="mountainGround"></div>
   <div class="mountainBack"></div>
@@ -3013,7 +3028,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
   <div class="car"></div>
 
   <div class="heroText">
-    <div class="kicker">NEON HIGHWAY // MIDNIGHT RUN</div>
+    <div class="kicker" id="heroKicker">NEON HIGHWAY // MIDNIGHT RUN</div>
     <div class="heroTitle" id="heroTitle">TERMINUS POOL</div>
     <div class="heroSub">THE LAST WORD IN MINING</div>
     <div class="heroMicro">DATUM-FIRST // CYBER MOUNTAIN // XBT BLAKE2B</div>
@@ -3594,6 +3609,24 @@ function updateWindowBitcoin(progress,work,target){
   const visualProgress=bounded<=0
     ? 0
     : Math.pow(progressRatio,mobileRise?.45:.65)*100;
+  const daylightLevel=visualProgress/100;
+  const hero=coin.closest(".hero");
+  if(hero){
+    hero.style.setProperty("--daylight-level",daylightLevel.toFixed(3));
+    hero.style.setProperty(
+      "--night-level",
+      Math.max(.06,1-daylightLevel*.94).toFixed(3)
+    );
+    hero.dataset.daylightProgress=(daylightLevel*100).toFixed(2);
+  }
+  const kicker=$("heroKicker");
+  if(kicker){
+    kicker.textContent=visualProgress<34
+      ? "NEON HIGHWAY // MIDNIGHT RUN"
+      : visualProgress<72
+        ? "NEON HIGHWAY // DAYBREAK RUN"
+        : "NEON HIGHWAY // DAYLIGHT RUN";
+  }
   const travel=mobileRise?75:150;
   coin.style.setProperty(
     "--bitcoin-offset",
@@ -3636,6 +3669,8 @@ function injectVisualFx(){
         pointer-events:none;
         overflow:hidden;
         z-index:1;
+        opacity:var(--night-level,1);
+        transition:opacity 1.4s cubic-bezier(.2,.78,.2,1);
     }
     .skyNebula{
         position:absolute;
@@ -3778,15 +3813,18 @@ function initSkyFx(){
     moon.className="skyMoon";
     moon.setAttribute("aria-hidden","true");
     moon.innerHTML=`
-      <svg class="moonSprite" viewBox="0 0 32 32" focusable="false">
-        <path fill="#173c63" d="M11 1h10v2h4v2h3v4h2v14h-2v4h-3v2h-4v2H11v-2H7v-2H4v-4H2V9h2V5h3V3h4z"/>
-        <path fill="#6fb9df" d="M10 3h9v2h3v2h2v3h2v12h-2v3h-2v2h-3v2h-9v-2H7v-3H5V9h2V6h3z"/>
-        <path fill="#bdeeff" d="M9 5h8v2h-4v2h-3v3H8v10h2v3h3v2H9v-2H7v-3H5V10h2V7h2z"/>
-        <path fill="#efffff" d="M9 7h4v2h-3v3H8v7H6v-8h2V8h1z"/>
-        <path fill="#08101f" d="M17 1h10v2h4v2h3v4h2v14h-2v4h-3v2h-4v2H17v-2h-4v-2h-3v-4H8V9h2V5h3V3h4z"/>
-        <rect fill="#4c8eb8" x="7" y="15" width="2" height="3"/>
-        <rect fill="#77c9e8" x="10" y="23" width="3" height="2"/>
-        <rect fill="#d9f8ff" x="9" y="9" width="2" height="2"/>
+      <svg class="moonSprite celestial32" viewBox="0 0 48 48" focusable="false" data-pixel-style="32-bit">
+        <path fill="#0c2747" d="M16 1h16v2h6v3h4v4h3v6h2v16h-2v6h-3v4h-4v3h-6v2H16v-2h-6v-3H6v-4H3v-6H1V16h2v-6h3V6h4V3h6z"/>
+        <path fill="#245a86" d="M15 3h15v2h6v3h4v5h3v7h2v10h-2v7h-3v4h-5v3h-6v1H15v-2h-5v-3H7v-5H5V14h2V9h3V6h5z"/>
+        <path fill="#55a6cf" d="M14 5h13v2h5v3h4v5h2v18h-2v5h-4v3h-5v2H14v-2h-4v-4H7V12h3V8h4z"/>
+        <path fill="#9eddf3" d="M13 7h11v2h-6v2h-4v4h-3v18h2v4h4v2h-5v-3H9v-5H7V16h2v-5h4z"/>
+        <path fill="#e8fbff" d="M12 9h7v2h-4v3h-3v5h-2v9H8V17h2v-5h2z"/>
+        <path fill="#07101f" d="M25 0h17v3h6v5h4v7h3v18h-3v7h-4v5h-6v3H25v-2h-7v-4h-5v-6h-3V12h3V6h5V2h7z"/>
+        <path fill="#0a1830" d="M29 4h13v3h5v5h3v7h2v12h-2v7h-3v4h-5v3H29v-2h-6v-3h-4v-5h-3V14h3V9h4V6h6z"/>
+        <g fill="#397fa8"><rect x="8" y="21" width="3" height="6"/><rect x="11" y="34" width="5" height="3"/><rect x="15" y="10" width="4" height="3"/></g>
+        <g fill="#72c5e4"><rect x="11" y="17" width="3" height="4"/><rect x="13" y="29" width="4" height="3"/><rect x="17" y="38" width="5" height="2"/></g>
+        <g fill="#c7f1fb"><rect x="11" y="12" width="3" height="3"/><rect x="8" y="16" width="2" height="6"/><rect x="10" y="29" width="2" height="3"/></g>
+        <g fill="#ffffff"><rect x="13" y="9" width="3" height="2"/><rect x="9" y="13" width="2" height="3"/></g>
       </svg>`;
     layer.appendChild(moon);
 
@@ -4797,7 +4835,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.28"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.29"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -4855,7 +4893,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.28"
+                                "Terminus-Umbrel-Client/0.2.29"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -5245,7 +5283,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.28"
+                                "Terminus-Umbrel-Client/0.2.29"
                         }
                     )
 

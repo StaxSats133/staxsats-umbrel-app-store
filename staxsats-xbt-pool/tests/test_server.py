@@ -30,7 +30,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.28")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.29")
         self.assertIn("Sitemap: https://terminuspool.xyz/sitemap.xml", self.server.ROBOTS_TXT)
         self.assertIn("https://terminuspool.xyz/", self.server.SITEMAP_XML)
         self.assertIn("404 // SIGNAL LOST", self.server.NOT_FOUND_HTML)
@@ -38,7 +38,13 @@ class TerminusServerTests(unittest.TestCase):
         self.assertNotIn('class="sun"', self.server.HTML)
         self.assertIn("Math.pow(progressRatio,mobileRise?.45:.65)", self.server.HTML)
         self.assertIn("coin.dataset.visualProgress", self.server.HTML)
-        self.assertIn('class="bitcoinSprite"', self.server.HTML)
+        self.assertIn('class="daylightSky"', self.server.HTML)
+        self.assertIn("--daylight-level", self.server.HTML)
+        self.assertIn("hero.dataset.daylightProgress", self.server.HTML)
+        self.assertIn("DAYBREAK RUN", self.server.HTML)
+        self.assertEqual(self.server.HTML.count('data-pixel-style="32-bit"'), 2)
+        self.assertIn("color:var(--gold);font-size:clamp(25px", self.server.HTML)
+        self.assertIn('class="bitcoinSprite celestial32"', self.server.HTML)
         self.assertIn('class="bitcoinGlow"', self.server.HTML)
         self.assertIn("moonSprite", self.server.HTML)
         self.assertIn("skyMoonGlow", self.server.HTML)
