@@ -30,7 +30,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.35")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.36")
 
     def test_quick_connect_places_prime_pubkey_below_datum_endpoint(self):
         endpoint_pos = self.server.HTML.index("datum.terminuspool.xyz:28915")
@@ -89,10 +89,13 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn("@keyframes propellerSpin", self.server.HTML)
         self.assertIn("width:34px;height:16px", self.server.HTML)
         self.assertIn("width:22px;height:11px", self.server.HTML)
-        self.assertEqual(self.server.HTML.count('viewBox="0 0 64 30"'), 2)
+        self.assertEqual(self.server.HTML.count('viewBox="0 0 120 50"'), 2)
         self.assertEqual(self.server.HTML.count('class="planeBody"'), 2)
         self.assertEqual(self.server.HTML.count('class="planeWing"'), 2)
         self.assertEqual(self.server.HTML.count('class="planeCabin"'), 2)
+        self.assertEqual(self.server.HTML.count('class="planeTail"'), 2)
+        self.assertEqual(self.server.HTML.count('class="planeStrut"'), 2)
+        self.assertEqual(self.server.HTML.count('class="planeWheelPant"'), 2)
         self.assertIn(".hero svg{\n  background:none;border:0", self.server.HTML)
         self.assertIn("20%{opacity:1;transform:translateX", self.server.HTML)
         self.assertIn('data-block-celebration="active"', self.server.HTML)

@@ -4,7 +4,7 @@ name: Terminus Pool
 tagline: The last word in mining
 icon: https://raw.githubusercontent.com/StaxSats133/staxsats-umbrel-app-store/main/staxsats-xbt-pool/icon.svg
 category: bitcoin
-version: "0.2.35"
+version: "0.2.36"
 port: 8081
 description: >-
   Terminus Pool is an XBT BLAKE2b mining pool dashboard for RATUM Prime and DATUM.
@@ -19,10 +19,10 @@ repo: https://github.com/StaxSats133/staxsats-umbrel-app-store
 support: https://github.com/StaxSats133/staxsats-umbrel-app-store/issues
 gallery: []
 releaseNotes: >-
-  Terminus Pool v0.2.35 redraws the fly-by as a smaller yellow high-wing prop
-  plane based on a classic side profile and removes unintended SVG grid lines
-  from the plane, Bitcoin, moon, and other hero artwork while preserving the
-  alternating flight paths and real-block-only victory banner.
+  Terminus Pool v0.2.36 faithfully redraws the fly-by as a cyberpunk high-wing
+  utility prop plane with a long tapered fuselage, cabin, tail, wing strut,
+  wheel pants, neon accents, and a nose propeller while preserving the smaller
+  mobile scale, clean hero artwork, and real-block-only victory banner.
 dependencies: []
 path: ""
 defaultUsername: ""
