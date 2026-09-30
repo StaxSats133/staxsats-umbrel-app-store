@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.37"
+RELEASE_VERSION = "0.2.38"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -167,7 +167,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.37",
+                    "User-Agent": "TerminusPool-Market/0.2.38",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -3241,7 +3241,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.37</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.38</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -4964,13 +4964,10 @@ function initAirplaneFlybys(){
     plane.addEventListener("animationiteration",()=>setRandomAltitude(plane));
   });
 
-  let resizeTimer=0;
-  window.addEventListener("resize",()=>{
-    window.clearTimeout(resizeTimer);
-    resizeTimer=window.setTimeout(()=>{
-      planes.forEach(setRandomAltitude);
-    },140);
-  },{passive:true});
+  // Lock altitude for the full visible crossing. Mobile browser chrome can emit
+  // resize events while scrolling; rerolling here would make an airborne plane
+  // climb or dive. The next animationiteration recalculates geometry and picks
+  // one new altitude while the plane is fully off-screen.
 }
 
 injectVisualFx();
@@ -5314,7 +5311,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.37"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.38"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -5372,7 +5369,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.37"
+                                "Terminus-Umbrel-Client/0.2.38"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -5797,7 +5794,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.37"
+                                "Terminus-Umbrel-Client/0.2.38"
                         }
                     )
 

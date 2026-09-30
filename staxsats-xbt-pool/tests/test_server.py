@@ -30,7 +30,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.37")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.38")
 
     def test_quick_connect_places_prime_pubkey_below_datum_endpoint(self):
         endpoint_pos = self.server.HTML.index("datum.terminuspool.xyz:28915")
@@ -106,6 +106,8 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn(".victoryPlane.rtl{top:var(--plane-altitude,39%)", self.server.HTML)
         self.assertIn("function initAirplaneFlybys()", self.server.HTML)
         self.assertIn('plane.addEventListener("animationiteration"', self.server.HTML)
+        self.assertNotIn("planes.forEach(setRandomAltitude)", self.server.HTML)
+        self.assertIn("Lock altitude for the full visible crossing", self.server.HTML)
         self.assertIn('plane.style.setProperty("--plane-altitude"', self.server.HTML)
         self.assertIn("plane.dataset.altitudeMinPx", self.server.HTML)
         self.assertIn("plane.dataset.altitudeMaxPx", self.server.HTML)
