@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.34"
+RELEASE_VERSION = "0.2.35"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -167,7 +167,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.34",
+                    "User-Agent": "TerminusPool-Market/0.2.35",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -1193,6 +1193,9 @@ h1{
   filter:drop-shadow(5px 6px 0 rgba(91,32,10,.66))
          drop-shadow(0 0 5px rgba(255,190,69,.72))
 }
+.hero svg{
+  background:none;border:0
+}
 .mountainGround{
   position:absolute;z-index:3;left:0;right:0;bottom:0;height:94px;
   background:linear-gradient(180deg,#08152d 0,#071124 38%,#050a16 100%);
@@ -1276,22 +1279,22 @@ h1{
 .victoryPlane.ltr{top:35%;animation:airplaneFlyRight 90s linear 12s infinite}
 .victoryPlane.rtl{top:39%;animation:airplaneFlyLeft 90s linear 57s infinite}
 .airplaneSprite{
-  position:absolute;z-index:2;right:0;top:5px;width:42px;height:24px;
+  position:absolute;z-index:2;right:0;top:8px;width:34px;height:16px;
   overflow:visible;image-rendering:pixelated;shape-rendering:crispEdges;
   filter:drop-shadow(2px 2px 0 rgba(0,0,0,.52)) drop-shadow(0 0 2px rgba(115,230,255,.28))
 }
 .planeProp{
-  transform-box:view-box;transform-origin:50px 15px;
+  transform-box:view-box;transform-origin:62px 15px;
   animation:propellerSpin .24s steps(2,end) infinite
 }
 .towLine{
-  position:absolute;z-index:1;right:39px;top:17px;width:22px;height:1px;
+  position:absolute;z-index:1;right:31px;top:17px;width:22px;height:1px;
   background:#d6f5ef;box-shadow:0 1px 0 rgba(0,0,0,.48);
   opacity:0;transform:rotate(-5deg);transform-origin:right center;
   transition:opacity .35s ease
 }
 .towBanner{
-  position:absolute;z-index:0;right:58px;top:5px;min-width:140px;
+  position:absolute;z-index:0;right:50px;top:5px;min-width:140px;
   padding:6px 9px 5px;border:2px solid #5c3f16;background:#ffc85c;
   color:#171008;font-size:10px;font-weight:1000;letter-spacing:.08em;
   display:flex;align-items:center;justify-content:center;gap:7px;
@@ -1307,10 +1310,10 @@ h1{
   left:0;right:auto;transform:scaleX(-1)
 }
 .victoryPlane.rtl .towLine{
-  left:39px;right:auto;transform:rotate(5deg);transform-origin:left center
+  left:31px;right:auto;transform:rotate(5deg);transform-origin:left center
 }
 .victoryPlane.rtl .towBanner{
-  left:58px;right:auto;transform-origin:left center
+  left:50px;right:auto;transform-origin:left center
 }
 .hero[data-block-celebration="active"] .towLine{opacity:1}
 .hero[data-block-celebration="active"] .towBanner{
@@ -1855,12 +1858,12 @@ footer{
   .road{left:15%;right:15%;height:129px}
   .roadLamp{height:48px}
   .victoryPlane{width:190px;height:28px}
-  .airplaneSprite{width:30px;height:18px;top:5px}
-  .towLine{right:28px;top:13px;width:16px}
-  .towBanner{right:42px;top:3px;min-width:116px;padding:5px 7px 4px;font-size:8px;gap:4px}
+  .airplaneSprite{width:22px;height:11px;top:8px}
+  .towLine{right:20px;top:13px;width:16px}
+  .towBanner{right:34px;top:3px;min-width:116px;padding:5px 7px 4px;font-size:8px;gap:4px}
   .towPickaxe{width:11px;height:11px;flex-basis:11px}
-  .victoryPlane.rtl .towLine{left:28px;right:auto}
-  .victoryPlane.rtl .towBanner{left:42px;right:auto}
+  .victoryPlane.rtl .towLine{left:20px;right:auto}
+  .victoryPlane.rtl .towBanner{left:34px;right:auto}
   @keyframes roadLampLeft{
     0%{left:28.5%;opacity:0;transform:translate(-100%,0) scale(.1)}
     10%{opacity:.28}
@@ -3238,7 +3241,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.34</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.35</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -3298,29 +3301,37 @@ a:focus-visible,button:focus-visible,input:focus-visible{
   <div class="victoryPlane ltr" aria-hidden="true">
     <div class="towBanner"><span>block found</span><svg class="towPickaxe" viewBox="0 0 15 15" focusable="false"><path fill="#33200d" d="M9 1h2v2h2v2H8v2H6V5H2V3h5V2h2zM7 6h2v8H7z"/><path fill="#fff0b0" d="M3 3h7v1H3z"/><path fill="#8a4b16" d="M8 7h1v7H8z"/></svg></div>
     <div class="towLine"></div>
-    <svg class="airplaneSprite" viewBox="0 0 52 30" focusable="false">
-      <path fill="#07101b" d="M3 12h7V6h5l3 6h23l7 3v6l-7 3H18l-3 5h-5l1-5H5z"/>
-      <path fill="#d8fff7" d="M6 13h35l5 3v4l-5 2H7l5-4z"/>
-      <path fill="#63d8dc" d="M17 7h24v4H17zM14 23h28v4H14z"/>
-      <path fill="#17384a" d="M20 11h3v12h-3zM36 11h3v12h-3z"/>
-      <path fill="#ff4eae" d="M7 14h7v3H7z"/>
-      <path fill="#82eaff" d="M33 10h7l3 5H31z"/>
-      <path fill="#ffffff" d="M9 13h30v2H9z"/>
-      <g class="planeProp" fill="#ffe7a1"><rect x="49" y="3" width="2" height="24"/><rect x="46" y="14" width="6" height="4"/></g>
+    <svg class="airplaneSprite" viewBox="0 0 64 30" focusable="false">
+      <path fill="#07101b" d="M2 15h5l3-9h6l3 7h27l7-4h5l2 5 4 2v5l-4 3H20l-5 3H8l2-5H4z"/>
+      <path class="planeBody" fill="#f5b914" d="M5 16l9-3h34l8 2 5 3-3 3-39 2-6 2H8l3-5H5z"/>
+      <path fill="#ffd12f" d="M8 16l3-8h4l3 8z"/>
+      <path class="planeWing" fill="#ffc51b" d="M17 10h30l8 4H28l-9 4h-6z"/>
+      <path fill="#9b6510" d="M14 20h43v2H18l-5 2H9z"/>
+      <path class="planeCabin" fill="#dbe8ec" d="M33 10h13l8 5H29z"/>
+      <path fill="#69b8d5" d="M35 11h5v4h-9zM42 11h4l6 4H42z"/>
+      <path fill="#f5b914" d="M39 10h2v7h-2z"/>
+      <path fill="#fff3ad" d="M54 16h5l2 2-2 2h-5z"/>
+      <path fill="#6d4309" d="M14 22h2v4h-2zM45 21h2v5h-2z"/>
+      <g class="planeWheel"><circle fill="#07101b" cx="15" cy="27" r="2.5"/><circle fill="#6d7781" cx="15" cy="27" r="1"/><circle fill="#07101b" cx="46" cy="27" r="2.5"/><circle fill="#6d7781" cx="46" cy="27" r="1"/></g>
+      <g class="planeProp" fill="#d9edf2"><rect x="61" y="4" width="2" height="22"/><rect x="58" y="14" width="6" height="3"/></g>
     </svg>
   </div>
   <div class="victoryPlane rtl" aria-hidden="true">
     <div class="towBanner"><span>block found</span><svg class="towPickaxe" viewBox="0 0 15 15" focusable="false"><path fill="#33200d" d="M9 1h2v2h2v2H8v2H6V5H2V3h5V2h2zM7 6h2v8H7z"/><path fill="#fff0b0" d="M3 3h7v1H3z"/><path fill="#8a4b16" d="M8 7h1v7H8z"/></svg></div>
     <div class="towLine"></div>
-    <svg class="airplaneSprite" viewBox="0 0 52 30" focusable="false">
-      <path fill="#07101b" d="M3 12h7V6h5l3 6h23l7 3v6l-7 3H18l-3 5h-5l1-5H5z"/>
-      <path fill="#d8fff7" d="M6 13h35l5 3v4l-5 2H7l5-4z"/>
-      <path fill="#63d8dc" d="M17 7h24v4H17zM14 23h28v4H14z"/>
-      <path fill="#17384a" d="M20 11h3v12h-3zM36 11h3v12h-3z"/>
-      <path fill="#ff4eae" d="M7 14h7v3H7z"/>
-      <path fill="#82eaff" d="M33 10h7l3 5H31z"/>
-      <path fill="#ffffff" d="M9 13h30v2H9z"/>
-      <g class="planeProp" fill="#ffe7a1"><rect x="49" y="3" width="2" height="24"/><rect x="46" y="14" width="6" height="4"/></g>
+    <svg class="airplaneSprite" viewBox="0 0 64 30" focusable="false">
+      <path fill="#07101b" d="M2 15h5l3-9h6l3 7h27l7-4h5l2 5 4 2v5l-4 3H20l-5 3H8l2-5H4z"/>
+      <path class="planeBody" fill="#f5b914" d="M5 16l9-3h34l8 2 5 3-3 3-39 2-6 2H8l3-5H5z"/>
+      <path fill="#ffd12f" d="M8 16l3-8h4l3 8z"/>
+      <path class="planeWing" fill="#ffc51b" d="M17 10h30l8 4H28l-9 4h-6z"/>
+      <path fill="#9b6510" d="M14 20h43v2H18l-5 2H9z"/>
+      <path class="planeCabin" fill="#dbe8ec" d="M33 10h13l8 5H29z"/>
+      <path fill="#69b8d5" d="M35 11h5v4h-9zM42 11h4l6 4H42z"/>
+      <path fill="#f5b914" d="M39 10h2v7h-2z"/>
+      <path fill="#fff3ad" d="M54 16h5l2 2-2 2h-5z"/>
+      <path fill="#6d4309" d="M14 22h2v4h-2zM45 21h2v5h-2z"/>
+      <g class="planeWheel"><circle fill="#07101b" cx="15" cy="27" r="2.5"/><circle fill="#6d7781" cx="15" cy="27" r="1"/><circle fill="#07101b" cx="46" cy="27" r="2.5"/><circle fill="#6d7781" cx="46" cy="27" r="1"/></g>
+      <g class="planeProp" fill="#d9edf2"><rect x="61" y="4" width="2" height="22"/><rect x="58" y="14" width="6" height="3"/></g>
     </svg>
   </div>
   <div class="hitchhiker" aria-hidden="true">
@@ -5217,7 +5228,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.34"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.35"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -5275,7 +5286,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.34"
+                                "Terminus-Umbrel-Client/0.2.35"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -5700,7 +5711,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.34"
+                                "Terminus-Umbrel-Client/0.2.35"
                         }
                     )
 
