@@ -30,7 +30,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.36")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.37")
 
     def test_quick_connect_places_prime_pubkey_below_datum_endpoint(self):
         endpoint_pos = self.server.HTML.index("datum.terminuspool.xyz:28915")
@@ -102,8 +102,16 @@ class TerminusServerTests(unittest.TestCase):
         self.assertEqual(self.server.HTML.count('class="towPickaxe"'), 2)
         self.assertEqual(self.server.HTML.count("<span>block found</span>"), 2)
         self.assertIn('.hero[data-block-celebration="active"] .towLine', self.server.HTML)
-        self.assertIn(".victoryPlane.ltr{top:35%", self.server.HTML)
-        self.assertIn(".victoryPlane.rtl{top:39%", self.server.HTML)
+        self.assertIn(".victoryPlane.ltr{top:var(--plane-altitude,35%)", self.server.HTML)
+        self.assertIn(".victoryPlane.rtl{top:var(--plane-altitude,39%)", self.server.HTML)
+        self.assertIn("function initAirplaneFlybys()", self.server.HTML)
+        self.assertIn('plane.addEventListener("animationiteration"', self.server.HTML)
+        self.assertIn('plane.style.setProperty("--plane-altitude"', self.server.HTML)
+        self.assertIn("plane.dataset.altitudeMinPx", self.server.HTML)
+        self.assertIn("plane.dataset.altitudeMaxPx", self.server.HTML)
+        self.assertIn("Math.min(...tips)", self.server.HTML)
+        self.assertIn("spriteHeight*.34", self.server.HTML)
+        self.assertIn("initAirplaneFlybys();", self.server.HTML)
         self.assertIn("position:absolute;z-index:3;width:164px;height:164px", self.server.HTML)
         self.assertNotIn("streetLightPair", self.server.HTML)
         self.assertIn('class="hitchhiker"', self.server.HTML)

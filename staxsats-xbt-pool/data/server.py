@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.36"
+RELEASE_VERSION = "0.2.37"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -167,7 +167,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.36",
+                    "User-Agent": "TerminusPool-Market/0.2.37",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -1276,8 +1276,8 @@ h1{
   opacity:0;pointer-events:none;transform:translateX(-270px);
   will-change:transform,opacity
 }
-.victoryPlane.ltr{top:35%;animation:airplaneFlyRight 90s linear 12s infinite}
-.victoryPlane.rtl{top:39%;animation:airplaneFlyLeft 90s linear 57s infinite}
+.victoryPlane.ltr{top:var(--plane-altitude,35%);animation:airplaneFlyRight 90s linear 12s infinite}
+.victoryPlane.rtl{top:var(--plane-altitude,39%);animation:airplaneFlyLeft 90s linear 57s infinite}
 .airplaneSprite{
   position:absolute;z-index:2;right:0;top:8px;width:34px;height:16px;
   overflow:visible;image-rendering:pixelated;shape-rendering:crispEdges;
@@ -3241,7 +3241,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.36</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.37</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -4902,8 +4902,80 @@ function initAdvancedFolds(){
   });
 }
 
+function initAirplaneFlybys(){
+  const hero=document.querySelector(".hero");
+  const planes=Array.from(document.querySelectorAll(".victoryPlane"));
+  if(!hero || !planes.length)return;
+  if(window.matchMedia("(prefers-reduced-motion:reduce)").matches)return;
+
+  let previousAltitude=null;
+
+  function randomUnit(){
+    if(window.crypto && typeof window.crypto.getRandomValues==="function"){
+      const sample=new Uint32Array(1);
+      window.crypto.getRandomValues(sample);
+      return sample[0]/4294967296;
+    }
+    return Math.random();
+  }
+
+  function altitudeRange(){
+    const mobile=window.matchMedia("(max-width:520px)").matches;
+    const back=hero.querySelector(".mountainBack");
+    const front=hero.querySelector(".mountainFront");
+    const fallbackFloor=hero.clientHeight*(mobile ? .52 : .49);
+    const tips=[];
+    if(back){
+      tips.push(back.offsetTop+back.offsetHeight*(mobile ? .49 : .28));
+    }
+    if(front){
+      tips.push(front.offsetTop+front.offsetHeight*(mobile ? .53 : .34));
+    }
+    const mountainTip=tips.length?Math.min(...tips):fallbackFloor;
+    const sprite=planes[0].querySelector(".airplaneSprite");
+    const spriteStyle=sprite?window.getComputedStyle(sprite):null;
+    const spriteTop=spriteStyle?parseFloat(spriteStyle.top)||0:0;
+    const spriteHeight=sprite?sprite.getBoundingClientRect().height:12;
+    const ceiling=Math.max(5,Math.round(hero.clientHeight*.025));
+    const floor=Math.max(
+      ceiling,
+      Math.round(mountainTip-spriteTop+spriteHeight*.34)
+    );
+    return {ceiling,floor};
+  }
+
+  function setRandomAltitude(plane){
+    const {ceiling,floor}=altitudeRange();
+    const span=Math.max(0,floor-ceiling);
+    let altitude=ceiling+randomUnit()*span;
+    if(previousAltitude!==null && span>24 && Math.abs(altitude-previousAltitude)<span*.18){
+      altitude=ceiling+((altitude-ceiling+span*.37)%span);
+    }
+    altitude=Math.round(altitude);
+    previousAltitude=altitude;
+    plane.style.setProperty("--plane-altitude",altitude+"px");
+    plane.dataset.altitudePx=String(altitude);
+    plane.dataset.altitudeMinPx=String(ceiling);
+    plane.dataset.altitudeMaxPx=String(floor);
+  }
+
+  planes.forEach(plane=>{
+    setRandomAltitude(plane);
+    plane.addEventListener("animationiteration",()=>setRandomAltitude(plane));
+  });
+
+  let resizeTimer=0;
+  window.addEventListener("resize",()=>{
+    window.clearTimeout(resizeTimer);
+    resizeTimer=window.setTimeout(()=>{
+      planes.forEach(setRandomAltitude);
+    },140);
+  },{passive:true});
+}
+
 injectVisualFx();
 initSkyFx();
+initAirplaneFlybys();
 initAdvancedFolds();
 refresh();
 loadHistory();
@@ -5242,7 +5314,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.36"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.37"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -5300,7 +5372,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.36"
+                                "Terminus-Umbrel-Client/0.2.37"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -5725,7 +5797,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.36"
+                                "Terminus-Umbrel-Client/0.2.37"
                         }
                     )
 
