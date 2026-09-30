@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.32"
+RELEASE_VERSION = "0.2.33"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -167,7 +167,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.32",
+                    "User-Agent": "TerminusPool-Market/0.2.33",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -1119,6 +1119,7 @@ h1{
 .hero{
   --daylight-level:0;
   --night-level:1;
+  --road-light-level:1;
   height:390px;position:relative;overflow:hidden;
   border:1px solid #164956;border-radius:10px;
   background:
@@ -1169,7 +1170,7 @@ h1{
   --bitcoin-offset:150px;
   --bitcoin-glow-alpha:.52;
   --bitcoin-glow-scale:1;
-  position:absolute;z-index:2;width:164px;height:164px;
+  position:absolute;z-index:3;width:164px;height:164px;
   left:62%;top:52px;
   transform:translateX(-50%) translateY(var(--bitcoin-offset));
   transition:transform 1.4s cubic-bezier(.2,.78,.2,1);
@@ -1260,10 +1261,57 @@ h1{
 .roadLamp:after{
   content:"";position:absolute;top:3px;width:7px;height:3px;
   background:#ffe7a1;
-  box-shadow:0 0 5px 2px rgba(255,219,128,.58),0 8px 18px 7px rgba(255,196,82,.12)
+  opacity:var(--road-light-level);
+  filter:brightness(calc(.55 + var(--road-light-level) * .65));
+  box-shadow:0 0 5px 2px rgba(255,219,128,.58),0 8px 18px 7px rgba(255,196,82,.12);
+  transition:opacity 1.4s cubic-bezier(.2,.78,.2,1),filter 1.4s cubic-bezier(.2,.78,.2,1)
 }
 .roadLamp.left:after{left:11px}
 .roadLamp.right:after{right:11px}
+.victoryPlane{
+  position:absolute;z-index:2;left:0;width:310px;height:42px;
+  opacity:0;pointer-events:none;transform:translateX(-340px);
+  will-change:transform,opacity
+}
+.victoryPlane.ltr{top:27%;animation:airplaneFlyRight 90s linear 12s infinite}
+.victoryPlane.rtl{top:17%;animation:airplaneFlyLeft 90s linear 57s infinite}
+.airplaneSprite{
+  position:absolute;z-index:2;right:0;top:7px;width:58px;height:28px;
+  overflow:visible;image-rendering:pixelated;shape-rendering:crispEdges;
+  filter:drop-shadow(3px 3px 0 rgba(0,0,0,.48)) drop-shadow(0 0 3px rgba(115,230,255,.38))
+}
+.towLine{
+  position:absolute;z-index:1;right:53px;top:21px;width:28px;height:1px;
+  background:#d6f5ef;box-shadow:0 1px 0 rgba(0,0,0,.48);
+  opacity:0;transform:rotate(-5deg);transform-origin:right center;
+  transition:opacity .35s ease
+}
+.towBanner{
+  position:absolute;z-index:0;right:78px;top:8px;min-width:154px;
+  padding:7px 11px 6px;border:2px solid #5c3f16;background:#ffc85c;
+  color:#171008;font-size:11px;font-weight:1000;letter-spacing:.08em;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  text-align:center;white-space:nowrap;opacity:0;transform:scaleX(.84);
+  transform-origin:right center;transition:opacity .35s ease,transform .35s ease;
+  box-shadow:4px 4px 0 rgba(53,26,5,.52),0 0 10px rgba(255,191,71,.28)
+}
+.towPickaxe{
+  width:15px;height:15px;flex:0 0 15px;overflow:visible;
+  background:transparent;border:0;filter:none;image-rendering:pixelated;shape-rendering:crispEdges
+}
+.victoryPlane.rtl .airplaneSprite{
+  left:0;right:auto;transform:scaleX(-1)
+}
+.victoryPlane.rtl .towLine{
+  left:53px;right:auto;transform:rotate(5deg);transform-origin:left center
+}
+.victoryPlane.rtl .towBanner{
+  left:78px;right:auto;transform-origin:left center
+}
+.hero[data-block-celebration="active"] .towLine{opacity:1}
+.hero[data-block-celebration="active"] .towBanner{
+  opacity:1;transform:scaleX(1)
+}
 .hitchhiker{
   position:absolute;z-index:11;left:50%;bottom:76px;
   width:28px;height:44px;opacity:0;pointer-events:none;
@@ -1346,6 +1394,21 @@ h1{
   50%{transform:translateY(-1px)}
 }
 
+@keyframes airplaneFlyRight{
+  0%{opacity:0;transform:translateX(-340px)}
+  .8%{opacity:1}
+  4%{transform:translateX(calc(50vw - 110px))}
+  8%{opacity:1;transform:translateX(calc(100vw + 90px))}
+  9%,100%{opacity:0;transform:translateX(calc(100vw + 180px))}
+}
+@keyframes airplaneFlyLeft{
+  0%{opacity:0;transform:translateX(calc(100vw + 180px))}
+  .8%{opacity:1}
+  4%{transform:translateX(calc(50vw - 110px))}
+  8%{opacity:1;transform:translateX(-340px)}
+  9%,100%{opacity:0;transform:translateX(-430px)}
+}
+
 @keyframes bitcoinGlowPulse{
   0%,100%{opacity:.72}
   50%{opacity:1}
@@ -1357,10 +1420,10 @@ h1{
 }
 
 @media(prefers-reduced-motion:reduce){
-  .car,.car:before,.car:after,.road:before,.roadLamp,.hitchhiker,.hitchThumb,.bitcoinGlow{
+  .car,.car:before,.car:after,.road:before,.roadLamp,.hitchhiker,.hitchThumb,.bitcoinGlow,.victoryPlane{
     animation:none !important
   }
-  .roadLamp,.hitchhiker{display:none}
+  .roadLamp,.hitchhiker,.victoryPlane{display:none}
 }
 
 .sectionTitle{
@@ -3160,7 +3223,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.32</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.33</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -3216,6 +3279,30 @@ a:focus-visible,button:focus-visible,input:focus-visible{
     <span class="roadLamp right pair2"></span>
     <span class="roadLamp left pair3"></span>
     <span class="roadLamp right pair3"></span>
+  </div>
+  <div class="victoryPlane ltr" aria-hidden="true">
+    <div class="towBanner"><span>block found</span><svg class="towPickaxe" viewBox="0 0 15 15" focusable="false"><path fill="#33200d" d="M9 1h2v2h2v2H8v2H6V5H2V3h5V2h2zM7 6h2v8H7z"/><path fill="#fff0b0" d="M3 3h7v1H3z"/><path fill="#8a4b16" d="M8 7h1v7H8z"/></svg></div>
+    <div class="towLine"></div>
+    <svg class="airplaneSprite" viewBox="0 0 58 28" focusable="false">
+      <path fill="#07101b" d="M2 12h17l9-9h8l-4 9h13l7-6h4l-3 8 3 8h-4l-7-6H32l4 9h-8l-9-9H2z"/>
+      <path fill="#c9f8f2" d="M5 11h17l8-7h4l-3 7h15l6-4h2l-3 6 3 6h-2l-6-4H31l3 7h-4l-8-7H5z"/>
+      <path fill="#5ecbd3" d="M5 13h43v2H5z"/>
+      <path fill="#ffffff" d="M9 11h16l5-5h2l-2 5h16l5-3-3 5H9z"/>
+      <path fill="#ff4eae" d="M42 12h7v3h-7z"/>
+      <path fill="#1e4d61" d="M31 11h10v2H31z"/>
+    </svg>
+  </div>
+  <div class="victoryPlane rtl" aria-hidden="true">
+    <div class="towBanner"><span>block found</span><svg class="towPickaxe" viewBox="0 0 15 15" focusable="false"><path fill="#33200d" d="M9 1h2v2h2v2H8v2H6V5H2V3h5V2h2zM7 6h2v8H7z"/><path fill="#fff0b0" d="M3 3h7v1H3z"/><path fill="#8a4b16" d="M8 7h1v7H8z"/></svg></div>
+    <div class="towLine"></div>
+    <svg class="airplaneSprite" viewBox="0 0 58 28" focusable="false">
+      <path fill="#07101b" d="M2 12h17l9-9h8l-4 9h13l7-6h4l-3 8 3 8h-4l-7-6H32l4 9h-8l-9-9H2z"/>
+      <path fill="#c9f8f2" d="M5 11h17l8-7h4l-3 7h15l6-4h2l-3 6 3 6h-2l-6-4H31l3 7h-4l-8-7H5z"/>
+      <path fill="#5ecbd3" d="M5 13h43v2H5z"/>
+      <path fill="#ffffff" d="M9 11h16l5-5h2l-2 5h16l5-3-3 5H9z"/>
+      <path fill="#ff4eae" d="M42 12h7v3h-7z"/>
+      <path fill="#1e4d61" d="M31 11h10v2H31z"/>
+    </svg>
   </div>
   <div class="hitchhiker" aria-hidden="true">
     <svg class="hitchhikerSprite" viewBox="0 0 16 24" focusable="false">
@@ -3843,6 +3930,10 @@ function updateWindowBitcoin(
     hero.style.setProperty(
       "--night-level",
       Math.max(.06,1-daylightLevel*.94).toFixed(3)
+    );
+    hero.style.setProperty(
+      "--road-light-level",
+      Math.max(.10,1-daylightLevel*.90).toFixed(3)
     );
     hero.dataset.daylightProgress=(daylightLevel*100).toFixed(2);
     hero.dataset.blockCelebration=windowBitcoinCelebrationActive
@@ -5107,7 +5198,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.32"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.33"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -5165,7 +5256,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.32"
+                                "Terminus-Umbrel-Client/0.2.33"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -5590,7 +5681,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.32"
+                                "Terminus-Umbrel-Client/0.2.33"
                         }
                     )
 

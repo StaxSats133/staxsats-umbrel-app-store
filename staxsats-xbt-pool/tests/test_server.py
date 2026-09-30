@@ -30,7 +30,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.32")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.33")
 
     def test_quick_connect_places_prime_pubkey_below_datum_endpoint(self):
         endpoint_pos = self.server.HTML.index("datum.terminuspool.xyz:28915")
@@ -75,6 +75,23 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn("55%{left:78%", self.server.HTML)
         self.assertIn("55%{left:15%", self.server.HTML)
         self.assertIn("55%{left:85%", self.server.HTML)
+        self.assertIn("--road-light-level:1", self.server.HTML)
+        self.assertIn("opacity:var(--road-light-level)", self.server.HTML)
+        self.assertIn('"--road-light-level"', self.server.HTML)
+        self.assertIn("Math.max(.10,1-daylightLevel*.90)", self.server.HTML)
+        self.assertIn('class="victoryPlane ltr"', self.server.HTML)
+        self.assertIn('class="victoryPlane rtl"', self.server.HTML)
+        self.assertIn("@keyframes airplaneFlyRight", self.server.HTML)
+        self.assertIn("@keyframes airplaneFlyLeft", self.server.HTML)
+        self.assertIn("animation:airplaneFlyRight 90s linear 12s infinite", self.server.HTML)
+        self.assertIn("animation:airplaneFlyLeft 90s linear 57s infinite", self.server.HTML)
+        self.assertIn('data-block-celebration="active"', self.server.HTML)
+        self.assertEqual(self.server.HTML.count('class="towPickaxe"'), 2)
+        self.assertEqual(self.server.HTML.count("<span>block found</span>"), 2)
+        self.assertIn('.hero[data-block-celebration="active"] .towLine', self.server.HTML)
+        self.assertIn(".victoryPlane.ltr{top:27%", self.server.HTML)
+        self.assertIn(".victoryPlane.rtl{top:17%", self.server.HTML)
+        self.assertIn("position:absolute;z-index:3;width:164px;height:164px", self.server.HTML)
         self.assertNotIn("streetLightPair", self.server.HTML)
         self.assertIn('class="hitchhiker"', self.server.HTML)
         self.assertIn("@keyframes hitchhikerPass", self.server.HTML)
