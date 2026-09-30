@@ -2,6 +2,7 @@ import importlib.util
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 
 SERVER_PATH = os.path.join(
@@ -29,7 +30,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.26")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.27")
         self.assertIn("Sitemap: https://terminuspool.xyz/sitemap.xml", self.server.ROBOTS_TXT)
         self.assertIn("https://terminuspool.xyz/", self.server.SITEMAP_XML)
         self.assertIn("404 // SIGNAL LOST", self.server.NOT_FOUND_HTML)
@@ -55,6 +56,58 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn("translate(245px,178px) scale(1.55)", self.server.HTML)
         self.assertNotIn("hitchhikerVisit", self.server.HTML)
         self.assertIn('class="hitchThumb"', self.server.HTML)
+        self.assertIn('id="xbtMarket"', self.server.HTML)
+        self.assertIn('id="xbtPrice"', self.server.HTML)
+        self.assertIn("renderXbtMarket(d.xbtMarket)", self.server.HTML)
+        self.assertIn("NEOXEX SYMBOL BTCB2", self.server.HTML)
+
+    def test_neoxex_xbt_market_normalization(self):
+        market = self.server.normalize_xbt_market({
+            "success": True,
+            "pair": "BTCB2_USDC",
+            "ticker": {
+                "lastPrice": 355,
+                "changePercent": -3.527,
+                "high24h": 400,
+                "low24h": 320,
+                "volume24h": 555.25,
+                "quoteVolume24h": 202256.98,
+                "trades24h": 1900,
+                "computedAt": 1_800_000_000_000,
+                "bestBid": 351.1,
+                "bestAsk": 355,
+            },
+        }, now=1_800_000_030)
+        self.assertEqual(market["pair"], "BTCB2_USDC")
+        self.assertEqual(market["displayPair"], "XBT / USDC")
+        self.assertEqual(market["lastPrice"], 355)
+        self.assertEqual(market["trades24h"], 1900)
+        self.assertFalse(market["stale"])
+
+    def test_neoxex_xbt_market_rejects_invalid_price(self):
+        with self.assertRaises(ValueError):
+            self.server.normalize_xbt_market({
+                "success": True,
+                "ticker": {"lastPrice": 0},
+            })
+
+    def test_neoxex_xbt_market_uses_recent_cache_during_outage(self):
+        self.server.XBT_MARKET_CACHE["data"] = {
+            "available": True,
+            "pair": "BTCB2_USDC",
+            "lastPrice": 355,
+            "stale": False,
+        }
+        self.server.XBT_MARKET_CACHE["fetchedAt"] = 1_000
+        with mock.patch.object(
+            self.server.urllib.request,
+            "urlopen",
+            side_effect=OSError("exchange unavailable"),
+        ):
+            market = self.server.load_xbt_market(now=1_031)
+        self.assertTrue(market["available"])
+        self.assertTrue(market["stale"])
+        self.assertEqual(market["lastPrice"], 355)
 
     def test_window_work_progress_is_bounded(self):
         self.assertEqual(self.server.window_work_progress(0, 0), 0)

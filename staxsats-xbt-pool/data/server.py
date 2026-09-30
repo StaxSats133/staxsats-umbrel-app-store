@@ -3,6 +3,7 @@ from contextlib import contextmanager
 import gzip
 import hashlib
 import json
+import math
 import os
 import sqlite3
 import threading
@@ -44,7 +45,15 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.26"
+RELEASE_VERSION = "0.2.27"
+NEOXEX_XBT_TICKER_URL = os.environ.get(
+    "TERMINUS_XBT_TICKER_URL",
+    "https://neoxa.exchange/api/exchange/ticker/BTCB2_USDC"
+)
+XBT_MARKET_CACHE_SECONDS = 30
+XBT_MARKET_STALE_SECONDS = 5 * 60
+XBT_MARKET_LOCK = threading.Lock()
+XBT_MARKET_CACHE = {"fetchedAt": 0, "data": None}
 COLLECTOR_PATH = os.environ.get(
     "TERMINUS_COLLECTOR_PATH",
     "/api/local-stats"
@@ -91,6 +100,89 @@ WORK_REWARD_TIERS = (
     (0.0025, "✨", "SPARK"),
 )
 DIAMOND_WORK_RATIO = 0.75
+
+
+def _market_number(value, default=0.0):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return default
+    return number if math.isfinite(number) else default
+
+
+def normalize_xbt_market(payload, now=None):
+    if not isinstance(payload, dict) or not payload.get("success"):
+        raise ValueError("NeoxEX ticker response was unsuccessful")
+
+    ticker = payload.get("ticker")
+    if not isinstance(ticker, dict):
+        raise ValueError("NeoxEX ticker payload is missing")
+
+    last_price = _market_number(ticker.get("lastPrice"), -1)
+    if last_price <= 0:
+        raise ValueError("NeoxEX XBT price is invalid")
+
+    current_time = int(time.time() if now is None else now)
+    computed_at = int(_market_number(ticker.get("computedAt"), 0))
+    updated_at = computed_at // 1000 if computed_at > 10_000_000_000 else computed_at
+    if updated_at <= 0:
+        updated_at = current_time
+
+    return {
+        "available": True,
+        "venue": "Neoxa Exchange",
+        "pair": "BTCB2_USDC",
+        "displayPair": "XBT / USDC",
+        "lastPrice": last_price,
+        "changePercent24h": _market_number(ticker.get("changePercent")),
+        "high24h": _market_number(ticker.get("high24h")),
+        "low24h": _market_number(ticker.get("low24h")),
+        "volume24h": _market_number(ticker.get("volume24h")),
+        "quoteVolume24h": _market_number(ticker.get("quoteVolume24h")),
+        "trades24h": max(0, int(_market_number(ticker.get("trades24h")))),
+        "bestBid": _market_number(ticker.get("bestBid")),
+        "bestAsk": _market_number(ticker.get("bestAsk")),
+        "updatedAt": updated_at,
+        "stale": current_time - updated_at > XBT_MARKET_STALE_SECONDS,
+    }
+
+
+def load_xbt_market(now=None):
+    current_time = int(time.time() if now is None else now)
+    with XBT_MARKET_LOCK:
+        cached = XBT_MARKET_CACHE.get("data")
+        fetched_at = int(XBT_MARKET_CACHE.get("fetchedAt", 0) or 0)
+        if cached and current_time - fetched_at < XBT_MARKET_CACHE_SECONDS:
+            return dict(cached)
+
+        try:
+            request = urllib.request.Request(
+                NEOXEX_XBT_TICKER_URL,
+                headers={
+                    "Accept": "application/json",
+                    "User-Agent": "TerminusPool-Market/0.2.27",
+                },
+            )
+            with urllib.request.urlopen(request, timeout=3) as response:
+                market = normalize_xbt_market(
+                    json.load(response),
+                    now=current_time
+                )
+            XBT_MARKET_CACHE["data"] = dict(market)
+            XBT_MARKET_CACHE["fetchedAt"] = current_time
+            return market
+        except Exception:
+            if cached and current_time - fetched_at <= XBT_MARKET_STALE_SECONDS:
+                fallback = dict(cached)
+                fallback["stale"] = True
+                return fallback
+            return {
+                "available": False,
+                "venue": "Neoxa Exchange",
+                "pair": "BTCB2_USDC",
+                "displayPair": "XBT / USDC",
+                "stale": True,
+            }
 
 
 @contextmanager
@@ -2225,9 +2317,62 @@ body{
 }
 
 
+/* TERMINUS_XBT_MARKET */
+.marketTicker{
+    margin:18px 0 14px;
+    padding:16px 18px;
+    border:1px solid rgba(67,245,255,.34);
+    border-radius:14px;
+    background:
+        radial-gradient(circle at 78% 50%,rgba(255,79,184,.10),transparent 34%),
+        linear-gradient(120deg,rgba(5,18,28,.98),rgba(8,12,24,.98));
+    box-shadow:inset 0 1px 0 rgba(114,255,180,.05),0 10px 35px rgba(0,0,0,.22);
+    display:grid;
+    grid-template-columns:minmax(210px,.85fr) minmax(190px,.65fr) minmax(330px,1.35fr) auto;
+    gap:18px;
+    align-items:center;
+    position:relative;
+    overflow:hidden;
+}
+.marketTicker:before{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:repeating-linear-gradient(90deg,transparent 0 31px,rgba(67,245,255,.018) 32px);
+}
+.marketTicker>*{position:relative;z-index:1;min-width:0}
+.marketKicker{color:#72ffb4;font-size:9px;font-weight:900;letter-spacing:.16em}
+.marketPair{margin-top:5px;color:#e7faff;font-size:18px;font-weight:1000;letter-spacing:.08em}
+.marketPair span{color:#678792;font-size:11px}
+.marketPrice{color:#43f5ff;font-size:clamp(25px,3vw,38px);font-weight:1000;font-variant-numeric:tabular-nums;text-shadow:0 0 20px rgba(67,245,255,.2);white-space:nowrap}
+.marketStats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.marketStat{padding:8px 10px;border-left:1px solid rgba(67,245,255,.18)}
+.marketStatLabel{display:block;color:#647f89;font-size:8px;font-weight:900;letter-spacing:.12em}
+.marketStatValue{display:block;margin-top:4px;color:#d7edf3;font-size:12px;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+.marketStatValue.up{color:#72ffb4}.marketStatValue.down{color:#ff7890}.marketStatValue.flat{color:#d7edf3}
+.marketFresh{justify-self:end;text-align:right;color:#7895a0;font-size:8px;font-weight:900;letter-spacing:.12em;line-height:1.5;white-space:nowrap}
+.marketFresh strong{display:block;color:#ffcc63;font-size:9px}
+.marketTicker.unavailable .marketPrice{color:#7895a0;text-shadow:none}
+
+@media(max-width:900px){
+    .marketTicker{grid-template-columns:1fr 1fr;gap:13px 16px}
+    .marketStats{grid-column:1/-1}
+    .marketFresh{position:absolute;right:0;top:0}
+}
+@media(max-width:520px){
+    .marketTicker{padding:15px;grid-template-columns:1fr auto;margin-top:14px}
+    .marketPrice{font-size:27px;text-align:right}
+    .marketStats{gap:0}
+    .marketStat{padding:8px 7px}
+    .marketStat:first-child{padding-left:0;border-left:0}
+    .marketStatValue{font-size:10px}
+    .marketFresh{position:static;grid-column:1/-1;justify-self:start;text-align:left}
+}
+
 /* TERMINUS_GRAND_OPENING_PROMO */
 .launchPromo{
-    margin:18px 0 26px;
+    margin:0 0 26px;
     padding:20px 22px;
     border:1px solid rgba(67,245,255,.30);
     border-radius:14px;
@@ -2773,7 +2918,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.26</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.27</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -2860,6 +3005,31 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <a class="primaryAction" href="#startMining">START MINING</a>
       <a href="#poolStats">VIEW LIVE STATS</a>
     </div>
+  </div>
+</section>
+
+<section class="marketTicker unavailable" id="xbtMarket" aria-label="Live XBT market price from Neoxa Exchange" aria-live="polite">
+  <div class="marketIdentity">
+    <div class="marketKicker">LIVE MARKET // NEOXA EXCHANGE</div>
+    <div class="marketPair">XBT <span>/ USDC</span></div>
+  </div>
+  <div class="marketPrice" id="xbtPrice">$—</div>
+  <div class="marketStats">
+    <div class="marketStat">
+      <span class="marketStatLabel">24H CHANGE</span>
+      <span class="marketStatValue flat" id="xbtChange">—</span>
+    </div>
+    <div class="marketStat">
+      <span class="marketStatLabel">24H VOLUME</span>
+      <span class="marketStatValue" id="xbtVolume">— XBT</span>
+    </div>
+    <div class="marketStat">
+      <span class="marketStatLabel">24H TRADES</span>
+      <span class="marketStatValue" id="xbtTrades">—</span>
+    </div>
+  </div>
+  <div class="marketFresh" id="xbtFresh">
+    NEOXEX SYMBOL BTCB2<strong>AWAITING MARKET</strong>
   </div>
 </section>
 
@@ -3251,6 +3421,40 @@ function compact(v){
   if(n>=1e6)return (n/1e6).toFixed(2)+"M";
   if(n>=1e3)return (n/1e3).toFixed(2)+"K";
   return num(n,0);
+}
+
+function marketMoney(v){
+  const n=Number(v);
+  if(!Number.isFinite(n)||n<=0)return "$—";
+  const digits=n>=100?2:n>=1?4:8;
+  return "$"+n.toLocaleString(undefined,{
+    minimumFractionDigits:2,
+    maximumFractionDigits:digits
+  });
+}
+
+function renderXbtMarket(market){
+  const box=$("xbtMarket");
+  const available=Boolean(market&&market.available);
+  box.classList.toggle("unavailable",!available);
+  if(!available){
+    $("xbtPrice").textContent="$—";
+    $("xbtChange").textContent="—";
+    $("xbtChange").className="marketStatValue flat";
+    $("xbtVolume").textContent="— XBT";
+    $("xbtTrades").textContent="—";
+    $("xbtFresh").innerHTML="NEOXEX SYMBOL BTCB2<strong>PRICE UNAVAILABLE</strong>";
+    return;
+  }
+  const change=Number(market.changePercent24h)||0;
+  const direction=change>0?"up":change<0?"down":"flat";
+  $("xbtPrice").textContent=marketMoney(market.lastPrice);
+  $("xbtChange").textContent=(change>0?"+":"")+num(change,2)+"%";
+  $("xbtChange").className="marketStatValue "+direction;
+  $("xbtVolume").textContent=compact(market.volume24h)+" XBT";
+  $("xbtTrades").textContent=num(market.trades24h,0);
+  const freshness=market.stale?"STALE CACHE":"LIVE // 30S CACHE";
+  $("xbtFresh").innerHTML="NEOXEX SYMBOL BTCB2<strong>"+freshness+"</strong>";
 }
 
 function escapeHtml(value){
@@ -4071,6 +4275,7 @@ async function refresh(){
 
     const d=await r.json();
     const ready=String(d.status||"").includes("Ready");
+    renderXbtMarket(d.xbtMarket);
 
     windowBitcoinLastWork=d.windowWork||0;
     windowBitcoinLastTarget=d.workTarget||0;
@@ -4576,7 +4781,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.26"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.27"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -4634,7 +4839,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.26"
+                                "Terminus-Umbrel-Client/0.2.27"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -4642,6 +4847,7 @@ class Handler(BaseHTTPRequestHandler):
                     if response_view == "live":
                         public_data.pop("history24h", None)
                         public_data.pop("hashHistory", None)
+                        public_data["xbtMarket"] = load_xbt_market()
                     elif response_view == "history":
                         public_data = {
                             "generatedAt": public_data.get(
@@ -4993,6 +5199,9 @@ class Handler(BaseHTTPRequestHandler):
                     },
                 ]
 
+                if response_view == "live":
+                    data["xbtMarket"] = load_xbt_market()
+
                 self.send_json(data)
 
             except Exception as e:
@@ -5020,7 +5229,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.26"
+                                "Terminus-Umbrel-Client/0.2.27"
                         }
                     )
 
@@ -5033,6 +5242,7 @@ class Handler(BaseHTTPRequestHandler):
                     if response_view == "live":
                         public_data.pop("history24h", None)
                         public_data.pop("hashHistory", None)
+                        public_data["xbtMarket"] = load_xbt_market()
                     elif response_view == "history":
                         public_data = {
                             "generatedAt": public_data.get(
