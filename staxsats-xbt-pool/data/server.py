@@ -45,7 +45,9 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.29"
+RELEASE_VERSION = "0.2.30"
+HASHES_PER_DIFFICULTY = 4_294_967_296.0
+BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 NEOXEX_XBT_TICKER_URL = os.environ.get(
     "TERMINUS_XBT_TICKER_URL",
     "https://neoxa.exchange/api/exchange/ticker/BTCB2_USDC"
@@ -160,7 +162,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.29",
+                    "User-Agent": "TerminusPool-Market/0.2.30",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -254,6 +256,19 @@ def _history_connection():
             )
             """
         )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS block_effort_state (
+                singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
+                observed_blocks INTEGER NOT NULL,
+                estimated_work REAL NOT NULL,
+                last_sample_at INTEGER NOT NULL,
+                last_hashrate_hs REAL NOT NULL,
+                tracking_since INTEGER NOT NULL,
+                last_reset_at INTEGER NOT NULL
+            )
+            """
+        )
         connection.commit()
         yield connection
         connection.commit()
@@ -261,8 +276,149 @@ def _history_connection():
         connection.close()
 
 
-def record_history(sample):
-    minute = int(time.time()) // 60 * 60
+def _history_effort_since(connection, since, until):
+    """Estimate difficulty-work from durable minute hashrate samples."""
+    rows = connection.execute(
+        """
+        SELECT minute, hashrate
+        FROM pool_history
+        WHERE minute >= ? AND minute <= ?
+        ORDER BY minute ASC
+        """,
+        (int(since), int(until))
+    ).fetchall()
+    if not rows:
+        return 0.0
+
+    estimated_work = 0.0
+    previous_at, previous_ths = rows[0]
+    for sampled_at, sampled_ths in rows[1:]:
+        elapsed = min(
+            BLOCK_EFFORT_MAX_SAMPLE_GAP,
+            max(0, int(sampled_at) - int(previous_at))
+        )
+        average_hs = (
+            max(0.0, float(previous_ths or 0)) +
+            max(0.0, float(sampled_ths or 0))
+        ) * 0.5 * 1_000_000_000_000
+        estimated_work += average_hs * elapsed / HASHES_PER_DIFFICULTY
+        previous_at, previous_ths = sampled_at, sampled_ths
+
+    tail_seconds = min(
+        BLOCK_EFFORT_MAX_SAMPLE_GAP,
+        max(0, int(until) - int(previous_at))
+    )
+    estimated_work += (
+        max(0.0, float(previous_ths or 0)) *
+        1_000_000_000_000 *
+        tail_seconds /
+        HASHES_PER_DIFFICULTY
+    )
+    return estimated_work
+
+
+def _update_block_effort(connection, sample, now):
+    """Track estimated pool work and reset only on a newly found block."""
+    blocks_found = max(0, int(_number(sample.get("blocks", 0))))
+    last_block_at = max(0, int(_number(sample.get("lastBlockAt", 0))))
+    hashrate_hs = max(
+        0.0,
+        _number(sample.get("hashrate", 0)) * 1_000_000_000_000
+    )
+    network_difficulty = max(0.0, _number(sample.get("difficulty", 0)))
+    state = connection.execute(
+        """
+        SELECT observed_blocks, estimated_work, last_sample_at,
+               last_hashrate_hs, tracking_since, last_reset_at
+        FROM block_effort_state
+        WHERE singleton = 1
+        """
+    ).fetchone()
+
+    if state is None:
+        seed_since = last_block_at if last_block_at > 0 else now
+        estimated_work = _history_effort_since(
+            connection,
+            seed_since,
+            now
+        ) if last_block_at > 0 else 0.0
+        tracking_since = seed_since
+        last_reset_at = seed_since
+    else:
+        (
+            observed_blocks,
+            estimated_work,
+            last_sample_at,
+            last_hashrate_hs,
+            tracking_since,
+            last_reset_at,
+        ) = state
+        if blocks_found != observed_blocks:
+            tracking_since = last_block_at if last_block_at > 0 else now
+            last_reset_at = tracking_since
+            estimated_work = _history_effort_since(
+                connection,
+                tracking_since,
+                now
+            ) if last_block_at > 0 else 0.0
+        else:
+            elapsed = min(
+                BLOCK_EFFORT_MAX_SAMPLE_GAP,
+                max(0, now - int(last_sample_at))
+            )
+            average_hs = (
+                max(0.0, float(last_hashrate_hs or 0)) +
+                hashrate_hs
+            ) * 0.5
+            estimated_work += (
+                average_hs * elapsed / HASHES_PER_DIFFICULTY
+            )
+
+    connection.execute(
+        """
+        INSERT INTO block_effort_state (
+            singleton, observed_blocks, estimated_work,
+            last_sample_at, last_hashrate_hs,
+            tracking_since, last_reset_at
+        ) VALUES (1, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(singleton) DO UPDATE SET
+            observed_blocks=excluded.observed_blocks,
+            estimated_work=excluded.estimated_work,
+            last_sample_at=excluded.last_sample_at,
+            last_hashrate_hs=excluded.last_hashrate_hs,
+            tracking_since=excluded.tracking_since,
+            last_reset_at=excluded.last_reset_at
+        """,
+        (
+            blocks_found,
+            estimated_work,
+            now,
+            hashrate_hs,
+            tracking_since,
+            last_reset_at,
+        )
+    )
+
+    effort_percent = (
+        estimated_work / network_difficulty * 100.0
+        if network_difficulty > 0 else 0.0
+    )
+    return {
+        "basis": "estimated-work-since-last-block",
+        "estimatedWork": estimated_work,
+        "expectedWork": network_difficulty,
+        "effortPercent": effort_percent,
+        "visualPercent": min(100.0, max(0.0, effort_percent)),
+        "trackingSince": int(tracking_since),
+        "lastResetAt": int(last_reset_at),
+        "observedBlocks": blocks_found,
+        "probabilistic": True,
+    }
+
+
+def record_history(sample, now=None):
+    sampled_at = int(time.time() if now is None else now)
+    minute = sampled_at // 60 * 60
 
     with HISTORY_LOCK:
         with _history_connection() as connection:
@@ -294,6 +450,7 @@ def record_history(sample):
                 "DELETE FROM pool_history WHERE minute < ?",
                 (minute - HISTORY_RETENTION_SECONDS,)
             )
+            return _update_block_effort(connection, sample, sampled_at)
 
 
 def load_history(hours=24, max_points=288):
@@ -2949,7 +3106,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.29</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.30</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -2967,7 +3124,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 <section class="hero" aria-labelledby="heroTitle">
   <div class="daylightSky" aria-hidden="true"></div>
   <div class="stars"></div>
-  <div class="windowBitcoin" id="windowBitcoin" role="img" aria-label="Current payout window work progress: waiting for telemetry">
+  <div class="windowBitcoin" id="windowBitcoin" role="img" aria-label="Estimated pool effort since the last Terminus block: waiting for telemetry">
     <div class="bitcoinGlow" aria-hidden="true"></div>
     <svg class="bitcoinSprite celestial32" viewBox="0 0 48 48" aria-hidden="true" focusable="false" data-pixel-style="32-bit">
       <path fill="#5b1b08" d="M15 1h18v2h6v3h4v4h3v6h2v16h-2v6h-3v4h-4v3h-6v2H15v-2H9v-3H5v-4H2v-6H0V16h2v-6h3V6h4V3h6z"/>
@@ -3595,8 +3752,9 @@ function historyMetric(label,value){
 let windowBitcoinProgress=0;
 let windowBitcoinLastWork=0;
 let windowBitcoinLastTarget=0;
+let windowBitcoinLastEffort=0;
 
-function updateWindowBitcoin(progress,work,target){
+function updateWindowBitcoin(progress,work,target,effortPercent){
   const coin=$("windowBitcoin");
   if(!coin)return;
   const numeric=Number(progress);
@@ -3604,11 +3762,8 @@ function updateWindowBitcoin(progress,work,target){
     ? Math.min(100,Math.max(0,numeric))
     : 0;
   windowBitcoinProgress=bounded;
-  const progressRatio=bounded/100;
   const mobileRise=window.matchMedia("(max-width:520px)").matches;
-  const visualProgress=bounded<=0
-    ? 0
-    : Math.pow(progressRatio,mobileRise?.45:.65)*100;
+  const visualProgress=bounded;
   const daylightLevel=visualProgress/100;
   const hero=coin.closest(".hero");
   if(hero){
@@ -3627,7 +3782,7 @@ function updateWindowBitcoin(progress,work,target){
         ? "NEON HIGHWAY // DAYBREAK RUN"
         : "NEON HIGHWAY // DAYLIGHT RUN";
   }
-  const travel=mobileRise?75:150;
+  const travel=mobileRise?75:210;
   coin.style.setProperty(
     "--bitcoin-offset",
     ((1-visualProgress/100)*travel).toFixed(2)+"px"
@@ -3641,9 +3796,13 @@ function updateWindowBitcoin(progress,work,target){
     "--bitcoin-glow-scale",
     (1+bounded*.0018).toFixed(2)
   );
+  const rawEffort=Number(effortPercent);
+  const reportedEffort=Number.isFinite(rawEffort)?Math.max(0,rawEffort):bounded;
   const label=
-    `Current payout window work progress: ${bounded.toFixed(2)}%. `+
-    `${compact(work||0)} of ${compact(target||0)} target work.`;
+    `Estimated pool effort since the last Terminus block: `+
+    `${reportedEffort.toFixed(2)}% of one statistically expected block. `+
+    `${compact(work||0)} estimated work against ${compact(target||0)} expected. `+
+    `Block discovery is probabilistic; the artwork resets only after a block is found.`;
   coin.setAttribute("aria-label",label);
   coin.title=label;
 }
@@ -3652,7 +3811,8 @@ window.addEventListener("resize",()=>{
   updateWindowBitcoin(
     windowBitcoinProgress,
     windowBitcoinLastWork,
-    windowBitcoinLastTarget
+    windowBitcoinLastTarget,
+    windowBitcoinLastEffort
   );
 });
 
@@ -4331,18 +4491,25 @@ async function refresh(){
     const ready=String(d.status||"").includes("Ready");
     renderXbtMarket(d.xbtMarket);
 
-    windowBitcoinLastWork=d.windowWork||0;
-    windowBitcoinLastTarget=d.workTarget||0;
-    const reportedWindowProgress=Number(d.windowProgressPercent);
-    const fallbackWindowProgress=Number(windowBitcoinLastTarget)>0
-      ? Number(windowBitcoinLastWork)/Number(windowBitcoinLastTarget)*100
-      : 0;
+    const blockEffort=d.blockEffort||{};
+    windowBitcoinLastWork=blockEffort.estimatedWork||0;
+    windowBitcoinLastTarget=blockEffort.expectedWork||d.difficulty||0;
+    windowBitcoinLastEffort=Number(blockEffort.effortPercent);
+    const reportedBlockProgress=Number(blockEffort.visualPercent);
+    const legacyWindowProgress=Number(d.windowProgressPercent);
+    const fallbackBlockProgress=Number.isFinite(windowBitcoinLastEffort)
+      && Number(windowBitcoinLastTarget)>0
+        ? Number(windowBitcoinLastWork)/Number(windowBitcoinLastTarget)*100
+        : Number.isFinite(legacyWindowProgress)
+          ? legacyWindowProgress
+          : 0;
     updateWindowBitcoin(
-      Number.isFinite(reportedWindowProgress)
-        ? reportedWindowProgress
-        : fallbackWindowProgress,
+      Number.isFinite(reportedBlockProgress)
+        ? reportedBlockProgress
+        : Math.min(100,Math.max(0,fallbackBlockProgress)),
       windowBitcoinLastWork,
-      windowBitcoinLastTarget
+      windowBitcoinLastTarget,
+      windowBitcoinLastEffort
     );
 
     const pubkey=d.primePubkey||"";
@@ -4835,7 +5002,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.29"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.30"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -4893,7 +5060,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.29"
+                                "Terminus-Umbrel-Client/0.2.30"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -5059,6 +5226,14 @@ class Handler(BaseHTTPRequestHandler):
                 payout_sats=int(
                     miner.get("payout_sats",0) or 0
                 )
+                last_block_at=max(
+                    (
+                        int(_number(block.get("found_at", 0)))
+                        for block in blocks.get("recent", [])
+                        if isinstance(block, dict)
+                    ),
+                    default=0
+                )
                 selected_miner_work=int(
                     _number(miner.get("work",0))
                 )
@@ -5180,12 +5355,15 @@ class Handler(BaseHTTPRequestHandler):
                         ),
 
                     "blocks":
-                        blocks.get("found",0)
+                        blocks.get("found",0),
+
+                    "lastBlockAt":
+                        last_block_at
                 }
 
                 history_persistent = True
                 try:
-                    record_history(data)
+                    data["blockEffort"] = record_history(data)
                     if response_view == "live":
                         history_points = []
                         history_summary = load_history_summary()
@@ -5193,6 +5371,18 @@ class Handler(BaseHTTPRequestHandler):
                         history_points, history_summary = load_history()
                 except Exception:
                     history_persistent = False
+                    data["blockEffort"] = {
+                        "basis": "estimated-work-since-last-block",
+                        "estimatedWork": 0.0,
+                        "expectedWork": float(data.get("difficulty", 0) or 0),
+                        "effortPercent": 0.0,
+                        "visualPercent": 0.0,
+                        "trackingSince": int(time.time()),
+                        "lastResetAt": int(time.time()),
+                        "observedBlocks": int(data.get("blocks", 0) or 0),
+                        "probabilistic": True,
+                        "available": False,
+                    }
                     history_points = [{
                         "ts": int(time.time()),
                         "hashrate": display_hash,
@@ -5283,7 +5473,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.29"
+                                "Terminus-Umbrel-Client/0.2.30"
                         }
                     )
 

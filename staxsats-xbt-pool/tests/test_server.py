@@ -30,14 +30,18 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.29")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.30")
         self.assertIn("Sitemap: https://terminuspool.xyz/sitemap.xml", self.server.ROBOTS_TXT)
         self.assertIn("https://terminuspool.xyz/", self.server.SITEMAP_XML)
         self.assertIn("404 // SIGNAL LOST", self.server.NOT_FOUND_HTML)
         self.assertIn('id="windowBitcoin"', self.server.HTML)
         self.assertNotIn('class="sun"', self.server.HTML)
-        self.assertIn("Math.pow(progressRatio,mobileRise?.45:.65)", self.server.HTML)
+        self.assertNotIn("Math.pow(progressRatio", self.server.HTML)
+        self.assertIn("const travel=mobileRise?75:210", self.server.HTML)
         self.assertIn("coin.dataset.visualProgress", self.server.HTML)
+        self.assertIn("const blockEffort=d.blockEffort||{}", self.server.HTML)
+        self.assertIn("legacyWindowProgress", self.server.HTML)
+        self.assertIn("one statistically expected block", self.server.HTML)
         self.assertIn('class="daylightSky"', self.server.HTML)
         self.assertIn("--daylight-level", self.server.HTML)
         self.assertIn("hero.dataset.daylightProgress", self.server.HTML)
@@ -139,6 +143,35 @@ class TerminusServerTests(unittest.TestCase):
         self.assertEqual(len(points), 1)
         self.assertEqual(summary["samples"], 1)
         self.assertEqual(self.server.load_history_summary()["samples"], 1)
+
+    def test_block_effort_persists_and_resets_only_on_new_block(self):
+        base = {
+            "hashrate": 0.001,
+            "poolMiners": 1,
+            "connections": 1,
+            "accepted": 0,
+            "rejected": 0,
+            "height": 974100,
+            "difficulty": 1_000,
+            "blocks": 1,
+        }
+        first = self.server.record_history(base, now=1_800_000_000)
+        self.assertEqual(first["effortPercent"], 0)
+
+        second = self.server.record_history(base, now=1_800_000_060)
+        self.assertGreater(second["effortPercent"], 1)
+        self.assertLess(second["effortPercent"], 2)
+
+        restarted = load_server(self.temp.name)
+        third = restarted.record_history(base, now=1_800_000_120)
+        self.assertGreater(third["effortPercent"], second["effortPercent"])
+
+        found = dict(base)
+        found["blocks"] = 2
+        reset = restarted.record_history(found, now=1_800_000_180)
+        self.assertEqual(reset["effortPercent"], 0)
+        self.assertEqual(reset["observedBlocks"], 2)
+        self.assertEqual(reset["lastResetAt"], 1_800_000_180)
 
     def test_public_leaderboard_uses_opaque_aliases(self):
         identity = "bc1qexampleidentitythatmustneverleak"
