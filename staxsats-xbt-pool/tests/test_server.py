@@ -30,7 +30,17 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.31")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.32")
+
+    def test_quick_connect_places_prime_pubkey_below_datum_endpoint(self):
+        endpoint_pos = self.server.HTML.index("datum.terminuspool.xyz:28915")
+        quick_pubkey_pos = self.server.HTML.index('id="quickPrimePubkey"')
+        pool_stats_pos = self.server.HTML.index('id="poolStats"')
+        self.assertLess(endpoint_pos, quick_pubkey_pos)
+        self.assertLess(quick_pubkey_pos, pool_stats_pos)
+        self.assertIn('id="quickCopyPrimePubkey"', self.server.HTML)
+        self.assertIn('/assets/datum-pool-setup.png', self.server.HTML)
+        self.assertGreater(len(self.server.POOL_SETUP_PNG), 1000)
         self.assertIn("Sitemap: https://terminuspool.xyz/sitemap.xml", self.server.ROBOTS_TXT)
         self.assertIn("https://terminuspool.xyz/", self.server.SITEMAP_XML)
         self.assertIn("404 // SIGNAL LOST", self.server.NOT_FOUND_HTML)
