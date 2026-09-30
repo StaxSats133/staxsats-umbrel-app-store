@@ -45,7 +45,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.27"
+RELEASE_VERSION = "0.2.28"
 NEOXEX_XBT_TICKER_URL = os.environ.get(
     "TERMINUS_XBT_TICKER_URL",
     "https://neoxa.exchange/api/exchange/ticker/BTCB2_USDC"
@@ -160,7 +160,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.27",
+                    "User-Agent": "TerminusPool-Market/0.2.28",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -1119,16 +1119,18 @@ h1{
 }
 
 @keyframes roadLampLeft{
-  0%{opacity:0;transform:translate(-18px,0) scale(.1)}
+  0%{left:36.5%;opacity:0;transform:translate(-100%,0) scale(.1)}
   10%{opacity:.28}
-  74%{opacity:.72}
-  100%{opacity:0;transform:translate(-245px,178px) scale(1.55)}
+  55%{left:22%;opacity:.72;transform:translate(-100%,98px) scale(.9)}
+  74%{left:17%;opacity:.72;transform:translate(-100%,132px) scale(1.18)}
+  100%{left:10%;opacity:0;transform:translate(-100%,178px) scale(1.55)}
 }
 @keyframes roadLampRight{
-  0%{opacity:0;transform:translate(18px,0) scale(.1)}
+  0%{left:63.5%;opacity:0;transform:translate(0,0) scale(.1)}
   10%{opacity:.28}
-  74%{opacity:.72}
-  100%{opacity:0;transform:translate(245px,178px) scale(1.55)}
+  55%{left:78%;opacity:.72;transform:translate(0,98px) scale(.9)}
+  74%{left:83%;opacity:.72;transform:translate(0,132px) scale(1.18)}
+  100%{left:90%;opacity:0;transform:translate(0,178px) scale(1.55)}
 }
 
 @keyframes hitchhikerPass{
@@ -1581,6 +1583,20 @@ footer{
   }
   .road{left:15%;right:15%;height:129px}
   .roadLamp{height:48px}
+  @keyframes roadLampLeft{
+    0%{left:28.5%;opacity:0;transform:translate(-100%,0) scale(.1)}
+    10%{opacity:.28}
+    55%{left:15%;opacity:.72;transform:translate(-100%,78px) scale(.9)}
+    74%{left:10%;opacity:.72;transform:translate(-100%,106px) scale(1.18)}
+    100%{left:4%;opacity:0;transform:translate(-100%,145px) scale(1.55)}
+  }
+  @keyframes roadLampRight{
+    0%{left:71.5%;opacity:0;transform:translate(0,0) scale(.1)}
+    10%{opacity:.28}
+    55%{left:85%;opacity:.72;transform:translate(0,78px) scale(.9)}
+    74%{left:90%;opacity:.72;transform:translate(0,106px) scale(1.18)}
+    100%{left:96%;opacity:0;transform:translate(0,145px) scale(1.55)}
+  }
   .hitchhiker{left:50%;bottom:76px;width:22px;height:35px}
   .car{width:94px;height:34px;bottom:14px}
   .grid6,.grid5,.grid4{grid-template-columns:repeat(2,1fr)}
@@ -2918,7 +2934,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.27</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.28</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -4781,7 +4797,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.27"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.28"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -4839,7 +4855,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.27"
+                                "Terminus-Umbrel-Client/0.2.28"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -5229,7 +5245,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.27"
+                                "Terminus-Umbrel-Client/0.2.28"
                         }
                     )
 

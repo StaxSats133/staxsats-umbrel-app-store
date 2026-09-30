@@ -30,7 +30,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.27")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.28")
         self.assertIn("Sitemap: https://terminuspool.xyz/sitemap.xml", self.server.ROBOTS_TXT)
         self.assertIn("https://terminuspool.xyz/", self.server.SITEMAP_XML)
         self.assertIn("404 // SIGNAL LOST", self.server.NOT_FOUND_HTML)
@@ -49,6 +49,10 @@ class TerminusServerTests(unittest.TestCase):
         self.assertEqual(self.server.HTML.count("pair3"), 3)
         self.assertIn("@keyframes roadLampLeft", self.server.HTML)
         self.assertIn("@keyframes roadLampRight", self.server.HTML)
+        self.assertIn("55%{left:22%", self.server.HTML)
+        self.assertIn("55%{left:78%", self.server.HTML)
+        self.assertIn("55%{left:15%", self.server.HTML)
+        self.assertIn("55%{left:85%", self.server.HTML)
         self.assertNotIn("streetLightPair", self.server.HTML)
         self.assertIn('class="hitchhiker"', self.server.HTML)
         self.assertIn("@keyframes hitchhikerPass", self.server.HTML)
