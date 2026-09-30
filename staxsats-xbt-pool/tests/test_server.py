@@ -30,7 +30,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.33")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.34")
 
     def test_quick_connect_places_prime_pubkey_below_datum_endpoint(self):
         endpoint_pos = self.server.HTML.index("datum.terminuspool.xyz:28915")
@@ -85,12 +85,17 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn("@keyframes airplaneFlyLeft", self.server.HTML)
         self.assertIn("animation:airplaneFlyRight 90s linear 12s infinite", self.server.HTML)
         self.assertIn("animation:airplaneFlyLeft 90s linear 57s infinite", self.server.HTML)
+        self.assertEqual(self.server.HTML.count('class="planeProp"'), 2)
+        self.assertIn("@keyframes propellerSpin", self.server.HTML)
+        self.assertIn("width:42px;height:24px", self.server.HTML)
+        self.assertIn("width:30px;height:18px", self.server.HTML)
+        self.assertIn("20%{opacity:1;transform:translateX", self.server.HTML)
         self.assertIn('data-block-celebration="active"', self.server.HTML)
         self.assertEqual(self.server.HTML.count('class="towPickaxe"'), 2)
         self.assertEqual(self.server.HTML.count("<span>block found</span>"), 2)
         self.assertIn('.hero[data-block-celebration="active"] .towLine', self.server.HTML)
-        self.assertIn(".victoryPlane.ltr{top:27%", self.server.HTML)
-        self.assertIn(".victoryPlane.rtl{top:17%", self.server.HTML)
+        self.assertIn(".victoryPlane.ltr{top:35%", self.server.HTML)
+        self.assertIn(".victoryPlane.rtl{top:39%", self.server.HTML)
         self.assertIn("position:absolute;z-index:3;width:164px;height:164px", self.server.HTML)
         self.assertNotIn("streetLightPair", self.server.HTML)
         self.assertIn('class="hitchhiker"', self.server.HTML)
