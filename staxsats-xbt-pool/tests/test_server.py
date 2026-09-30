@@ -30,7 +30,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.38")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.39")
 
     def test_quick_connect_places_prime_pubkey_below_datum_endpoint(self):
         endpoint_pos = self.server.HTML.index("datum.terminuspool.xyz:28915")
@@ -81,10 +81,11 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn("Math.max(.10,1-daylightLevel*.90)", self.server.HTML)
         self.assertIn('class="victoryPlane ltr"', self.server.HTML)
         self.assertIn('class="victoryPlane rtl"', self.server.HTML)
+        self.assertEqual(self.server.HTML.count('class="planeTrack"'), 2)
         self.assertIn("@keyframes airplaneFlyRight", self.server.HTML)
         self.assertIn("@keyframes airplaneFlyLeft", self.server.HTML)
-        self.assertIn("animation:airplaneFlyRight 90s linear 12s infinite", self.server.HTML)
-        self.assertIn("animation:airplaneFlyLeft 90s linear 57s infinite", self.server.HTML)
+        self.assertIn(".victoryPlane.ltr .planeTrack{animation:airplaneFlyRight 90s linear 12s infinite}", self.server.HTML)
+        self.assertIn(".victoryPlane.rtl .planeTrack{animation:airplaneFlyLeft 90s linear 57s infinite}", self.server.HTML)
         self.assertEqual(self.server.HTML.count('class="planeProp"'), 2)
         self.assertIn("@keyframes propellerSpin", self.server.HTML)
         self.assertIn("width:34px;height:16px", self.server.HTML)
@@ -105,7 +106,7 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn(".victoryPlane.ltr{top:var(--plane-altitude,35%)", self.server.HTML)
         self.assertIn(".victoryPlane.rtl{top:var(--plane-altitude,39%)", self.server.HTML)
         self.assertIn("function initAirplaneFlybys()", self.server.HTML)
-        self.assertIn('plane.addEventListener("animationiteration"', self.server.HTML)
+        self.assertIn('track.addEventListener("animationiteration"', self.server.HTML)
         self.assertNotIn("planes.forEach(setRandomAltitude)", self.server.HTML)
         self.assertIn("Lock altitude for the full visible crossing", self.server.HTML)
         self.assertIn('plane.style.setProperty("--plane-altitude"', self.server.HTML)

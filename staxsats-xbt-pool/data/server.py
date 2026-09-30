@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.38"
+RELEASE_VERSION = "0.2.39"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -167,7 +167,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.38",
+                    "User-Agent": "TerminusPool-Market/0.2.39",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -1272,12 +1272,18 @@ h1{
 .roadLamp.left:after{left:11px}
 .roadLamp.right:after{right:11px}
 .victoryPlane{
-  position:absolute;z-index:2;left:0;width:244px;height:34px;
-  opacity:0;pointer-events:none;transform:translateX(-270px);
+  position:absolute;z-index:2;left:0;right:0;height:34px;
+  pointer-events:none
+}
+.victoryPlane.ltr{top:var(--plane-altitude,35%)}
+.victoryPlane.rtl{top:var(--plane-altitude,39%)}
+.planeTrack{
+  position:absolute;left:0;top:0;width:244px;height:34px;
+  opacity:0;transform:translate3d(-270px,0,0);
   will-change:transform,opacity
 }
-.victoryPlane.ltr{top:var(--plane-altitude,35%);animation:airplaneFlyRight 90s linear 12s infinite}
-.victoryPlane.rtl{top:var(--plane-altitude,39%);animation:airplaneFlyLeft 90s linear 57s infinite}
+.victoryPlane.ltr .planeTrack{animation:airplaneFlyRight 90s linear 12s infinite}
+.victoryPlane.rtl .planeTrack{animation:airplaneFlyLeft 90s linear 57s infinite}
 .airplaneSprite{
   position:absolute;z-index:2;right:0;top:8px;width:34px;height:16px;
   overflow:visible;image-rendering:pixelated;shape-rendering:crispEdges;
@@ -1431,7 +1437,7 @@ h1{
 }
 
 @media(prefers-reduced-motion:reduce){
-  .car,.car:before,.car:after,.road:before,.roadLamp,.hitchhiker,.hitchThumb,.bitcoinGlow,.victoryPlane,.planeProp{
+  .car,.car:before,.car:after,.road:before,.roadLamp,.hitchhiker,.hitchThumb,.bitcoinGlow,.planeTrack,.planeProp{
     animation:none !important
   }
   .roadLamp,.hitchhiker,.victoryPlane{display:none}
@@ -1857,7 +1863,8 @@ footer{
   }
   .road{left:15%;right:15%;height:129px}
   .roadLamp{height:48px}
-  .victoryPlane{width:190px;height:28px}
+  .victoryPlane{height:28px}
+  .planeTrack{width:190px;height:28px}
   .airplaneSprite{width:22px;height:11px;top:8px}
   .towLine{right:20px;top:13px;width:16px}
   .towBanner{right:34px;top:3px;min-width:116px;padding:5px 7px 4px;font-size:8px;gap:4px}
@@ -3241,7 +3248,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.38</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.39</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -3299,6 +3306,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
     <span class="roadLamp right pair3"></span>
   </div>
   <div class="victoryPlane ltr" aria-hidden="true">
+   <div class="planeTrack">
     <div class="towBanner"><span>block found</span><svg class="towPickaxe" viewBox="0 0 15 15" focusable="false"><path fill="#33200d" d="M9 1h2v2h2v2H8v2H6V5H2V3h5V2h2zM7 6h2v8H7z"/><path fill="#fff0b0" d="M3 3h7v1H3z"/><path fill="#8a4b16" d="M8 7h1v7H8z"/></svg></div>
     <div class="towLine"></div>
     <svg class="airplaneSprite" viewBox="0 0 120 50" focusable="false">
@@ -3322,8 +3330,10 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <path fill="none" stroke="#43f5ff" stroke-width="1.4" d="M48 37l2 5M93 36l1 5"/>
       <g class="planeProp" fill="#d9edf2"><rect x="116" y="6" width="2" height="42"/><rect x="112" y="25" width="8" height="4"/></g>
     </svg>
+   </div>
   </div>
   <div class="victoryPlane rtl" aria-hidden="true">
+   <div class="planeTrack">
     <div class="towBanner"><span>block found</span><svg class="towPickaxe" viewBox="0 0 15 15" focusable="false"><path fill="#33200d" d="M9 1h2v2h2v2H8v2H6V5H2V3h5V2h2zM7 6h2v8H7z"/><path fill="#fff0b0" d="M3 3h7v1H3z"/><path fill="#8a4b16" d="M8 7h1v7H8z"/></svg></div>
     <div class="towLine"></div>
     <svg class="airplaneSprite" viewBox="0 0 120 50" focusable="false">
@@ -3347,6 +3357,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <path fill="none" stroke="#43f5ff" stroke-width="1.4" d="M48 37l2 5M93 36l1 5"/>
       <g class="planeProp" fill="#d9edf2"><rect x="116" y="6" width="2" height="42"/><rect x="112" y="25" width="8" height="4"/></g>
     </svg>
+   </div>
   </div>
   <div class="hitchhiker" aria-hidden="true">
     <svg class="hitchhikerSprite" viewBox="0 0 16 24" focusable="false">
@@ -4961,7 +4972,10 @@ function initAirplaneFlybys(){
 
   planes.forEach(plane=>{
     setRandomAltitude(plane);
-    plane.addEventListener("animationiteration",()=>setRandomAltitude(plane));
+    const track=plane.querySelector(".planeTrack");
+    if(track){
+      track.addEventListener("animationiteration",()=>setRandomAltitude(plane));
+    }
   });
 
   // Lock altitude for the full visible crossing. Mobile browser chrome can emit
@@ -5226,7 +5240,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_header("Access-Control-Allow-Origin","*")
         else:
             self.send_header("Content-Type","text/html; charset=utf-8")
-            self.send_header("Cache-Control","public, max-age=60")
+            self.send_header("Cache-Control","no-store")
 
         self.send_security_headers()
         self.end_headers()
@@ -5311,7 +5325,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.38"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.39"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -5369,7 +5383,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.38"
+                                "Terminus-Umbrel-Client/0.2.39"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -5794,7 +5808,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.38"
+                                "Terminus-Umbrel-Client/0.2.39"
                         }
                     )
 
@@ -5868,7 +5882,7 @@ class Handler(BaseHTTPRequestHandler):
             )
             self.send_header(
                 "Cache-Control",
-                "public, max-age=60"
+                "no-store"
             )
             self.send_header("Content-Length",str(len(body)))
             self.send_security_headers()
