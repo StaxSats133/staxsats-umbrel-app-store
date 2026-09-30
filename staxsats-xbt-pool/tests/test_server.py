@@ -30,7 +30,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.30")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.31")
         self.assertIn("Sitemap: https://terminuspool.xyz/sitemap.xml", self.server.ROBOTS_TXT)
         self.assertIn("https://terminuspool.xyz/", self.server.SITEMAP_XML)
         self.assertIn("404 // SIGNAL LOST", self.server.NOT_FOUND_HTML)
@@ -42,6 +42,8 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn("const blockEffort=d.blockEffort||{}", self.server.HTML)
         self.assertIn("legacyWindowProgress", self.server.HTML)
         self.assertIn("one statistically expected block", self.server.HTML)
+        self.assertIn("TERMINUS BLOCK // VICTORY LAP", self.server.HTML)
+        self.assertIn("blockEffort.celebrationActive===true", self.server.HTML)
         self.assertIn('class="daylightSky"', self.server.HTML)
         self.assertIn("--daylight-level", self.server.HTML)
         self.assertIn("hero.dataset.daylightProgress", self.server.HTML)
@@ -168,10 +170,49 @@ class TerminusServerTests(unittest.TestCase):
 
         found = dict(base)
         found["blocks"] = 2
+        found["lastBlockAt"] = 1_800_000_180
         reset = restarted.record_history(found, now=1_800_000_180)
         self.assertEqual(reset["effortPercent"], 0)
+        self.assertEqual(reset["visualPercent"], 100)
+        self.assertTrue(reset["celebrationActive"])
+        self.assertEqual(reset["celebrationUntil"], 1_800_086_580)
         self.assertEqual(reset["observedBlocks"], 2)
         self.assertEqual(reset["lastResetAt"], 1_800_000_180)
+
+        restarted_again = load_server(self.temp.name)
+        during = restarted_again.record_history(
+            found,
+            now=1_800_000_240,
+        )
+        self.assertTrue(during["celebrationActive"])
+        self.assertEqual(during["visualPercent"], 100)
+        self.assertGreater(during["effortPercent"], 0)
+
+        expired = restarted_again.record_history(
+            found,
+            now=1_800_086_580,
+        )
+        self.assertFalse(expired["celebrationActive"])
+        self.assertEqual(
+            expired["visualPercent"],
+            min(100, expired["effortPercent"]),
+        )
+
+    def test_block_celebration_uses_exact_24_hour_boundary(self):
+        found_at = 1_800_000_000
+        active, until = self.server._block_celebration(
+            found_at,
+            found_at + 86_399,
+        )
+        self.assertTrue(active)
+        self.assertEqual(until, found_at + 86_400)
+
+        active, until = self.server._block_celebration(
+            found_at,
+            found_at + 86_400,
+        )
+        self.assertFalse(active)
+        self.assertEqual(until, found_at + 86_400)
 
     def test_public_leaderboard_uses_opaque_aliases(self):
         identity = "bc1qexampleidentitythatmustneverleak"

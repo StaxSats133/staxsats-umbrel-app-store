@@ -45,9 +45,10 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.30"
+RELEASE_VERSION = "0.2.31"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
+BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
 NEOXEX_XBT_TICKER_URL = os.environ.get(
     "TERMINUS_XBT_TICKER_URL",
     "https://neoxa.exchange/api/exchange/ticker/BTCB2_USDC"
@@ -162,7 +163,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.30",
+                    "User-Agent": "TerminusPool-Market/0.2.31",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -317,6 +318,19 @@ def _history_effort_since(connection, since, until):
     return estimated_work
 
 
+def _block_celebration(last_block_at, now):
+    found_at = max(0, int(_number(last_block_at)))
+    celebration_until = (
+        found_at + BLOCK_CELEBRATION_SECONDS
+        if found_at > 0 else 0
+    )
+    celebration_active = (
+        found_at > 0 and
+        found_at <= now < celebration_until
+    )
+    return celebration_active, celebration_until
+
+
 def _update_block_effort(connection, sample, now):
     """Track estimated pool work and reset only on a newly found block."""
     blocks_found = max(0, int(_number(sample.get("blocks", 0))))
@@ -403,16 +417,26 @@ def _update_block_effort(connection, sample, now):
         estimated_work / network_difficulty * 100.0
         if network_difficulty > 0 else 0.0
     )
+    celebration_active, celebration_until = _block_celebration(
+        last_block_at,
+        now,
+    )
     return {
         "basis": "estimated-work-since-last-block",
         "estimatedWork": estimated_work,
         "expectedWork": network_difficulty,
         "effortPercent": effort_percent,
-        "visualPercent": min(100.0, max(0.0, effort_percent)),
+        "visualPercent": (
+            100.0 if celebration_active
+            else min(100.0, max(0.0, effort_percent))
+        ),
         "trackingSince": int(tracking_since),
         "lastResetAt": int(last_reset_at),
         "observedBlocks": blocks_found,
         "probabilistic": True,
+        "celebrationActive": celebration_active,
+        "celebrationUntil": int(celebration_until),
+        "celebrationSeconds": BLOCK_CELEBRATION_SECONDS,
     }
 
 
@@ -3106,7 +3130,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.30</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.31</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -3753,8 +3777,14 @@ let windowBitcoinProgress=0;
 let windowBitcoinLastWork=0;
 let windowBitcoinLastTarget=0;
 let windowBitcoinLastEffort=0;
+let windowBitcoinCelebrationActive=false;
+let windowBitcoinCelebrationUntil=0;
+let windowBitcoinLastBlockAt=0;
 
-function updateWindowBitcoin(progress,work,target,effortPercent){
+function updateWindowBitcoin(
+  progress,work,target,effortPercent,
+  celebrationActive=false,celebrationUntil=0,lastBlockAt=0
+){
   const coin=$("windowBitcoin");
   if(!coin)return;
   const numeric=Number(progress);
@@ -3762,6 +3792,9 @@ function updateWindowBitcoin(progress,work,target,effortPercent){
     ? Math.min(100,Math.max(0,numeric))
     : 0;
   windowBitcoinProgress=bounded;
+  windowBitcoinCelebrationActive=Boolean(celebrationActive);
+  windowBitcoinCelebrationUntil=Number(celebrationUntil)||0;
+  windowBitcoinLastBlockAt=Number(lastBlockAt)||0;
   const mobileRise=window.matchMedia("(max-width:520px)").matches;
   const visualProgress=bounded;
   const daylightLevel=visualProgress/100;
@@ -3773,14 +3806,19 @@ function updateWindowBitcoin(progress,work,target,effortPercent){
       Math.max(.06,1-daylightLevel*.94).toFixed(3)
     );
     hero.dataset.daylightProgress=(daylightLevel*100).toFixed(2);
+    hero.dataset.blockCelebration=windowBitcoinCelebrationActive
+      ? "active"
+      : "inactive";
   }
   const kicker=$("heroKicker");
   if(kicker){
-    kicker.textContent=visualProgress<34
-      ? "NEON HIGHWAY // MIDNIGHT RUN"
-      : visualProgress<72
-        ? "NEON HIGHWAY // DAYBREAK RUN"
-        : "NEON HIGHWAY // DAYLIGHT RUN";
+    kicker.textContent=windowBitcoinCelebrationActive
+      ? "TERMINUS BLOCK // VICTORY LAP"
+      : visualProgress<34
+        ? "NEON HIGHWAY // MIDNIGHT RUN"
+        : visualProgress<72
+          ? "NEON HIGHWAY // DAYBREAK RUN"
+          : "NEON HIGHWAY // DAYLIGHT RUN";
   }
   const travel=mobileRise?75:210;
   coin.style.setProperty(
@@ -3798,11 +3836,14 @@ function updateWindowBitcoin(progress,work,target,effortPercent){
   );
   const rawEffort=Number(effortPercent);
   const reportedEffort=Number.isFinite(rawEffort)?Math.max(0,rawEffort):bounded;
-  const label=
-    `Estimated pool effort since the last Terminus block: `+
-    `${reportedEffort.toFixed(2)}% of one statistically expected block. `+
-    `${compact(work||0)} estimated work against ${compact(target||0)} expected. `+
-    `Block discovery is probabilistic; the artwork resets only after a block is found.`;
+  const label=windowBitcoinCelebrationActive
+    ? `Terminus block celebration: 100% daylight for 24 hours after the block. `+
+      `Next-block effort is already ${reportedEffort.toFixed(2)}% of one statistically expected block. `+
+      `Celebration ends ${new Date(windowBitcoinCelebrationUntil*1000).toISOString()}.`
+    : `Estimated pool effort since the last Terminus block: `+
+      `${reportedEffort.toFixed(2)}% of one statistically expected block. `+
+      `${compact(work||0)} estimated work against ${compact(target||0)} expected. `+
+      `Block discovery is probabilistic; the artwork resets only after a block is found.`;
   coin.setAttribute("aria-label",label);
   coin.title=label;
 }
@@ -3812,7 +3853,10 @@ window.addEventListener("resize",()=>{
     windowBitcoinProgress,
     windowBitcoinLastWork,
     windowBitcoinLastTarget,
-    windowBitcoinLastEffort
+    windowBitcoinLastEffort,
+    windowBitcoinCelebrationActive,
+    windowBitcoinCelebrationUntil,
+    windowBitcoinLastBlockAt
   );
 });
 
@@ -4495,6 +4539,9 @@ async function refresh(){
     windowBitcoinLastWork=blockEffort.estimatedWork||0;
     windowBitcoinLastTarget=blockEffort.expectedWork||d.difficulty||0;
     windowBitcoinLastEffort=Number(blockEffort.effortPercent);
+    windowBitcoinCelebrationActive=blockEffort.celebrationActive===true;
+    windowBitcoinCelebrationUntil=Number(blockEffort.celebrationUntil)||0;
+    windowBitcoinLastBlockAt=Number(d.lastBlockAt)||0;
     const reportedBlockProgress=Number(blockEffort.visualPercent);
     const legacyWindowProgress=Number(d.windowProgressPercent);
     const fallbackBlockProgress=Number.isFinite(windowBitcoinLastEffort)
@@ -4509,7 +4556,10 @@ async function refresh(){
         : Math.min(100,Math.max(0,fallbackBlockProgress)),
       windowBitcoinLastWork,
       windowBitcoinLastTarget,
-      windowBitcoinLastEffort
+      windowBitcoinLastEffort,
+      windowBitcoinCelebrationActive,
+      windowBitcoinCelebrationUntil,
+      windowBitcoinLastBlockAt
     );
 
     const pubkey=d.primePubkey||"";
@@ -5002,7 +5052,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.30"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.31"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -5060,7 +5110,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.30"
+                                "Terminus-Umbrel-Client/0.2.31"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -5371,16 +5421,28 @@ class Handler(BaseHTTPRequestHandler):
                         history_points, history_summary = load_history()
                 except Exception:
                     history_persistent = False
+                    fallback_now = int(time.time())
+                    celebration_active, celebration_until = (
+                        _block_celebration(
+                            data.get("lastBlockAt", 0),
+                            fallback_now,
+                        )
+                    )
                     data["blockEffort"] = {
                         "basis": "estimated-work-since-last-block",
                         "estimatedWork": 0.0,
                         "expectedWork": float(data.get("difficulty", 0) or 0),
                         "effortPercent": 0.0,
-                        "visualPercent": 0.0,
-                        "trackingSince": int(time.time()),
-                        "lastResetAt": int(time.time()),
+                        "visualPercent": (
+                            100.0 if celebration_active else 0.0
+                        ),
+                        "trackingSince": fallback_now,
+                        "lastResetAt": fallback_now,
                         "observedBlocks": int(data.get("blocks", 0) or 0),
                         "probabilistic": True,
+                        "celebrationActive": celebration_active,
+                        "celebrationUntil": celebration_until,
+                        "celebrationSeconds": BLOCK_CELEBRATION_SECONDS,
                         "available": False,
                     }
                     history_points = [{
@@ -5473,7 +5535,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.30"
+                                "Terminus-Umbrel-Client/0.2.31"
                         }
                     )
 
