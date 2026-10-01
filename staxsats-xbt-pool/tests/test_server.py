@@ -31,7 +31,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.44")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.45")
         self.assertIn('card("WINDOW SHARES"', self.server.HTML)
         self.assertNotIn("SHARES SINCE BLOCK", self.server.HTML)
         self.assertIn('id="neuralRain"', self.server.HTML)
@@ -41,6 +41,17 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('localStorage.setItem(storageKey', self.server.HTML)
         self.assertIn('document.hidden', self.server.HTML)
         self.assertIn('@media(prefers-reduced-motion:reduce)', self.server.HTML)
+        self.assertIn('id="nightwave"', self.server.HTML)
+        self.assertIn('NIGHTWAVE // ONLY XBT ACCEPTED', self.server.HTML)
+        self.assertIn('id="nightwaveAudio"', self.server.HTML)
+        self.assertIn('const NIGHTWAVE_TRACKS=[', self.server.HTML)
+        self.assertIn('initNightwave();', self.server.HTML)
+        self.assertEqual(self.server.HTML.count('https://opengameart.org/sites/default/files/'), 5)
+        self.assertTrue(any(
+            "media-src 'self' https://opengameart.org" in value
+            for value in self.server.Handler.send_security_headers.__code__.co_consts
+            if isinstance(value, str)
+        ))
 
     def test_quick_connect_places_prime_pubkey_below_datum_endpoint(self):
         endpoint_pos = self.server.HTML.index("datum.terminuspool.xyz:28915")

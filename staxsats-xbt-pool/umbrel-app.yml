@@ -4,7 +4,7 @@ name: Terminus Pool
 tagline: The last word in mining
 icon: https://raw.githubusercontent.com/StaxSats133/staxsats-umbrel-app-store/main/staxsats-xbt-pool/icon.svg
 category: bitcoin
-version: "0.2.44"
+version: "0.2.45"
 port: 8081
 description: >-
   Terminus Pool is an XBT BLAKE2b mining pool dashboard for RATUM Prime and DATUM.
@@ -19,10 +19,11 @@ repo: https://github.com/StaxSats133/staxsats-umbrel-app-store
 support: https://github.com/StaxSats133/staxsats-umbrel-app-store/issues
 gallery: []
 releaseNotes: >-
-  Terminus Pool v0.2.44 lifts the full Bitcoin above the skyline during the
-  24-hour victory lap and replaces the first-block feature panel with a concise
-  TerminusPool established-block milestone. Pool telemetry and mining behavior
-  are unchanged.
+  Terminus Pool v0.2.45 adds the optional NIGHTWAVE CC0 lo-fi tuner with five
+  public-domain tracks, cyberpunk playback controls, a live spectrum,
+  remembered track and volume, and the signal-line motto ONLY XBT ACCEPTED.
+  Playback is user-initiated and requires no music account. Pool telemetry and
+  mining behavior are unchanged.
 dependencies: []
 path: ""
 defaultUsername: ""

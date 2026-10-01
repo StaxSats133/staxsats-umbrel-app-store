@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.44"
+RELEASE_VERSION = "0.2.45"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -167,7 +167,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.44",
+                    "User-Agent": "TerminusPool-Market/0.2.45",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -3115,6 +3115,131 @@ a:focus-visible,button:focus-visible,input:focus-visible{
     .heroText{left:18px;right:18px;top:20px}
 }
 
+/* TERMINUS_NIGHTWAVE_TUNER_V1 */
+.nightwave{
+    position:relative;
+    display:grid;
+    grid-template-columns:132px minmax(0,1fr) auto;
+    gap:18px;
+    align-items:center;
+    margin:18px 0;
+    padding:15px 17px;
+    overflow:hidden;
+    border:1px solid rgba(67,245,255,.55);
+    border-radius:16px 3px 16px 3px;
+    background:
+      linear-gradient(110deg,rgba(4,18,27,.98),rgba(9,12,28,.97)),
+      repeating-linear-gradient(90deg,transparent 0 12px,rgba(67,245,255,.04) 12px 13px);
+    box-shadow:inset 4px 0 0 var(--pink),inset -2px 0 0 var(--green),0 0 24px rgba(67,245,255,.08);
+}
+.nightwave:before{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:linear-gradient(90deg,transparent,rgba(114,255,180,.06),transparent);
+    transform:translateX(-100%);
+}
+.nightwave.playing:before{animation:tunerScan 4.5s linear infinite}
+@keyframes tunerScan{to{transform:translateX(100%)}}
+.tunerScope{
+    position:relative;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    gap:4px;
+    height:66px;
+    padding:9px 10px;
+    border:1px solid rgba(114,255,180,.42);
+    background:#030b12;
+    box-shadow:inset 0 0 18px rgba(67,245,255,.12);
+}
+.tunerScope:after{
+    content:"88.9";
+    position:absolute;
+    top:4px;
+    right:7px;
+    color:rgba(67,245,255,.52);
+    font-size:8px;
+    letter-spacing:.13em;
+}
+.tunerBar{
+    width:5px;
+    height:18%;
+    background:linear-gradient(to top,var(--pink),var(--cyan) 64%,#d9fff2);
+    box-shadow:0 0 7px rgba(67,245,255,.45);
+    transform-origin:bottom;
+}
+.nightwave.playing .tunerBar{animation:tunerPulse .72s ease-in-out infinite alternate}
+.tunerBar:nth-child(2n){animation-duration:.94s!important}
+.tunerBar:nth-child(3n){animation-duration:.58s!important}
+.tunerBar:nth-child(4n){animation-delay:-.37s}
+.tunerBar:nth-child(5n){animation-delay:-.62s}
+@keyframes tunerPulse{from{height:15%}to{height:88%}}
+.tunerMeta{min-width:0}
+.tunerKicker{
+    color:var(--green);
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.16em;
+}
+.tunerTitle{
+    margin-top:7px;
+    overflow:hidden;
+    color:#effcff;
+    font-size:clamp(16px,2.1vw,23px);
+    font-weight:900;
+    letter-spacing:.055em;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+.tunerArtist,.tunerTime{
+    margin-top:4px;
+    color:#7895a0;
+    font-size:9px;
+    letter-spacing:.13em;
+}
+.tunerTimeline{display:flex;align-items:center;gap:10px;margin-top:10px}
+.tunerTimeline input{flex:1;min-width:80px}
+.tunerControls{display:grid;grid-template-columns:repeat(3,42px);gap:7px;align-items:center}
+.tunerBtn{
+    width:42px;
+    height:42px;
+    border:1px solid rgba(67,245,255,.5);
+    background:#07131d;
+    color:var(--cyan);
+    font:900 16px ui-monospace,monospace;
+    cursor:pointer;
+    box-shadow:inset 0 -2px 0 rgba(255,79,184,.32);
+}
+.tunerBtn.play{border-color:var(--green);color:var(--green);box-shadow:0 0 15px rgba(114,255,180,.14)}
+.tunerBtn:hover,.tunerBtn:focus-visible{background:#0b2130;color:#fff;outline:2px solid var(--pink);outline-offset:2px}
+.tunerVolume{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:3px;color:#7895a0;font-size:9px;letter-spacing:.1em}
+.tunerVolume input{width:100%}
+.nightwave input[type="range"]{accent-color:var(--pink);cursor:pointer}
+.tunerCredits{grid-column:1/-1;margin-top:-7px;color:#7895a0;font-size:9px;letter-spacing:.08em}
+.tunerCredits summary{width:max-content;cursor:pointer;color:#7fb8c3}
+.tunerCredits a{color:var(--cyan)}
+@media(max-width:720px){
+    .nightwave{grid-template-columns:92px minmax(0,1fr);gap:12px;padding:13px 12px}
+    .tunerScope{height:58px;padding-inline:7px;gap:3px}
+    .tunerBar{width:4px}
+    .tunerControls{grid-column:1/-1;grid-template-columns:repeat(3,46px) minmax(120px,1fr)}
+    .tunerBtn{width:46px;height:44px}
+    .tunerVolume{grid-column:4;grid-row:1;margin:0}
+    .tunerVolume span{display:none}
+    .tunerCredits{margin-top:-2px}
+}
+@media(max-width:430px){
+    .nightwave{grid-template-columns:76px minmax(0,1fr);margin:14px 0;border-radius:12px 2px 12px 2px}
+    .tunerScope{height:52px}
+    .tunerTitle{font-size:15px}
+    .tunerKicker{font-size:8px;letter-spacing:.11em}
+    .tunerArtist{letter-spacing:.08em}
+    .tunerControls{grid-template-columns:repeat(3,42px) minmax(90px,1fr)}
+    .tunerBtn{width:42px;height:42px}
+}
+
 /* TERMINUS_NEURAL_RAIN_V1 */
 body{isolation:isolate}
 .neuralRain{
@@ -3189,6 +3314,7 @@ body{isolation:isolate}
 }
 @media(prefers-reduced-motion:reduce){
     .neuralRain{display:none}
+    .nightwave.playing:before,.nightwave.playing .tunerBar{animation:none}
 }
 </style>
 </head>
@@ -3206,7 +3332,7 @@ body{isolation:isolate}
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.44</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.45</div>
     </div>
   </div>
   <div class="headerControls">
@@ -3353,6 +3479,40 @@ body{isolation:isolate}
       <a href="#poolStats">VIEW LIVE STATS</a>
     </div>
   </div>
+</section>
+
+<section class="nightwave" id="nightwave" aria-labelledby="nightwaveTitle">
+  <div class="tunerScope" aria-hidden="true">
+    <span class="tunerBar"></span><span class="tunerBar"></span>
+    <span class="tunerBar"></span><span class="tunerBar"></span>
+    <span class="tunerBar"></span><span class="tunerBar"></span>
+    <span class="tunerBar"></span><span class="tunerBar"></span>
+    <span class="tunerBar"></span><span class="tunerBar"></span>
+    <span class="tunerBar"></span><span class="tunerBar"></span>
+  </div>
+  <div class="tunerMeta">
+    <div class="tunerKicker">NIGHTWAVE // ONLY XBT ACCEPTED</div>
+    <div class="tunerTitle" id="nightwaveTitle">LO-FI SIGNAL STANDBY</div>
+    <div class="tunerArtist" id="nightwaveArtist">CC0 // FIRST-PARTY AUDIO</div>
+    <div class="tunerTimeline">
+      <input id="nightwaveSeek" type="range" min="0" max="1000" value="0" aria-label="Track position">
+      <span class="tunerTime" id="nightwaveTime">00:00 / 00:00</span>
+    </div>
+  </div>
+  <div class="tunerControls" aria-label="Nightwave music controls">
+    <button class="tunerBtn" id="nightwavePrev" type="button" aria-label="Previous track">|&lt;</button>
+    <button class="tunerBtn play" id="nightwavePlay" type="button" aria-label="Play music" aria-pressed="false">&gt;</button>
+    <button class="tunerBtn" id="nightwaveNext" type="button" aria-label="Next track">&gt;|</button>
+    <label class="tunerVolume" for="nightwaveVolume"><span>GAIN</span><input id="nightwaveVolume" type="range" min="0" max="1" step="0.01" value="0.42" aria-label="Music volume"></label>
+  </div>
+  <details class="tunerCredits">
+    <summary>PUBLIC-DOMAIN SIGNAL CREDITS</summary>
+    CC0 tracks by
+    <a href="https://opengameart.org/users/omfgdude" target="_blank" rel="noopener noreferrer">omfgdude</a>,
+    <a href="https://opengameart.org/users/sudocolon" target="_blank" rel="noopener noreferrer">Sudocolon</a>, and
+    <a href="https://opengameart.org/users/cinameng" target="_blank" rel="noopener noreferrer">cinameng</a>.
+  </details>
+  <audio id="nightwaveAudio" preload="metadata"></audio>
 </section>
 
 <section class="marketTicker unavailable" id="xbtMarket" aria-label="Live XBT market price from Neoxa Exchange" aria-live="polite">
@@ -3741,6 +3901,125 @@ function initNeuralRain(){
   sync();
   animationFrame=requestAnimationFrame(paint);
   window.addEventListener("pagehide",()=>cancelAnimationFrame(animationFrame),{once:true});
+}
+
+const NIGHTWAVE_TRACKS=[
+  {title:"LOFI HIP HOP",artist:"OMFGDUDE",src:"https://opengameart.org/sites/default/files/audio_preview/lofihiphop.ogg.mp3"},
+  {title:"LOFI HIP HOP LOOP",artist:"OMFGDUDE",src:"https://opengameart.org/sites/default/files/audio_preview/LofiLoop_1.ogg.mp3"},
+  {title:"LOFI AGAIN",artist:"OMFGDUDE",src:"https://opengameart.org/sites/default/files/audio_preview/lofiagain_0.ogg.mp3"},
+  {title:"WIFI TRASHERINO",artist:"SUDOCOLON",src:"https://opengameart.org/sites/default/files/WiFi%20Trasherino.mp3"},
+  {title:"CAN BE SO BEAUTIFUL",artist:"CINAMENG",src:"https://opengameart.org/sites/default/files/can_be_so_beautiful.mp3"}
+];
+
+function initNightwave(){
+  const deck=$("nightwave");
+  const audio=$("nightwaveAudio");
+  const play=$("nightwavePlay");
+  const previous=$("nightwavePrev");
+  const next=$("nightwaveNext");
+  const seek=$("nightwaveSeek");
+  const volume=$("nightwaveVolume");
+  const title=$("nightwaveTitle");
+  const artist=$("nightwaveArtist");
+  const timeLabel=$("nightwaveTime");
+  if(!deck||!audio||!play||!previous||!next||!seek||!volume)return;
+
+  const trackKey="terminusNightwaveTrack";
+  const volumeKey="terminusNightwaveVolume";
+  let index=Number.parseInt(localStorage.getItem(trackKey)||"0",10);
+  if(!Number.isInteger(index)||index<0||index>=NIGHTWAVE_TRACKS.length)index=0;
+  const savedVolume=Number.parseFloat(localStorage.getItem(volumeKey)||"0.42");
+  audio.volume=Number.isFinite(savedVolume)?Math.min(1,Math.max(0,savedVolume)):.42;
+  volume.value=String(audio.volume);
+
+  const formatTime=value=>{
+    const seconds=Number.isFinite(value)?Math.max(0,Math.floor(value)):0;
+    return `${String(Math.floor(seconds/60)).padStart(2,"0")}:${String(seconds%60).padStart(2,"0")}`;
+  };
+
+  function renderTrack(){
+    const track=NIGHTWAVE_TRACKS[index];
+    title.textContent=track.title;
+    artist.textContent=`${track.artist} // CC0 SIGNAL ${index+1}/${NIGHTWAVE_TRACKS.length}`;
+    localStorage.setItem(trackKey,String(index));
+    if("mediaSession" in navigator){
+      navigator.mediaSession.metadata=new MediaMetadata({
+        title:track.title,
+        artist:track.artist,
+        album:"Terminus Nightwave // CC0"
+      });
+    }
+  }
+
+  function syncPlayback(){
+    const playing=!audio.paused&&!audio.ended;
+    deck.classList.toggle("playing",playing);
+    play.textContent=playing?"||":">";
+    play.setAttribute("aria-label",playing?"Pause music":"Play music");
+    play.setAttribute("aria-pressed",String(playing));
+  }
+
+  function loadTrack(autoplay=false){
+    const track=NIGHTWAVE_TRACKS[index];
+    audio.src=track.src;
+    seek.value="0";
+    timeLabel.textContent="00:00 / 00:00";
+    renderTrack();
+    if(autoplay){
+      audio.play().catch(()=>{
+        artist.textContent=`${track.artist} // TAP PLAY TO RESTORE SIGNAL`;
+        syncPlayback();
+      });
+    }
+  }
+
+  function move(direction,autoplay=!audio.paused){
+    index=(index+direction+NIGHTWAVE_TRACKS.length)%NIGHTWAVE_TRACKS.length;
+    loadTrack(autoplay);
+  }
+
+  play.addEventListener("click",()=>{
+    if(audio.paused)audio.play().catch(()=>{
+      artist.textContent="BROWSER BLOCKED AUDIO // TAP PLAY AGAIN";
+    });
+    else audio.pause();
+  });
+  previous.addEventListener("click",()=>move(-1));
+  next.addEventListener("click",()=>move(1));
+  audio.addEventListener("play",syncPlayback);
+  audio.addEventListener("pause",syncPlayback);
+  audio.addEventListener("ended",()=>move(1,true));
+  audio.addEventListener("loadedmetadata",()=>{
+    timeLabel.textContent=`00:00 / ${formatTime(audio.duration)}`;
+  });
+  audio.addEventListener("timeupdate",()=>{
+    const duration=Number.isFinite(audio.duration)?audio.duration:0;
+    seek.value=duration?String(Math.round(audio.currentTime/duration*1000)):"0";
+    timeLabel.textContent=`${formatTime(audio.currentTime)} / ${formatTime(duration)}`;
+  });
+  audio.addEventListener("error",()=>{
+    artist.textContent="SIGNAL LOST // SKIP CHANNEL";
+    syncPlayback();
+  });
+  seek.addEventListener("input",()=>{
+    if(Number.isFinite(audio.duration))audio.currentTime=audio.duration*(Number(seek.value)/1000);
+  });
+  volume.addEventListener("input",()=>{
+    audio.volume=Math.min(1,Math.max(0,Number(volume.value)));
+    localStorage.setItem(volumeKey,String(audio.volume));
+  });
+  if("mediaSession" in navigator){
+    [
+      ["play",()=>audio.play()],
+      ["pause",()=>audio.pause()],
+      ["previoustrack",()=>move(-1)],
+      ["nexttrack",()=>move(1)]
+    ].forEach(([action,handler])=>{
+      try{navigator.mediaSession.setActionHandler(action,handler)}catch(_error){}
+    });
+  }
+  loadTrack(false);
+  syncPlayback();
 }
 
 let accountAddress =
@@ -5004,6 +5283,7 @@ function initAirplaneFlybys(){
 
 injectVisualFx();
 initNeuralRain();
+initNightwave();
 initSkyFx();
 initAirplaneFlybys();
 initAdvancedFolds();
@@ -5159,7 +5439,7 @@ class Handler(BaseHTTPRequestHandler):
             "default-src 'self'; img-src 'self' data:; "
             "style-src 'self' 'unsafe-inline'; "
             "script-src 'self' 'unsafe-inline'; "
-            "connect-src 'self'"
+            "connect-src 'self'; media-src 'self' https://opengameart.org"
         )
         self.send_header(
             "Strict-Transport-Security",
@@ -5344,7 +5624,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.44"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.45"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -5402,7 +5682,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.44"
+                                "Terminus-Umbrel-Client/0.2.45"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -5827,7 +6107,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.44"
+                                "Terminus-Umbrel-Client/0.2.45"
                         }
                     )
 
