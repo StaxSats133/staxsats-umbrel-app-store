@@ -8,7 +8,7 @@ Every source page identifies the track as **CC0 / public domain**.
 | Lofi Hip Hop | omfgdude | https://opengameart.org/content/lofi-hip-hop |
 | Lofi Hip Hop Loop | omfgdude | https://opengameart.org/content/lofi-hip-hop-loop |
 | Lofi Again | omfgdude | https://opengameart.org/content/lofi-again |
-| WiFi Trasherino | Sudocolon | https://opengameart.org/content/wifi-trasherino |
+| Chill (Loopable) | Pro Sensory / Alex McCulloch | https://opengameart.org/content/chill-loopable |
 | Can Be So Beautiful | James Gargette / cinameng | https://opengameart.org/content/can-be-so-beautiful |
 
 License: CC0 1.0 Universal — https://creativecommons.org/publicdomain/zero/1.0/

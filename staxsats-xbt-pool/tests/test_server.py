@@ -31,7 +31,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.45")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.46")
         self.assertIn('card("WINDOW SHARES"', self.server.HTML)
         self.assertNotIn("SHARES SINCE BLOCK", self.server.HTML)
         self.assertIn('id="neuralRain"', self.server.HTML)
@@ -44,8 +44,17 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('id="nightwave"', self.server.HTML)
         self.assertIn('NIGHTWAVE // ONLY XBT ACCEPTED', self.server.HTML)
         self.assertIn('id="nightwaveAudio"', self.server.HTML)
+        self.assertIn('id="nightwaveAudio" preload="none"', self.server.HTML)
         self.assertIn('const NIGHTWAVE_TRACKS=[', self.server.HTML)
         self.assertIn('initNightwave();', self.server.HTML)
+        self.assertIn('function startPlayback()', self.server.HTML)
+        self.assertNotIn('loadTrack(false);\n  syncPlayback();', self.server.HTML)
+        self.assertIn('TERMINUS_DENSITY_POLISH_V1', self.server.HTML)
+        self.assertIn('class="promoMilestone"', self.server.HTML)
+        self.assertNotIn('class="establishedBlock"', self.server.HTML)
+        self.assertNotIn('<details class="advancedFold" open>', self.server.HTML)
+        self.assertIn('title:"CHILL LOOP",artist:"PRO SENSORY"', self.server.HTML)
+        self.assertNotIn("WIFI TRASHERINO", self.server.HTML)
         self.assertEqual(self.server.HTML.count('https://opengameart.org/sites/default/files/'), 5)
         self.assertTrue(any(
             "media-src 'self' https://opengameart.org" in value
@@ -87,7 +96,7 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('transform:translateX(-50%) translateY(-48px) !important', self.server.HTML)
         self.assertIn('width:86px !important', self.server.HTML)
         self.assertIn('.hero[data-block-celebration="active"] .skyMoon', self.server.HTML)
-        self.assertIn('TerminusPool est. block <strong>974025</strong>', self.server.HTML)
+        self.assertIn('TERMINUSPOOL EST. BLOCK <strong>974025</strong>', self.server.HTML)
         self.assertNotIn("TERMINUS FOUND ITS FIRST BLOCK", self.server.HTML)
         self.assertNotIn('class="firstBlock"', self.server.HTML)
         self.assertIn("moonSprite", self.server.HTML)

@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.45"
+RELEASE_VERSION = "0.2.46"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -167,7 +167,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.45",
+                    "User-Agent": "TerminusPool-Market/0.2.46",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -3316,6 +3316,166 @@ body{isolation:isolate}
     .neuralRain{display:none}
     .nightwave.playing:before,.nightwave.playing .tunerBar{animation:none}
 }
+
+/* TERMINUS_DENSITY_POLISH_V1 */
+.shell{padding-top:24px}
+header{align-items:flex-start;margin-bottom:12px}
+.headerControls{
+    max-width:620px;
+    display:flex;
+    flex-flow:row wrap;
+    justify-content:flex-end;
+    align-items:stretch;
+    gap:7px;
+}
+.headerControls .live,.headerControls .neuralRainToggle{
+    min-height:36px;
+    padding:8px 11px;
+    font-size:9px;
+}
+.headerControls .topNav{margin:0}
+.headerControls .topNav a{min-height:36px;padding:8px 11px}
+.liveShort{display:none}
+.liveClock{color:#7895a0}
+.hero{height:345px}
+.heroText{top:22px}
+.heroActions{margin-top:13px}
+.hero[data-block-celebration="active"] .windowBitcoin{
+    width:120px!important;
+    height:120px!important;
+    top:2px!important;
+    transform:translateX(-50%) translateY(0)!important;
+    transition:none!important;
+}
+.nightwave{
+    grid-template-columns:86px minmax(0,1fr) auto;
+    gap:12px;
+    margin:12px 0;
+    padding:10px 12px;
+    border-radius:12px 3px 12px 3px;
+}
+.tunerScope{height:50px;padding:7px 8px;gap:3px}
+.tunerBar{width:4px}
+.tunerKicker{font-size:9px}
+.tunerTitle{margin-top:4px;font-size:17px}
+.tunerArtist,.tunerTime{font-size:8px}
+.tunerTimeline{margin-top:5px}
+.tunerControls{grid-template-columns:repeat(3,42px);gap:6px}
+.tunerBtn{width:42px;height:42px;font-size:14px}
+.tunerVolume{margin-top:0}
+.tunerCredits{margin-top:-4px;font-size:8px}
+.marketTicker{margin-top:12px;margin-bottom:12px;padding-block:12px}
+.launchPromo{margin-bottom:14px;padding:14px 17px;gap:18px}
+.launchPromoKicker{margin-bottom:5px;font-size:9px}
+.launchPromoTitle{font-size:24px}
+.launchPromoText{margin-top:7px;line-height:1.4}
+.launchPromoMeta{display:flex;flex-wrap:wrap;gap:7px 18px;margin-top:7px}
+.promoMilestone{color:#9fb8c0}
+.promoMilestone strong{color:var(--gold);font-size:12px}
+.launchPromoClock{padding-left:18px}
+.launchPromoClockLabel{margin-bottom:7px}
+.promoUnit{padding:7px 4px 6px}
+.promoNumber{font-size:18px}
+.promoLabel{margin-top:4px}
+.quickConnect{margin:14px 0 22px;padding:17px 19px}
+.sectionTitle{margin-top:28px}
+.advancedFold{
+    margin:18px 0 0;
+    border:1px solid #174655;
+    background:#06101a;
+}
+.advancedFold>summary{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:12px 15px;
+    color:var(--pink);
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.12em;
+    cursor:pointer;
+    list-style:none;
+}
+.advancedFold>summary::-webkit-details-marker{display:none}
+.advancedFold>summary:after{content:"+";color:var(--cyan);font-size:17px}
+.advancedFold[open]>summary:after{content:"−"}
+.advancedFold>.advancedFoldBody{padding:0 14px 16px}
+.advancedFold .sectionTitle{margin-top:18px!important}
+
+@media(max-width:760px){
+    .shell{padding-top:12px}
+    header{gap:9px;margin-bottom:10px!important}
+    .badge{width:48px!important;height:48px!important;flex-basis:48px!important;border-radius:12px!important}
+    .tagline{font-size:9px}
+    .stackline{display:none}
+    .versionBadge{margin-top:5px;padding:3px 6px;font-size:8px}
+    header .headerControls{
+        width:100%;
+        max-width:none;
+        display:grid;
+        grid-template-columns:minmax(0,1fr) auto auto;
+        gap:6px;
+    }
+    header .headerControls .live{display:flex!important;align-items:center;min-width:0;overflow:hidden}
+    .liveLong{display:none}
+    .liveShort{display:inline}
+    .liveClock{display:none}
+    .neuralRainToggle{min-height:38px!important;padding-inline:9px!important;font-size:8px!important}
+    .adminMobileLink{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        min-height:38px;
+        margin:0;
+        padding:8px 10px;
+        border:1px solid #2c6b56;
+        background:#06141a;
+        color:var(--green);
+        font-size:8px;
+        font-weight:900;
+        letter-spacing:.1em;
+        text-decoration:none;
+        white-space:nowrap;
+    }
+    .hero{height:250px}
+    .heroText{top:17px;left:18px}
+    .heroTitle{font-size:25px!important}
+    .heroSub{font-size:9px}
+    .nightwave{grid-template-columns:62px minmax(0,1fr);gap:8px;margin:10px 0;padding:9px 10px}
+    .tunerScope{height:44px;padding-inline:5px;gap:2px}
+    .tunerBar{width:3px}
+    .tunerKicker{font-size:7px;letter-spacing:.09em}
+    .tunerTitle{font-size:14px}
+    .tunerArtist{font-size:7px;letter-spacing:.06em}
+    .tunerTimeline{gap:7px;margin-top:4px}
+    .tunerControls{grid-column:1/-1;grid-template-columns:repeat(3,42px) minmax(76px,1fr);gap:6px}
+    .tunerBtn{width:42px;height:42px}
+    .tunerVolume{grid-column:4;grid-row:1}
+    .tunerCredits{grid-column:1/-1;margin-top:-2px;font-size:7px}
+    .marketTicker{padding:12px;margin-top:10px}
+    .launchPromo{grid-template-columns:1fr;gap:11px;padding:13px 14px}
+    .launchPromoClock{padding-top:11px}
+    .launchPromoText{font-size:11px}
+    .launchPromoMeta{font-size:8px}
+    .promoUnit{padding:6px 3px}
+    .promoNumber{font-size:17px}
+    .quickConnect{padding:14px;margin-top:12px}
+    .sectionTitle{margin:23px 0 11px!important}
+    .hero[data-block-celebration="active"] .windowBitcoin{
+        width:78px!important;
+        height:78px!important;
+        left:88%!important;
+        top:8px!important;
+    }
+}
+@media(max-width:430px){
+    header .headerControls{grid-template-columns:minmax(0,1fr) auto auto}
+    .headerControls .live{padding-inline:8px}
+    .hero{height:242px}
+    .hero[data-block-celebration="active"] .windowBitcoin{top:8px!important}
+    .tunerTime{letter-spacing:.04em}
+}
 </style>
 </head>
 <body>
@@ -3332,24 +3492,21 @@ body{isolation:isolate}
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.45</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.46</div>
     </div>
   </div>
   <div class="headerControls">
-    <div id="live" class="live">● NODE LINK ACTIVE</div>
+    <div id="live" class="live"><span class="liveLong">● NODE LINK ACTIVE</span><span class="liveShort">● NODE OK</span></div>
     <button id="neuralRainToggle" class="neuralRainToggle" type="button" aria-pressed="true">
       NEURAL RAIN · ONLINE
     </button>
+    <!-- TERMINUS_ADMIN_MOBILE_LINK -->
+    <nav class="topNav" aria-label="Primary navigation">
+      <a href="#minerAccounting">MINER LOOKUP</a>
+      <!-- TERMINUS_ADMIN_LINK -->
+    </nav>
   </div>
 </header>
-<!-- TERMINUS_ADMIN_MOBILE_LINK -->
-
-<nav class="topNav" aria-label="Primary navigation">
-  <a href="#startMining">START MINING</a>
-  <a href="#poolStats">LIVE STATS</a>
-  <a href="#minerAccounting">MINER LOOKUP</a>
-  <!-- TERMINUS_ADMIN_LINK -->
-</nav>
 
 <main id="mainContent">
 <section class="hero" aria-labelledby="heroTitle">
@@ -3509,10 +3666,10 @@ body{isolation:isolate}
     <summary>PUBLIC-DOMAIN SIGNAL CREDITS</summary>
     CC0 tracks by
     <a href="https://opengameart.org/users/omfgdude" target="_blank" rel="noopener noreferrer">omfgdude</a>,
-    <a href="https://opengameart.org/users/sudocolon" target="_blank" rel="noopener noreferrer">Sudocolon</a>, and
+    <a href="https://opengameart.org/users/pro-sensory" target="_blank" rel="noopener noreferrer">Pro Sensory</a>, and
     <a href="https://opengameart.org/users/cinameng" target="_blank" rel="noopener noreferrer">cinameng</a>.
   </details>
-  <audio id="nightwaveAudio" preload="metadata"></audio>
+  <audio id="nightwaveAudio" preload="none"></audio>
 </section>
 
 <section class="marketTicker unavailable" id="xbtMarket" aria-label="Live XBT market price from Neoxa Exchange" aria-live="polite">
@@ -3558,7 +3715,8 @@ body{isolation:isolate}
     </div>
 
     <div class="launchPromoMeta" id="promoMeta">
-      STANDARD DATUM OPERATIONAL FEE AFTER PROMO: 1%
+      <span>STANDARD DATUM OPERATIONAL FEE AFTER PROMO: 1%</span>
+      <span class="promoMilestone">TERMINUSPOOL EST. BLOCK <strong>974025</strong></span>
     </div>
   </div>
 
@@ -3590,10 +3748,6 @@ body{isolation:isolate}
     </div>
   </div>
 </section>
-
-<div class="establishedBlock" aria-label="TerminusPool established at block 974025">
-  TerminusPool est. block <strong>974025</strong>
-</div>
 
 <section class="quickConnect" id="startMining" aria-labelledby="startMiningTitle">
   <div class="quickConnectHead">
@@ -3683,7 +3837,7 @@ body{isolation:isolate}
 <div class="sectionTitle">POOL-TELEMETRY</div>
 <div id="telemetry" class="grid grid6"></div>
 
-<details class="advancedFold" open>
+<details class="advancedFold">
   <summary>ADVANCED OPERATOR HEALTH</summary>
   <div class="advancedFoldBody">
     <div class="sectionTitle">OPERATOR-HEALTH // READ-ONLY</div>
@@ -3745,7 +3899,7 @@ body{isolation:isolate}
 
 </div>
 
-<details class="advancedFold" open>
+<details class="advancedFold">
   <summary>ADVANCED NETWORK + POOL IDENTITY</summary>
   <div class="advancedFoldBody">
     <div class="sectionTitle">NETWORK-UPLINK</div>
@@ -3831,16 +3985,19 @@ function initNeuralRain(){
   let columns=[];
   let animationFrame=0;
   let lastFrame=0;
+  let frameInterval=66;
   let enabled=localStorage.getItem(storageKey)!=="off";
 
   function resize(){
-    const dpr=Math.min(window.devicePixelRatio||1,1.5);
+    const mobile=innerWidth<=520;
+    const dpr=Math.min(window.devicePixelRatio||1,mobile?1:1.35);
     canvas.width=Math.max(1,Math.floor(innerWidth*dpr));
     canvas.height=Math.max(1,Math.floor(innerHeight*dpr));
     canvas.style.width=innerWidth+"px";
     canvas.style.height=innerHeight+"px";
     ctx.setTransform(dpr,0,0,dpr,0,0);
-    const fontSize=innerWidth<=520?13:17;
+    const fontSize=mobile?15:18;
+    frameInterval=mobile?100:66;
     const count=Math.ceil(innerWidth/fontSize);
     columns=Array.from({length:count},(_,index)=>({
       x:index*fontSize,
@@ -3854,7 +4011,7 @@ function initNeuralRain(){
 
   function paint(now){
     animationFrame=requestAnimationFrame(paint);
-    if(!enabled || reduced.matches || document.hidden || now-lastFrame<50)return;
+    if(!enabled || reduced.matches || document.hidden || now-lastFrame<frameInterval)return;
     lastFrame=now;
     ctx.clearRect(0,0,innerWidth,innerHeight);
     ctx.textAlign="center";
@@ -3907,7 +4064,7 @@ const NIGHTWAVE_TRACKS=[
   {title:"LOFI HIP HOP",artist:"OMFGDUDE",src:"https://opengameart.org/sites/default/files/audio_preview/lofihiphop.ogg.mp3"},
   {title:"LOFI HIP HOP LOOP",artist:"OMFGDUDE",src:"https://opengameart.org/sites/default/files/audio_preview/LofiLoop_1.ogg.mp3"},
   {title:"LOFI AGAIN",artist:"OMFGDUDE",src:"https://opengameart.org/sites/default/files/audio_preview/lofiagain_0.ogg.mp3"},
-  {title:"WIFI TRASHERINO",artist:"SUDOCOLON",src:"https://opengameart.org/sites/default/files/WiFi%20Trasherino.mp3"},
+  {title:"CHILL LOOP",artist:"PRO SENSORY",src:"https://opengameart.org/sites/default/files/chillloopable.mp3"},
   {title:"CAN BE SO BEAUTIFUL",artist:"CINAMENG",src:"https://opengameart.org/sites/default/files/can_be_so_beautiful.mp3"}
 ];
 
@@ -3927,6 +4084,7 @@ function initNightwave(){
   const trackKey="terminusNightwaveTrack";
   const volumeKey="terminusNightwaveVolume";
   let index=Number.parseInt(localStorage.getItem(trackKey)||"0",10);
+  let loadedIndex=-1;
   if(!Number.isInteger(index)||index<0||index>=NIGHTWAVE_TRACKS.length)index=0;
   const savedVolume=Number.parseFloat(localStorage.getItem(volumeKey)||"0.42");
   audio.volume=Number.isFinite(savedVolume)?Math.min(1,Math.max(0,savedVolume)):.42;
@@ -3962,6 +4120,7 @@ function initNightwave(){
   function loadTrack(autoplay=false){
     const track=NIGHTWAVE_TRACKS[index];
     audio.src=track.src;
+    loadedIndex=index;
     seek.value="0";
     timeLabel.textContent="00:00 / 00:00";
     renderTrack();
@@ -3975,11 +4134,26 @@ function initNightwave(){
 
   function move(direction,autoplay=!audio.paused){
     index=(index+direction+NIGHTWAVE_TRACKS.length)%NIGHTWAVE_TRACKS.length;
-    loadTrack(autoplay);
+    if(autoplay){
+      loadTrack(true);
+    }else{
+      audio.removeAttribute("src");
+      audio.load();
+      loadedIndex=-1;
+      seek.value="0";
+      timeLabel.textContent="00:00 / 00:00";
+      renderTrack();
+      syncPlayback();
+    }
+  }
+
+  function startPlayback(){
+    if(loadedIndex!==index)loadTrack(false);
+    return audio.play();
   }
 
   play.addEventListener("click",()=>{
-    if(audio.paused)audio.play().catch(()=>{
+    if(audio.paused)startPlayback().catch(()=>{
       artist.textContent="BROWSER BLOCKED AUDIO // TAP PLAY AGAIN";
     });
     else audio.pause();
@@ -4010,7 +4184,7 @@ function initNightwave(){
   });
   if("mediaSession" in navigator){
     [
-      ["play",()=>audio.play()],
+      ["play",()=>startPlayback()],
       ["pause",()=>audio.pause()],
       ["previoustrack",()=>move(-1)],
       ["nexttrack",()=>move(1)]
@@ -4018,7 +4192,7 @@ function initNightwave(){
       try{navigator.mediaSession.setActionHandler(action,handler)}catch(_error){}
     });
   }
-  loadTrack(false);
+  renderTrack();
   syncPlayback();
 }
 
@@ -5052,9 +5226,10 @@ async function refresh(){
     $("copyCoinbaseTag").dataset.copy=tag;
 
     $("live").className=ready?"live":"live bad";
-    $("live").textContent=
-      (ready?"● NODE LINK ACTIVE // ":"● NODE LINK DEGRADED // ")+
-      new Date().toLocaleTimeString();
+    $("live").innerHTML=
+      `<span class="liveLong">${ready?"● NODE LINK ACTIVE":"● NODE LINK DEGRADED"}</span>`+
+      `<span class="liveShort">${ready?"● NODE OK":"● NODE WARN"}</span>`+
+      `<span class="liveClock">&nbsp;// ${new Date().toLocaleTimeString()}</span>`;
 
     $("telemetry").innerHTML=
       card("SYSTEM STATUS",d.status||"Unknown",ready?"ok":"bad")+
@@ -5624,7 +5799,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.45"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.46"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -5682,7 +5857,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.45"
+                                "Terminus-Umbrel-Client/0.2.46"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -6107,7 +6282,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.45"
+                                "Terminus-Umbrel-Client/0.2.46"
                         }
                     )
 
@@ -6163,7 +6338,7 @@ class Handler(BaseHTTPRequestHandler):
                 )
                 page = page.replace(
                     "<!-- TERMINUS_ADMIN_MOBILE_LINK -->",
-                    '<a class="adminMobileLink" href="/admin">PRIVATE MINER ADMIN →</a>'
+                    '<a class="adminMobileLink" href="/admin">ADMIN →</a>'
                 )
             else:
                 page = page.replace("<!-- TERMINUS_ADMIN_LINK -->", "")
