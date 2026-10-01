@@ -31,9 +31,16 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.42")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.43")
         self.assertIn('card("WINDOW SHARES"', self.server.HTML)
         self.assertNotIn("SHARES SINCE BLOCK", self.server.HTML)
+        self.assertIn('id="neuralRain"', self.server.HTML)
+        self.assertIn('id="neuralRainToggle"', self.server.HTML)
+        self.assertIn("NEURAL RAIN · ONLINE", self.server.HTML)
+        self.assertIn('const storageKey="terminusNeuralRain"', self.server.HTML)
+        self.assertIn('localStorage.setItem(storageKey', self.server.HTML)
+        self.assertIn('document.hidden', self.server.HTML)
+        self.assertIn('@media(prefers-reduced-motion:reduce)', self.server.HTML)
 
     def test_quick_connect_places_prime_pubkey_below_datum_endpoint(self):
         endpoint_pos = self.server.HTML.index("datum.terminuspool.xyz:28915")

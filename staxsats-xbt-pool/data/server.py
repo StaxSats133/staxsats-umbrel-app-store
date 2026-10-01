@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.42"
+RELEASE_VERSION = "0.2.43"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -167,7 +167,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.42",
+                    "User-Agent": "TerminusPool-Market/0.2.43",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -3233,11 +3233,70 @@ a:focus-visible,button:focus-visible,input:focus-visible{
     .hero{height:270px}
     .heroText{left:18px;right:18px;top:20px}
 }
+
+/* TERMINUS_NEURAL_RAIN_V1 */
+body{isolation:isolate}
+.neuralRain{
+    position:fixed;
+    z-index:0;
+    inset:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    opacity:.34;
+    transition:opacity .25s ease;
+}
+.neuralRain.offline{opacity:0}
+.shell{position:relative;z-index:1}
+.headerControls{
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:8px;
+}
+.neuralRainToggle{
+    min-height:38px;
+    padding:8px 13px;
+    border:1px solid rgba(114,255,180,.62);
+    background:linear-gradient(135deg,rgba(5,28,24,.94),rgba(5,16,25,.96));
+    color:var(--green);
+    font:900 10px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    letter-spacing:.12em;
+    cursor:pointer;
+    box-shadow:inset 3px 0 var(--green),0 0 18px rgba(114,255,180,.1);
+}
+.neuralRainToggle[aria-pressed="false"]{
+    border-color:rgba(255,79,184,.48);
+    color:#d48ab8;
+    box-shadow:inset 3px 0 var(--pink);
+}
+.neuralRainToggle:disabled{
+    cursor:not-allowed;
+    opacity:.62;
+}
+@media(max-width:760px){
+    header .headerControls{
+        grid-column:1 / -1;
+        width:100%;
+        display:grid;
+        grid-template-columns:minmax(0,1fr) auto;
+        align-items:stretch;
+    }
+    header .headerControls .live{display:flex;align-items:center}
+    .neuralRainToggle{min-height:44px;padding-inline:11px}
+}
+@media(max-width:430px){
+    header .headerControls{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+    .neuralRain{display:none}
+}
 </style>
 </head>
 <body>
 <a class="skipLink" href="#mainContent">SKIP TO MAIN CONTENT</a>
 <div id="copyToast" class="copyToast" role="status" aria-live="polite">COPIED TO CLIPBOARD</div>
+<canvas id="neuralRain" class="neuralRain" aria-hidden="true"></canvas>
 
 <div class="shell">
 
@@ -3248,10 +3307,15 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.42</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.43</div>
     </div>
   </div>
-  <div id="live" class="live">● NODE LINK ACTIVE</div>
+  <div class="headerControls">
+    <div id="live" class="live">● NODE LINK ACTIVE</div>
+    <button id="neuralRainToggle" class="neuralRainToggle" type="button" aria-pressed="true">
+      NEURAL RAIN · ONLINE
+    </button>
+  </div>
 </header>
 <!-- TERMINUS_ADMIN_MOBILE_LINK -->
 
@@ -3732,6 +3796,90 @@ TERMINUS POOL // THE LAST WORD IN MINING // DATUM-FIRST ARCHITECTURE // XBT BLAK
 
 <script>
 const $=id=>document.getElementById(id);
+
+function initNeuralRain(){
+  const canvas=$("neuralRain");
+  const toggle=$("neuralRainToggle");
+  if(!canvas || !toggle)return;
+
+  const storageKey="terminusNeuralRain";
+  const reduced=window.matchMedia("(prefers-reduced-motion:reduce)");
+  const ctx=canvas.getContext("2d",{alpha:true});
+  const glyphs="01XBTDATUMRATUM<>/\\[]{}アカサタナハマヤラワ";
+  let columns=[];
+  let animationFrame=0;
+  let lastFrame=0;
+  let enabled=localStorage.getItem(storageKey)!=="off";
+
+  function resize(){
+    const dpr=Math.min(window.devicePixelRatio||1,1.5);
+    canvas.width=Math.max(1,Math.floor(innerWidth*dpr));
+    canvas.height=Math.max(1,Math.floor(innerHeight*dpr));
+    canvas.style.width=innerWidth+"px";
+    canvas.style.height=innerHeight+"px";
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    const fontSize=innerWidth<=520?13:17;
+    const count=Math.ceil(innerWidth/fontSize);
+    columns=Array.from({length:count},(_,index)=>({
+      x:index*fontSize,
+      y:Math.random()*innerHeight,
+      speed:.7+Math.random()*1.25,
+      trail:5+Math.floor(Math.random()*9),
+      fontSize,
+      accent:Math.random()>.88
+    }));
+  }
+
+  function paint(now){
+    animationFrame=requestAnimationFrame(paint);
+    if(!enabled || reduced.matches || document.hidden || now-lastFrame<50)return;
+    lastFrame=now;
+    ctx.clearRect(0,0,innerWidth,innerHeight);
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    ctx.font=`700 ${columns[0]?.fontSize||17}px ui-monospace,monospace`;
+    columns.forEach(column=>{
+      for(let step=column.trail;step>=0;step--){
+        const alpha=(1-step/(column.trail+1))*.42;
+        ctx.fillStyle=step===0
+          ? (column.accent?`rgba(67,245,255,${Math.min(.76,alpha+.28)})`:`rgba(210,255,229,${Math.min(.72,alpha+.25)})`)
+          : `rgba(114,255,180,${alpha*.68})`;
+        const glyph=glyphs[Math.floor(Math.random()*glyphs.length)];
+        ctx.fillText(glyph,column.x,column.y-step*column.fontSize);
+      }
+      column.y+=column.speed*column.fontSize*.34;
+      if(column.y-column.trail*column.fontSize>innerHeight){
+        column.y=-Math.random()*innerHeight*.45;
+        column.speed=.7+Math.random()*1.25;
+        column.accent=Math.random()>.88;
+      }
+    });
+  }
+
+  function sync(){
+    const active=enabled && !reduced.matches;
+    canvas.classList.toggle("offline",!active);
+    toggle.setAttribute("aria-pressed",String(active));
+    toggle.disabled=reduced.matches;
+    toggle.textContent=reduced.matches
+      ? "NEURAL RAIN · MOTION GUARD"
+      : active?"NEURAL RAIN · ONLINE":"NEURAL RAIN · OFFLINE";
+    if(!active)ctx.clearRect(0,0,innerWidth,innerHeight);
+  }
+
+  toggle.addEventListener("click",()=>{
+    if(reduced.matches)return;
+    enabled=!enabled;
+    localStorage.setItem(storageKey,enabled?"on":"off");
+    sync();
+  });
+  window.addEventListener("resize",resize,{passive:true});
+  reduced.addEventListener?.("change",sync);
+  resize();
+  sync();
+  animationFrame=requestAnimationFrame(paint);
+  window.addEventListener("pagehide",()=>cancelAnimationFrame(animationFrame),{once:true});
+}
 
 let accountAddress =
   localStorage.getItem("terminusAccountAddress") || "";
@@ -4993,6 +5141,7 @@ function initAirplaneFlybys(){
 }
 
 injectVisualFx();
+initNeuralRain();
 initSkyFx();
 initAirplaneFlybys();
 initAdvancedFolds();
@@ -5333,7 +5482,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.42"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.43"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -5391,7 +5540,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.42"
+                                "Terminus-Umbrel-Client/0.2.43"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -5816,7 +5965,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.42"
+                                "Terminus-Umbrel-Client/0.2.43"
                         }
                     )
 
