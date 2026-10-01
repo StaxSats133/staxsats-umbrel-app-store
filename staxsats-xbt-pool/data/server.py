@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.41"
+RELEASE_VERSION = "0.2.42"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -167,7 +167,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.41",
+                    "User-Agent": "TerminusPool-Market/0.2.42",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -267,30 +267,13 @@ def _history_connection():
                 singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
                 observed_blocks INTEGER NOT NULL,
                 estimated_work REAL NOT NULL,
-                estimated_shares REAL NOT NULL DEFAULT 0,
                 last_sample_at INTEGER NOT NULL,
                 last_hashrate_hs REAL NOT NULL,
-                last_share_difficulty REAL NOT NULL DEFAULT 0,
                 tracking_since INTEGER NOT NULL,
                 last_reset_at INTEGER NOT NULL
             )
             """
         )
-        effort_columns = {
-            row[1] for row in connection.execute(
-                "PRAGMA table_info(block_effort_state)"
-            ).fetchall()
-        }
-        if "estimated_shares" not in effort_columns:
-            connection.execute(
-                "ALTER TABLE block_effort_state "
-                "ADD COLUMN estimated_shares REAL NOT NULL DEFAULT 0"
-            )
-        if "last_share_difficulty" not in effort_columns:
-            connection.execute(
-                "ALTER TABLE block_effort_state "
-                "ADD COLUMN last_share_difficulty REAL NOT NULL DEFAULT 0"
-            )
         connection.commit()
         yield connection
         connection.commit()
@@ -361,19 +344,10 @@ def _update_block_effort(connection, sample, now):
         _number(sample.get("hashrate", 0)) * 1_000_000_000_000
     )
     network_difficulty = max(0.0, _number(sample.get("difficulty", 0)))
-    window_work = max(0.0, _number(sample.get("windowWork", 0)))
-    window_shares = max(0, int(_number(sample.get("windowShares", 0))))
-    share_floor = max(0.0, _number(sample.get("shareDifficulty", 0)))
-    share_difficulty_basis = (
-        window_work / window_shares
-        if window_work > 0 and window_shares > 0
-        else share_floor
-    )
     state = connection.execute(
         """
-        SELECT observed_blocks, estimated_work, estimated_shares,
-               last_sample_at, last_hashrate_hs, last_share_difficulty,
-               tracking_since, last_reset_at
+        SELECT observed_blocks, estimated_work, last_sample_at,
+               last_hashrate_hs, tracking_since, last_reset_at
         FROM block_effort_state
         WHERE singleton = 1
         """
@@ -386,21 +360,14 @@ def _update_block_effort(connection, sample, now):
             seed_since,
             now
         ) if last_block_at > 0 else 0.0
-        estimated_shares = (
-            estimated_work / share_difficulty_basis
-            if share_difficulty_basis > 0 else 0.0
-        )
-        last_share_difficulty = share_difficulty_basis
         tracking_since = seed_since
         last_reset_at = seed_since
     else:
         (
             observed_blocks,
             estimated_work,
-            estimated_shares,
             last_sample_at,
             last_hashrate_hs,
-            last_share_difficulty,
             tracking_since,
             last_reset_at,
         ) = state
@@ -412,20 +379,7 @@ def _update_block_effort(connection, sample, now):
                 tracking_since,
                 now
             ) if last_block_at > 0 else 0.0
-            estimated_shares = (
-                estimated_work / share_difficulty_basis
-                if share_difficulty_basis > 0 else 0.0
-            )
         else:
-            if (
-                estimated_shares <= 0 and
-                estimated_work > 0 and
-                last_share_difficulty <= 0 and
-                share_difficulty_basis > 0
-            ):
-                estimated_shares = (
-                    estimated_work / share_difficulty_basis
-                )
             elapsed = min(
                 BLOCK_EFFORT_MAX_SAMPLE_GAP,
                 max(0, now - int(last_sample_at))
@@ -434,41 +388,30 @@ def _update_block_effort(connection, sample, now):
                 max(0.0, float(last_hashrate_hs or 0)) +
                 hashrate_hs
             ) * 0.5
-            work_increment = average_hs * elapsed / HASHES_PER_DIFFICULTY
-            estimated_work += work_increment
-            average_share_difficulty = (
-                max(0.0, float(last_share_difficulty or 0)) +
-                share_difficulty_basis
-            ) * 0.5
-            if average_share_difficulty > 0:
-                estimated_shares += (
-                    work_increment / average_share_difficulty
-                )
+            estimated_work += (
+                average_hs * elapsed / HASHES_PER_DIFFICULTY
+            )
 
     connection.execute(
         """
         INSERT INTO block_effort_state (
-            singleton, observed_blocks, estimated_work, estimated_shares,
-            last_sample_at, last_hashrate_hs, last_share_difficulty,
+            singleton, observed_blocks, estimated_work,
+            last_sample_at, last_hashrate_hs,
             tracking_since, last_reset_at
-        ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (1, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(singleton) DO UPDATE SET
             observed_blocks=excluded.observed_blocks,
             estimated_work=excluded.estimated_work,
-            estimated_shares=excluded.estimated_shares,
             last_sample_at=excluded.last_sample_at,
             last_hashrate_hs=excluded.last_hashrate_hs,
-            last_share_difficulty=excluded.last_share_difficulty,
             tracking_since=excluded.tracking_since,
             last_reset_at=excluded.last_reset_at
         """,
         (
             blocks_found,
             estimated_work,
-            estimated_shares,
             now,
             hashrate_hs,
-            share_difficulty_basis,
             tracking_since,
             last_reset_at,
         )
@@ -485,9 +428,6 @@ def _update_block_effort(connection, sample, now):
     return {
         "basis": "estimated-work-since-last-block",
         "estimatedWork": estimated_work,
-        "estimatedShares": estimated_shares,
-        "shareDifficultyBasis": share_difficulty_basis,
-        "sharesEstimated": True,
         "expectedWork": network_difficulty,
         "effortPercent": effort_percent,
         "visualPercent": (
@@ -3308,7 +3248,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.41</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.42</div>
     </div>
   </div>
   <div id="live" class="live">● NODE LINK ACTIVE</div>
@@ -4831,22 +4771,7 @@ async function refresh(){
       card("SYSTEM STATUS",d.status||"Unknown",ready?"ok":"bad")+
       card("LIVE POOL HASHRATE",num(d.hashrate,3)+" TH/s","cyan")+
       card("POOL MINERS",num(d.poolMiners,0))+
-      card(
-        "SHARES SINCE BLOCK · EST.",
-        "≈"+compact(
-          Number.isFinite(Number(blockEffort.estimatedShares))
-            ? Number(blockEffort.estimatedShares)
-            : (
-              Number(blockEffort.estimatedWork||0) /
-              Math.max(
-                1,
-                Number(d.windowWork||0)/Math.max(1,Number(d.windowShares||0)),
-                Number(d.shareDifficulty||0)
-              )
-            )
-        ),
-        "purple"
-      )+
+      card("WINDOW SHARES",num(d.windowShares,0),"purple")+
       card("POOL SHARE FLOOR",compact(Number(d.shareDifficulty)||1024),"cyan")+
       card("BLOCKS FOUND",num(d.blocks,0),Number(d.blocks)>0?"gold":"");
 
@@ -5408,7 +5333,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.41"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.42"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -5466,7 +5391,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.41"
+                                "Terminus-Umbrel-Client/0.2.42"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -5787,11 +5712,6 @@ class Handler(BaseHTTPRequestHandler):
                     data["blockEffort"] = {
                         "basis": "estimated-work-since-last-block",
                         "estimatedWork": 0.0,
-                        "estimatedShares": 0.0,
-                        "shareDifficultyBasis": float(
-                            data.get("shareDifficulty", 0) or 0
-                        ),
-                        "sharesEstimated": True,
                         "expectedWork": float(data.get("difficulty", 0) or 0),
                         "effortPercent": 0.0,
                         "visualPercent": (
@@ -5896,7 +5816,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.41"
+                                "Terminus-Umbrel-Client/0.2.42"
                         }
                     )
 

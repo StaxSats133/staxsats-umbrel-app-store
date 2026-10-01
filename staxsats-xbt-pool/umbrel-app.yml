@@ -4,7 +4,7 @@ name: Terminus Pool
 tagline: The last word in mining
 icon: https://raw.githubusercontent.com/StaxSats133/staxsats-umbrel-app-store/main/staxsats-xbt-pool/icon.svg
 category: bitcoin
-version: "0.2.41"
+version: "0.2.42"
 port: 8081
 description: >-
   Terminus Pool is an XBT BLAKE2b mining pool dashboard for RATUM Prime and DATUM.
@@ -19,10 +19,9 @@ repo: https://github.com/StaxSats133/staxsats-umbrel-app-store
 support: https://github.com/StaxSats133/staxsats-umbrel-app-store/issues
 gallery: []
 releaseNotes: >-
-  Terminus Pool v0.2.41 replaces the capped payout-window share count with an
-  estimated shares-since-block metric tied to the durable block-effort cycle.
-  It resets only when Terminus finds a real block and is explicitly labeled as
-  an estimate because RATUM does not expose a monotonic accepted-share total.
+  Terminus Pool v0.2.42 restores the original payout-window share count card
+  and removes the estimated shares-since-block metric. All v0.2.40 airplane,
+  telemetry, privacy, and endpoint behavior remains unchanged.
 dependencies: []
 path: ""
 defaultUsername: ""
