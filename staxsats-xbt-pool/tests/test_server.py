@@ -1,5 +1,6 @@
 import importlib.util
 import os
+import sqlite3
 import tempfile
 import unittest
 from unittest import mock
@@ -30,7 +31,9 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.40")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.41")
+        self.assertIn("SHARES SINCE BLOCK · EST.", self.server.HTML)
+        self.assertNotIn('card("WINDOW SHARES"', self.server.HTML)
 
     def test_quick_connect_places_prime_pubkey_below_datum_endpoint(self):
         endpoint_pos = self.server.HTML.index("datum.terminuspool.xyz:28915")
@@ -210,6 +213,9 @@ class TerminusServerTests(unittest.TestCase):
             "height": 974100,
             "difficulty": 1_000,
             "blocks": 1,
+            "windowWork": 4_096,
+            "windowShares": 4,
+            "shareDifficulty": 1_024,
         }
         first = self.server.record_history(base, now=1_800_000_000)
         self.assertEqual(first["effortPercent"], 0)
@@ -217,16 +223,24 @@ class TerminusServerTests(unittest.TestCase):
         second = self.server.record_history(base, now=1_800_000_060)
         self.assertGreater(second["effortPercent"], 1)
         self.assertLess(second["effortPercent"], 2)
+        self.assertGreater(second["estimatedShares"], 0)
+        self.assertEqual(second["shareDifficultyBasis"], 1_024)
+        self.assertTrue(second["sharesEstimated"])
 
         restarted = load_server(self.temp.name)
         third = restarted.record_history(base, now=1_800_000_120)
         self.assertGreater(third["effortPercent"], second["effortPercent"])
+        self.assertGreater(
+            third["estimatedShares"],
+            second["estimatedShares"],
+        )
 
         found = dict(base)
         found["blocks"] = 2
         found["lastBlockAt"] = 1_800_000_180
         reset = restarted.record_history(found, now=1_800_000_180)
         self.assertEqual(reset["effortPercent"], 0)
+        self.assertEqual(reset["estimatedShares"], 0)
         self.assertEqual(reset["visualPercent"], 100)
         self.assertTrue(reset["celebrationActive"])
         self.assertEqual(reset["celebrationUntil"], 1_800_086_580)
@@ -251,6 +265,60 @@ class TerminusServerTests(unittest.TestCase):
             expired["visualPercent"],
             min(100, expired["effortPercent"]),
         )
+
+    def test_block_effort_migrates_existing_state_for_cycle_shares(self):
+        database = os.path.join(
+            self.temp.name,
+            "terminus-history.sqlite3",
+        )
+        connection = sqlite3.connect(database)
+        connection.execute(
+            """
+            CREATE TABLE block_effort_state (
+                singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
+                observed_blocks INTEGER NOT NULL,
+                estimated_work REAL NOT NULL,
+                last_sample_at INTEGER NOT NULL,
+                last_hashrate_hs REAL NOT NULL,
+                tracking_since INTEGER NOT NULL,
+                last_reset_at INTEGER NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
+            INSERT INTO block_effort_state VALUES
+            (1, 1, 4096, 1800000000, 1000000000, 1799900000, 1799900000)
+            """
+        )
+        connection.commit()
+        connection.close()
+
+        migrated = self.server.record_history({
+            "hashrate": 0.001,
+            "poolMiners": 1,
+            "connections": 1,
+            "accepted": 0,
+            "rejected": 0,
+            "height": 974100,
+            "difficulty": 1_000,
+            "blocks": 1,
+            "windowWork": 8_192,
+            "windowShares": 4,
+            "shareDifficulty": 1_024,
+        }, now=1_800_000_060)
+        self.assertGreater(migrated["estimatedShares"], 2)
+        connection = sqlite3.connect(database)
+        try:
+            columns = {
+                row[1] for row in connection.execute(
+                    "PRAGMA table_info(block_effort_state)"
+                )
+            }
+        finally:
+            connection.close()
+        self.assertIn("estimated_shares", columns)
+        self.assertIn("last_share_difficulty", columns)
 
     def test_block_celebration_uses_exact_24_hour_boundary(self):
         found_at = 1_800_000_000
