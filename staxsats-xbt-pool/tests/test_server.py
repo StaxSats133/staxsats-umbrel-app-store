@@ -31,7 +31,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.43")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.44")
         self.assertIn('card("WINDOW SHARES"', self.server.HTML)
         self.assertNotIn("SHARES SINCE BLOCK", self.server.HTML)
         self.assertIn('id="neuralRain"', self.server.HTML)
@@ -72,6 +72,13 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn("color:var(--gold);font-size:clamp(25px", self.server.HTML)
         self.assertIn('class="bitcoinSprite celestial32"', self.server.HTML)
         self.assertIn('class="bitcoinGlow"', self.server.HTML)
+        self.assertIn('.hero[data-block-celebration="active"] .windowBitcoin', self.server.HTML)
+        self.assertIn('transform:translateX(-50%) translateY(-48px) !important', self.server.HTML)
+        self.assertIn('width:86px !important', self.server.HTML)
+        self.assertIn('.hero[data-block-celebration="active"] .skyMoon', self.server.HTML)
+        self.assertIn('TerminusPool est. block <strong>974025</strong>', self.server.HTML)
+        self.assertNotIn("TERMINUS FOUND ITS FIRST BLOCK", self.server.HTML)
+        self.assertNotIn('class="firstBlock"', self.server.HTML)
         self.assertIn("moonSprite", self.server.HTML)
         self.assertIn("skyMoonGlow", self.server.HTML)
         self.assertIn('class="roadsideLights"', self.server.HTML)
