@@ -31,7 +31,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.46")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.47")
         self.assertIn('card("WINDOW SHARES"', self.server.HTML)
         self.assertNotIn("SHARES SINCE BLOCK", self.server.HTML)
         self.assertIn('id="neuralRain"', self.server.HTML)
@@ -45,29 +45,57 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('NIGHTWAVE // ONLY XBT ACCEPTED', self.server.HTML)
         self.assertIn('id="nightwaveAudio"', self.server.HTML)
         self.assertIn('id="nightwaveAudio" preload="none"', self.server.HTML)
+        self.assertIn('id="nightwaveCollapse"', self.server.HTML)
+        self.assertIn('const collapseKey="terminusNightwaveCollapsed"', self.server.HTML)
+        self.assertIn('collapse.setAttribute("aria-expanded"', self.server.HTML)
+        self.assertIn('.nightwave.collapsed', self.server.HTML)
         self.assertIn('const NIGHTWAVE_TRACKS=[', self.server.HTML)
         self.assertIn('initNightwave();', self.server.HTML)
         self.assertIn('function startPlayback()', self.server.HTML)
         self.assertNotIn('loadTrack(false);\n  syncPlayback();', self.server.HTML)
         self.assertIn('TERMINUS_DENSITY_POLISH_V1', self.server.HTML)
         self.assertIn('class="promoMilestone"', self.server.HTML)
+        self.assertIn('id="lastBlockFound"', self.server.HTML)
+        self.assertIn('id="lastBlockMiner"', self.server.HTML)
+        self.assertIn('id="lastBlockHash"', self.server.HTML)
+        self.assertIn('id="lastBlockDifficulty"', self.server.HTML)
+        self.assertNotIn('id="lastBlockFinder"', self.server.HTML)
         self.assertNotIn('class="establishedBlock"', self.server.HTML)
         self.assertNotIn('<details class="advancedFold" open>', self.server.HTML)
         self.assertIn('title:"CHILL LOOP",artist:"PRO SENSORY"', self.server.HTML)
         self.assertNotIn("WIFI TRASHERINO", self.server.HTML)
         self.assertEqual(self.server.HTML.count('https://opengameart.org/sites/default/files/'), 5)
+        tuner_pos = self.server.HTML.index('id="nightwave"')
+        graph_pos = self.server.HTML.index('id="poolStats"')
+        last_block_pos = self.server.HTML.index('id="lastBlockFound"')
+        market_pos = self.server.HTML.index('id="xbtMarket"')
+        start_mining_pos = self.server.HTML.index('id="startMining"')
+        self.assertLess(tuner_pos, graph_pos)
+        self.assertLess(graph_pos, market_pos)
+        self.assertLess(graph_pos, last_block_pos)
+        self.assertLess(last_block_pos, market_pos)
+        self.assertLess(market_pos, start_mining_pos)
         self.assertTrue(any(
             "media-src 'self' https://opengameart.org" in value
             for value in self.server.Handler.send_security_headers.__code__.co_consts
             if isinstance(value, str)
         ))
 
+    def test_block_hash_implies_winning_share_difficulty(self):
+        block_hash = (
+            "0000000000000000a2717d85f96e9fcf"
+            "1834788c3351dfc79df1c0a674599ba2"
+        )
+        difficulty = self.server._share_difficulty_from_block_hash(block_hash)
+        self.assertAlmostEqual(difficulty, 6768482938.1588, places=4)
+        self.assertEqual(self.server._share_difficulty_from_block_hash("bad"), 0.0)
+
     def test_quick_connect_places_prime_pubkey_below_datum_endpoint(self):
+        start_mining_pos = self.server.HTML.index('id="startMining"')
         endpoint_pos = self.server.HTML.index("datum.terminuspool.xyz:28915")
         quick_pubkey_pos = self.server.HTML.index('id="quickPrimePubkey"')
-        pool_stats_pos = self.server.HTML.index('id="poolStats"')
+        self.assertLess(start_mining_pos, endpoint_pos)
         self.assertLess(endpoint_pos, quick_pubkey_pos)
-        self.assertLess(quick_pubkey_pos, pool_stats_pos)
         self.assertIn('id="quickCopyPrimePubkey"', self.server.HTML)
         self.assertIn('/assets/datum-pool-setup.png', self.server.HTML)
         self.assertGreater(len(self.server.POOL_SETUP_PNG), 1000)

@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.46"
+RELEASE_VERSION = "0.2.47"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -167,7 +167,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.46",
+                    "User-Agent": "TerminusPool-Market/0.2.47",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -576,6 +576,26 @@ def _number(value, default=0.0):
         return float(value or 0)
     except (TypeError, ValueError):
         return default
+
+
+DIFFICULTY_ONE_TARGET = int(
+    "00000000ffff0000000000000000000000000000000000000000000000000000",
+    16,
+)
+
+
+def _share_difficulty_from_block_hash(block_hash):
+    """Return the accepted share difficulty implied by a display-order hash."""
+    value = str(block_hash or "").strip().lower()
+    if len(value) != 64:
+        return 0.0
+    try:
+        hash_value = int(value, 16)
+    except ValueError:
+        return 0.0
+    if hash_value <= 0:
+        return 0.0
+    return DIFFICULTY_ONE_TARGET / hash_value
 
 
 def _mask_identity(identity):
@@ -1953,6 +1973,71 @@ footer{
     overflow:hidden;
 }
 
+/* TERMINUS_LAST_BLOCK_FOUND_V1 */
+.lastBlockPanel{
+    position:relative;
+    margin:12px 0 16px;
+    padding:14px 16px;
+    overflow:hidden;
+    border:1px solid rgba(255,200,92,.48);
+    border-radius:3px 16px 3px 16px;
+    background:
+      linear-gradient(112deg,rgba(24,15,22,.97),rgba(4,17,27,.98)),
+      repeating-linear-gradient(90deg,transparent 0 14px,rgba(255,200,92,.035) 14px 15px);
+    box-shadow:inset 4px 0 0 #ffc85c,0 0 24px rgba(255,200,92,.08);
+}
+.lastBlockPanel:after{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:linear-gradient(100deg,transparent 58%,rgba(255,79,184,.045),transparent);
+}
+.lastBlockHead{
+    position:relative;
+    z-index:1;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    margin-bottom:11px;
+}
+.lastBlockTitle{color:#ffc85c;font-size:12px;font-weight:900;letter-spacing:.18em}
+.lastBlockExplorer{color:var(--cyan);font-size:9px;font-weight:900;letter-spacing:.12em;text-decoration:none}
+.lastBlockExplorer:hover{color:var(--green)}
+.lastBlockGrid{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:minmax(120px,.8fr) minmax(105px,.55fr) minmax(140px,.75fr) minmax(150px,.9fr);
+    gap:10px 18px;
+}
+.lastBlockMetric{min-width:0}
+.lastBlockLabel{color:#718d99;font-size:8px;font-weight:900;letter-spacing:.14em}
+.lastBlockValue{margin-top:4px;color:#effcff;font-size:15px;font-weight:900;letter-spacing:.045em}
+.lastBlockValue.gold{color:#ffc85c}
+.lastBlockHashRow{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end}
+.lastBlockHash{
+    margin-top:4px;
+    overflow-wrap:anywhere;
+    color:#8eefff;
+    font-size:10px;
+    line-height:1.45;
+    letter-spacing:.055em;
+}
+.lastBlockHashRow .copyBtn{min-height:34px;padding:8px 11px}
+@media(max-width:760px){
+  .lastBlockGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
+  .lastBlockHashRow{grid-column:1/-1}
+}
+@media(max-width:420px){
+  .lastBlockPanel{padding:12px 13px}
+  .lastBlockHead{align-items:flex-start;flex-direction:column;gap:5px}
+  .lastBlockValue{font-size:13px}
+  .lastBlockHashRow{grid-template-columns:minmax(0,1fr)}
+  .lastBlockHashRow .copyBtn{justify-self:start}
+}
+
 /* animated radar / scanner sweep */
 .poolHashrateGraph:after{
     content:"";
@@ -3177,12 +3262,25 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 .tunerBar:nth-child(5n){animation-delay:-.62s}
 @keyframes tunerPulse{from{height:15%}to{height:88%}}
 .tunerMeta{min-width:0}
+.tunerKickerRow{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .tunerKicker{
     color:var(--green);
     font-size:10px;
     font-weight:900;
     letter-spacing:.16em;
 }
+.tunerCollapse{
+    flex:none;
+    min-height:28px;
+    padding:5px 9px;
+    border:1px solid rgba(67,245,255,.42);
+    background:rgba(3,11,18,.78);
+    color:var(--cyan);
+    font:900 8px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    letter-spacing:.12em;
+    cursor:pointer;
+}
+.tunerCollapse:hover{border-color:var(--green);color:var(--green)}
 .tunerTitle{
     margin-top:7px;
     overflow:hidden;
@@ -3217,6 +3315,14 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 .tunerVolume{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:3px;color:#7895a0;font-size:9px;letter-spacing:.1em}
 .tunerVolume input{width:100%}
 .nightwave input[type="range"]{accent-color:var(--pink);cursor:pointer}
+.nightwave.collapsed{grid-template-columns:minmax(0,1fr);padding-block:10px}
+.nightwave.collapsed .tunerScope,
+.nightwave.collapsed .tunerArtist,
+.nightwave.collapsed .tunerTimeline,
+.nightwave.collapsed .tunerControls,
+.nightwave.collapsed .tunerCredits{display:none}
+.nightwave.collapsed .tunerTitle{margin-top:4px;font-size:14px}
+.nightwave.collapsed .tunerMeta{grid-column:1/-1}
 .tunerCredits{grid-column:1/-1;margin-top:-7px;color:#7895a0;font-size:9px;letter-spacing:.08em}
 .tunerCredits summary{width:max-content;cursor:pointer;color:#7fb8c3}
 .tunerCredits a{color:var(--cyan)}
@@ -3492,7 +3598,7 @@ header{align-items:flex-start;margin-bottom:12px}
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.46</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.47</div>
     </div>
   </div>
   <div class="headerControls">
@@ -3648,7 +3754,10 @@ header{align-items:flex-start;margin-bottom:12px}
     <span class="tunerBar"></span><span class="tunerBar"></span>
   </div>
   <div class="tunerMeta">
-    <div class="tunerKicker">NIGHTWAVE // ONLY XBT ACCEPTED</div>
+    <div class="tunerKickerRow">
+      <div class="tunerKicker">NIGHTWAVE // ONLY XBT ACCEPTED</div>
+      <button class="tunerCollapse" id="nightwaveCollapse" type="button" aria-controls="nightwave" aria-expanded="true">MINIMIZE</button>
+    </div>
     <div class="tunerTitle" id="nightwaveTitle">LO-FI SIGNAL STANDBY</div>
     <div class="tunerArtist" id="nightwaveArtist">CC0 // FIRST-PARTY AUDIO</div>
     <div class="tunerTimeline">
@@ -3670,6 +3779,59 @@ header{align-items:flex-start;margin-bottom:12px}
     <a href="https://opengameart.org/users/cinameng" target="_blank" rel="noopener noreferrer">cinameng</a>.
   </details>
   <audio id="nightwaveAudio" preload="none"></audio>
+</section>
+
+<div class="sectionTitle" id="poolStats">LIVE-POOL-HASHRATE</div>
+
+<div class="graphCard poolHashrateGraph">
+  <div class="graphTop">
+    <div class="graphTitle">
+      TERMINUS POOL // ROLLING LIVE HASHRATE
+    </div>
+
+    <div class="graphStats">
+      <span id="graphMiners" class="graphPill">0 POOL MINERS</span>
+      <div id="graphNow">0.000 TH/s</div>
+    </div>
+  </div>
+
+  <svg viewBox="0 0 1000 220" preserveAspectRatio="none">
+    <path id="graphFill"></path>
+    <path id="graphLine"></path>
+  </svg>
+  <div id="historySummary" class="historySummary" aria-label="24-hour pool summary"></div>
+</div>
+
+<section class="lastBlockPanel" id="lastBlockFound" aria-labelledby="lastBlockTitle">
+  <div class="lastBlockHead">
+    <div class="lastBlockTitle" id="lastBlockTitle">LAST BLOCK FOUND</div>
+    <a class="lastBlockExplorer" id="lastBlockExplorer" href="https://mempool.guide/" target="_blank" rel="noopener noreferrer">VIEW ON EXPLORER ↗</a>
+  </div>
+  <div class="lastBlockGrid">
+    <div class="lastBlockMetric">
+      <div class="lastBlockLabel">WINNING MINER TAG</div>
+      <div class="lastBlockValue gold" id="lastBlockMiner">AWAITING BLOCK</div>
+    </div>
+    <div class="lastBlockMetric">
+      <div class="lastBlockLabel">BLOCK HEIGHT</div>
+      <div class="lastBlockValue" id="lastBlockHeight">—</div>
+    </div>
+    <div class="lastBlockMetric">
+      <div class="lastBlockLabel">WINNING SHARE DIFFICULTY</div>
+      <div class="lastBlockValue" id="lastBlockDifficulty">—</div>
+    </div>
+    <div class="lastBlockMetric">
+      <div class="lastBlockLabel">FOUND AT</div>
+      <div class="lastBlockValue" id="lastBlockTime">—</div>
+    </div>
+    <div class="lastBlockHashRow">
+      <div class="lastBlockMetric">
+        <div class="lastBlockLabel">BLOCK HASH</div>
+        <div class="lastBlockHash" id="lastBlockHash">AWAITING CONFIRMED BLOCK</div>
+      </div>
+      <button type="button" class="copyBtn" id="copyLastBlockHash" aria-label="Copy last block hash" data-copy="" onclick="copyField(this)">COPY HASH</button>
+    </div>
+  </div>
 </section>
 
 <section class="marketTicker unavailable" id="xbtMarket" aria-label="Live XBT market price from Neoxa Exchange" aria-live="polite">
@@ -3775,27 +3937,6 @@ header{align-items:flex-start;margin-bottom:12px}
     </div>
   </div>
 </section>
-
-<div class="sectionTitle" id="poolStats">LIVE-POOL-HASHRATE</div>
-
-<div class="graphCard poolHashrateGraph">
-  <div class="graphTop">
-    <div class="graphTitle">
-      TERMINUS POOL // ROLLING LIVE HASHRATE
-    </div>
-
-    <div class="graphStats">
-      <span id="graphMiners" class="graphPill">0 POOL MINERS</span>
-      <div id="graphNow">0.000 TH/s</div>
-    </div>
-  </div>
-
-  <svg viewBox="0 0 1000 220" preserveAspectRatio="none">
-    <path id="graphFill"></path>
-    <path id="graphLine"></path>
-  </svg>
-  <div id="historySummary" class="historySummary" aria-label="24-hour pool summary"></div>
-</div>
 
 <div class="sectionTitle" id="leaderboard">24H-HASHING-LEADERBOARD</div>
 <section class="leaderboardPanel" aria-labelledby="leaderboardTitle">
@@ -4079,16 +4220,32 @@ function initNightwave(){
   const title=$("nightwaveTitle");
   const artist=$("nightwaveArtist");
   const timeLabel=$("nightwaveTime");
-  if(!deck||!audio||!play||!previous||!next||!seek||!volume)return;
+  const collapse=$("nightwaveCollapse");
+  if(!deck||!audio||!play||!previous||!next||!seek||!volume||!collapse)return;
 
   const trackKey="terminusNightwaveTrack";
   const volumeKey="terminusNightwaveVolume";
+  const collapseKey="terminusNightwaveCollapsed";
   let index=Number.parseInt(localStorage.getItem(trackKey)||"0",10);
   let loadedIndex=-1;
   if(!Number.isInteger(index)||index<0||index>=NIGHTWAVE_TRACKS.length)index=0;
   const savedVolume=Number.parseFloat(localStorage.getItem(volumeKey)||"0.42");
   audio.volume=Number.isFinite(savedVolume)?Math.min(1,Math.max(0,savedVolume)):.42;
   volume.value=String(audio.volume);
+
+  function syncCollapsed(){
+    const collapsed=localStorage.getItem(collapseKey)==="yes";
+    deck.classList.toggle("collapsed",collapsed);
+    collapse.textContent=collapsed?"EXPAND":"MINIMIZE";
+    collapse.setAttribute("aria-expanded",String(!collapsed));
+    collapse.setAttribute("aria-label",collapsed?"Expand Nightwave tuner":"Minimize Nightwave tuner");
+  }
+
+  collapse.addEventListener("click",()=>{
+    const collapsed=!deck.classList.contains("collapsed");
+    localStorage.setItem(collapseKey,collapsed?"yes":"no");
+    syncCollapsed();
+  });
 
   const formatTime=value=>{
     const seconds=Number.isFinite(value)?Math.max(0,Math.floor(value)):0;
@@ -4192,6 +4349,7 @@ function initNightwave(){
       try{navigator.mediaSession.setActionHandler(action,handler)}catch(_error){}
     });
   }
+  syncCollapsed();
   renderTrack();
   syncPlayback();
 }
@@ -5213,6 +5371,8 @@ async function refresh(){
     const pubkey=d.primePubkey||"";
     const payoutScript=d.poolPayoutScript||"";
     const tag=d.coinbaseTag||"";
+    const lastBlock=d.lastBlock||{};
+    const lastBlockHash=String(lastBlock.hash||"");
 
     $("primePubkey").textContent=pubkey||"UNAVAILABLE";
     $("copyPrimePubkey").dataset.copy=pubkey;
@@ -5224,6 +5384,23 @@ async function refresh(){
 
     $("coinbaseTag").textContent=tag||"UNAVAILABLE";
     $("copyCoinbaseTag").dataset.copy=tag;
+
+    $("lastBlockMiner").textContent=lastBlock.minerTag||"UNTAGGED";
+    $("lastBlockHeight").textContent=lastBlock.height?num(lastBlock.height,0):"—";
+    $("lastBlockDifficulty").textContent=lastBlock.shareDifficulty
+      ? compact(lastBlock.shareDifficulty)
+      : "—";
+    $("lastBlockDifficulty").title=lastBlock.shareDifficulty
+      ? num(lastBlock.shareDifficulty,8)
+      : "";
+    $("lastBlockTime").textContent=lastBlock.foundAt
+      ? new Date(Number(lastBlock.foundAt)*1000).toLocaleString()
+      : "—";
+    $("lastBlockHash").textContent=lastBlockHash||"AWAITING CONFIRMED BLOCK";
+    $("copyLastBlockHash").dataset.copy=lastBlockHash;
+    $("lastBlockExplorer").href=lastBlockHash
+      ? "https://mempool.guide/block/"+encodeURIComponent(lastBlockHash)
+      : "https://mempool.guide/";
 
     $("live").className=ready?"live":"live bad";
     $("live").innerHTML=
@@ -5799,7 +5976,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.46"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.47"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -5857,7 +6034,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.46"
+                                "Terminus-Umbrel-Client/0.2.47"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -6031,6 +6208,18 @@ class Handler(BaseHTTPRequestHandler):
                     ),
                     default=0
                 )
+                recent_blocks = [
+                    block for block in blocks.get("recent", [])
+                    if isinstance(block, dict)
+                ]
+                last_block = max(
+                    recent_blocks,
+                    key=lambda block: int(_number(block.get("found_at", 0))),
+                    default={},
+                )
+                last_block_hash = str(
+                    last_block.get("block_hash", "") or ""
+                ).strip().lower()
                 selected_miner_work=int(
                     _number(miner.get("work",0))
                 )
@@ -6153,6 +6342,19 @@ class Handler(BaseHTTPRequestHandler):
 
                     "blocks":
                         blocks.get("found",0),
+
+                    "lastBlock": {
+                        "height": int(_number(last_block.get("height", 0))),
+                        "hash": last_block_hash,
+                        "foundAt": int(_number(last_block.get("found_at", 0))),
+                        "minerTag": _clean_worker_tag(last_block.get("tag", "")),
+                        "shareDifficulty": _share_difficulty_from_block_hash(
+                            last_block_hash
+                        ),
+                        "confirmations": int(
+                            _number(last_block.get("confirmations", 0))
+                        ),
+                    } if last_block else {},
 
                     "lastBlockAt":
                         last_block_at
@@ -6282,7 +6484,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.46"
+                                "Terminus-Umbrel-Client/0.2.47"
                         }
                     )
 
