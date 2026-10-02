@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.47"
+RELEASE_VERSION = "0.2.48"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -167,7 +167,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.47",
+                    "User-Agent": "TerminusPool-Market/0.2.48",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -2954,6 +2954,17 @@ body{
 .leaderStatus.seen{color:#a3abb2;border-color:#4c5860}
 .leaderboardEmpty{padding:34px!important;text-align:center!important;color:#7895a0}
 .leaderboardFoot{display:flex;justify-content:space-between;gap:14px;padding:11px 16px;color:#7895a0;font-size:8px;line-height:1.5}
+.leaderboardBestNote{
+    padding:9px 16px;
+    border-top:1px solid rgba(255,200,92,.2);
+    border-bottom:1px solid rgba(255,200,92,.14);
+    background:rgba(255,200,92,.035);
+    color:#9fb4bb;
+    font-size:8px;
+    line-height:1.55;
+    letter-spacing:.065em;
+}
+.leaderboardBestNote strong{color:#ffc85c}
 @media(max-width:760px){
     .leaderboardHead{align-items:flex-start;flex-direction:column}
     .leaderboardPrivacy{text-align:left}
@@ -3598,7 +3609,7 @@ header{align-items:flex-start;margin-bottom:12px}
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.47</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.48</div>
     </div>
   </div>
   <div class="headerControls">
@@ -3949,10 +3960,11 @@ header{align-items:flex-start;margin-bottom:12px}
   </div>
   <div class="leaderboardTableWrap">
     <table class="leaderboardTable">
-      <thead><tr><th>RANK</th><th>MINER</th><th>STATE</th><th>24H AVG</th><th>24H PEAK</th><th>ACTIVE MIN</th><th>BEST SHARE</th><th>LAST ACTIVE</th></tr></thead>
+      <thead><tr><th>RANK</th><th>MINER</th><th>STATE</th><th>24H AVG</th><th>24H PEAK</th><th>ACTIVE MIN</th><th title="Highest RATUM window-best value captured by the one-minute collector during this rolling 24-hour period">24H SAMPLED BEST</th><th>LAST ACTIVE</th></tr></thead>
       <tbody id="leaderboardRows"><tr><td colspan="8" class="leaderboardEmpty">BUILDING 24H ACTIVITY WINDOW…</td></tr></tbody>
     </table>
   </div>
+  <div class="leaderboardBestNote"><strong>24H SAMPLED BEST</strong> = HIGHEST RATUM WINDOW-BEST OBSERVED BY THE 60-SECOND COLLECTOR IN THIS ROLLING 24H PERIOD. IT IS NOT TRACKED ALL-TIME AND A TRANSIENT SHARE BETWEEN SAMPLES — INCLUDING A BLOCK-WINNING SHARE — MAY NOT APPEAR.</div>
   <div class="leaderboardFoot"><span id="leaderboardFreshness">AWAITING ACTIVITY SAMPLES</span><span>LIVE ≤10 MIN // RECENT ≤60 MIN // SEEN WITHIN 24H</span></div>
 </section>
 
@@ -4536,7 +4548,7 @@ async function loadLeaderboard(){
         <td data-label="24H AVG">${num(miner.averageHashrateThs,3)} TH/s</td>
         <td data-label="24H PEAK">${num(miner.peakHashrateThs,3)} TH/s</td>
         <td data-label="ACTIVE MIN">${num(miner.activeMinutes,0)}</td>
-        <td data-label="BEST SHARE">${bestShareFmt(miner.bestShare)}</td>
+        <td data-label="24H SAMPLED BEST">${bestShareFmt(miner.bestShare)}</td>
         <td data-label="LAST ACTIVE">${relativeAge(miner.lastActiveAt)}</td>
       </tr>`).join(""):`<tr><td colspan="8" class="leaderboardEmpty">BUILDING 24H ACTIVITY WINDOW // FIRST SAMPLE ARRIVES WITHIN ONE MINUTE</td></tr>`;
     $("leaderboardFreshness").textContent=
@@ -5976,7 +5988,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.47"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.48"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -6034,7 +6046,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.47"
+                                "Terminus-Umbrel-Client/0.2.48"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -6484,7 +6496,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.47"
+                                "Terminus-Umbrel-Client/0.2.48"
                         }
                     )
 

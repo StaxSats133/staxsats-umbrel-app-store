@@ -4,7 +4,7 @@ name: Terminus Pool
 tagline: The last word in mining
 icon: https://raw.githubusercontent.com/StaxSats133/staxsats-umbrel-app-store/main/staxsats-xbt-pool/icon.svg
 category: bitcoin
-version: "0.2.47"
+version: "0.2.48"
 port: 8081
 description: >-
   Terminus Pool is an XBT BLAKE2b mining pool dashboard for RATUM Prime and DATUM.
@@ -19,11 +19,11 @@ repo: https://github.com/StaxSats133/staxsats-umbrel-app-store
 support: https://github.com/StaxSats133/staxsats-umbrel-app-store/issues
 gallery: []
 releaseNotes: >-
-  Terminus Pool v0.2.47 makes NIGHTWAVE persistently collapsible, moves the
-  rolling live hashrate graph directly beneath it, and adds a public-safe Last
-  Block Found panel with the winning miner tag, block height, hash, timestamp,
-  and hash-derived winning share difficulty. Mining behavior and payout
-  identities are unchanged.
+  Terminus Pool v0.2.48 accurately relabels the leaderboard best-share field as
+  24H Sampled Best and explains that it is the highest RATUM window-best value
+  captured by the 60-second collector, not a tracked all-time value. It also
+  warns that transient shares between samples may not appear. Mining behavior
+  and privacy boundaries are unchanged.
 dependencies: []
 path: ""
 defaultUsername: ""

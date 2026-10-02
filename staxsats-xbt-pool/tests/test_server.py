@@ -31,7 +31,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.47")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.48")
         self.assertIn('card("WINDOW SHARES"', self.server.HTML)
         self.assertNotIn("SHARES SINCE BLOCK", self.server.HTML)
         self.assertIn('id="neuralRain"', self.server.HTML)
@@ -60,6 +60,10 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('id="lastBlockHash"', self.server.HTML)
         self.assertIn('id="lastBlockDifficulty"', self.server.HTML)
         self.assertNotIn('id="lastBlockFinder"', self.server.HTML)
+        self.assertIn('24H SAMPLED BEST', self.server.HTML)
+        self.assertIn('IT IS NOT TRACKED ALL-TIME', self.server.HTML)
+        self.assertIn('A TRANSIENT SHARE BETWEEN SAMPLES', self.server.HTML)
+        self.assertNotIn('data-label="BEST SHARE"', self.server.HTML)
         self.assertNotIn('class="establishedBlock"', self.server.HTML)
         self.assertNotIn('<details class="advancedFold" open>', self.server.HTML)
         self.assertIn('title:"CHILL LOOP",artist:"PRO SENSORY"', self.server.HTML)
