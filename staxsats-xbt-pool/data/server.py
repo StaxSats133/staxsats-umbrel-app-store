@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.51"
+RELEASE_VERSION = "0.2.52"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -167,7 +167,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.51",
+                    "User-Agent": "TerminusPool-Market/0.2.52",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -3765,6 +3765,152 @@ header{align-items:flex-start;margin-bottom:12px}
     .setupExample{width:100%;max-width:100%}
     .accountSearch{padding:9px}
 }
+
+/* TERMINUS_HEADER_BOOMBOX_V1 */
+.nightwaveDesktopDock{display:none;min-width:0}
+.nightwaveMobileDock{min-width:0}
+.boomboxSpeaker{display:none}
+.stasisToggle{
+    min-height:36px;
+    padding:8px 11px;
+    border:1px solid rgba(255,79,184,.55);
+    background:linear-gradient(135deg,rgba(31,8,28,.95),rgba(6,15,27,.96));
+    color:#ff8cd0;
+    font:900 9px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    letter-spacing:.11em;
+    cursor:pointer;
+    box-shadow:inset 3px 0 var(--pink),0 0 16px rgba(255,79,184,.08);
+}
+.stasisToggle[aria-pressed="true"]{
+    border-color:rgba(255,200,92,.68);
+    color:var(--gold);
+    box-shadow:inset 3px 0 var(--gold),0 0 20px rgba(255,200,92,.12);
+}
+.stasisShort{display:none}
+.headerControls{
+    position:relative;
+    padding:17px 8px 8px;
+    border:1px solid rgba(67,245,255,.23);
+    border-radius:10px 2px 10px 2px;
+    background:linear-gradient(135deg,rgba(6,20,29,.94),rgba(7,12,24,.95));
+    box-shadow:inset 0 1px 0 rgba(114,255,180,.035),0 8px 22px rgba(0,0,0,.2);
+}
+.headerControls::before{
+    content:"TERMINUS COMMAND DECK";
+    position:absolute;
+    top:5px;
+    left:10px;
+    color:var(--pink);
+    font-size:7px;
+    font-weight:1000;
+    letter-spacing:.17em;
+}
+.headerControls .live,
+.headerControls .neuralRainToggle,
+.headerControls .stasisToggle,
+.headerControls .topNav a{
+    border-radius:5px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+}
+html.stasis{scroll-behavior:auto}
+html.stasis *,html.stasis *::before,html.stasis *::after{
+    animation-play-state:paused!important;
+    transition-duration:0s!important;
+    scroll-behavior:auto!important;
+}
+html.stasis .neuralRain{opacity:0}
+@media(min-width:1051px){
+    header{
+        display:grid;
+        grid-template-columns:minmax(280px,1fr) minmax(650px,720px);
+        grid-template-areas:"brand controls" "brand boombox";
+        column-gap:24px;
+        row-gap:8px;
+        align-items:start;
+    }
+    header .brand{grid-area:brand;align-self:center}
+    header .brandText{max-width:100%}
+    header .brand h1{
+        max-width:390px;
+        white-space:normal;
+        font-size:clamp(34px,3.5vw,46px);
+        line-height:.92;
+    }
+    header .headerControls{
+        grid-area:controls;
+        width:100%;
+        max-width:none;
+        flex-wrap:nowrap;
+        gap:6px;
+    }
+    header .headerControls .live{flex:1 1 155px;min-width:145px;padding-inline:9px;font-size:8px}
+    header .headerControls .neuralRainToggle,
+    header .headerControls .stasisToggle{flex:0 0 auto;padding-inline:9px;font-size:8px}
+    header .headerControls .topNav{flex:0 0 auto;flex-wrap:nowrap;gap:6px}
+    header .headerControls .topNav a{padding-inline:9px;font-size:8px}
+    .nightwaveDesktopDock{display:block;grid-area:boombox;min-width:0}
+    .nightwaveMobileDock{display:none}
+    .nightwave.headerBoombox{
+        grid-template-columns:50px 66px minmax(170px,1fr) auto 50px;
+        gap:8px;
+        min-height:78px;
+        margin:0;
+        padding:8px 10px;
+        border-color:rgba(67,245,255,.58);
+        border-radius:12px 3px 12px 3px;
+        background:
+          linear-gradient(110deg,rgba(5,17,29,.99),rgba(18,8,31,.98)),
+          repeating-linear-gradient(90deg,transparent 0 11px,rgba(67,245,255,.045) 11px 12px);
+        box-shadow:inset 4px 0 0 var(--pink),inset -3px 0 0 var(--green),0 10px 28px rgba(0,0,0,.28),0 0 22px rgba(67,245,255,.08);
+    }
+    .headerBoombox .boomboxSpeaker{
+        position:relative;
+        display:block;
+        width:50px;
+        height:50px;
+        border:1px solid rgba(67,245,255,.4);
+        border-radius:50%;
+        background:
+          radial-gradient(circle,#ff4fb8 0 7%,#07121d 8% 26%,#43f5ff 27% 30%,#050a12 31% 53%,#1b3241 54% 57%,#02070d 58%);
+        box-shadow:inset 0 0 12px #000,0 0 12px rgba(255,79,184,.12);
+    }
+    .headerBoombox .boomboxSpeaker::after{
+        content:"";
+        position:absolute;
+        inset:5px;
+        border:1px dashed rgba(114,255,180,.23);
+        border-radius:50%;
+    }
+    .headerBoombox .boomboxSpeaker.right{grid-column:5}
+    .headerBoombox .tunerScope{grid-column:2;height:50px;padding:7px 6px;gap:2px}
+    .headerBoombox .tunerBar{width:3px}
+    .headerBoombox .tunerMeta{grid-column:3}
+    .headerBoombox .tunerControls{grid-column:4;grid-template-columns:repeat(3,34px);gap:5px}
+    .headerBoombox .tunerBtn{width:34px;height:34px;font-size:12px}
+    .headerBoombox .tunerVolume{margin-top:0;font-size:7px}
+    .headerBoombox .tunerKicker{font-size:7px}
+    .headerBoombox .tunerTitle{font-size:14px}
+    .headerBoombox .tunerArtist,.headerBoombox .tunerTime{font-size:7px}
+    .headerBoombox .tunerTimeline{gap:7px;margin-top:4px}
+    .headerBoombox .tunerCollapse{min-height:23px;padding:4px 7px;font-size:7px}
+    .headerBoombox .tunerCredits{grid-column:1/-1;margin:-2px 0 0 58px;font-size:7px}
+    .nightwave.headerBoombox.collapsed{
+        grid-template-columns:30px minmax(0,1fr) 30px;
+        min-height:48px;
+        padding:6px 10px;
+    }
+    .headerBoombox.collapsed .boomboxSpeaker{width:30px;height:30px}
+    .headerBoombox.collapsed .boomboxSpeaker.left{grid-column:1}
+    .headerBoombox.collapsed .tunerMeta{grid-column:2}
+    .headerBoombox.collapsed .boomboxSpeaker.right{grid-column:3}
+}
+@media(max-width:1050px){
+    .nightwaveDesktopDock{display:none}
+    .nightwaveMobileDock{display:block}
+    .headerControls .stasisToggle{min-height:38px;padding-inline:9px;font-size:8px}
+    .stasisLong{display:none}
+    .stasisShort{display:inline}
+}
 </style>
 </head>
 <body>
@@ -3781,13 +3927,16 @@ header{align-items:flex-start;margin-bottom:12px}
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.51</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.52</div>
     </div>
   </div>
-  <div class="headerControls">
+  <div class="headerControls" role="group" aria-label="Terminus Command Deck">
     <div id="live" class="live"><span class="liveLong">● NODE LINK ACTIVE</span><span class="liveShort">● NODE OK</span></div>
     <button id="neuralRainToggle" class="neuralRainToggle" type="button" aria-pressed="true">
       NEURAL RAIN · ONLINE
+    </button>
+    <button id="stasisToggle" class="stasisToggle" type="button" aria-pressed="false" aria-label="Engage Stasis Mode and pause decorative motion">
+      <span class="stasisLong">STASIS MODE · OFF</span><span class="stasisShort">STASIS</span>
     </button>
     <!-- TERMINUS_ADMIN_MOBILE_LINK -->
     <nav class="topNav" aria-label="Primary navigation">
@@ -3795,6 +3944,7 @@ header{align-items:flex-start;margin-bottom:12px}
       <!-- TERMINUS_ADMIN_LINK -->
     </nav>
   </div>
+  <div class="nightwaveDesktopDock" id="nightwaveDesktopDock" aria-label="Desktop Nightwave dock"></div>
 </header>
 
 <main id="mainContent">
@@ -3927,7 +4077,9 @@ header{align-items:flex-start;margin-bottom:12px}
   </div>
 </section>
 
-<section class="nightwave" id="nightwave" aria-labelledby="nightwaveTitle">
+<div class="nightwaveMobileDock" id="nightwaveMobileDock">
+<section class="nightwave headerBoombox" id="nightwave" aria-labelledby="nightwaveTitle">
+  <div class="boomboxSpeaker left" aria-hidden="true"></div>
   <div class="tunerScope" aria-hidden="true">
     <span class="tunerBar"></span><span class="tunerBar"></span>
     <span class="tunerBar"></span><span class="tunerBar"></span>
@@ -3954,6 +4106,7 @@ header{align-items:flex-start;margin-bottom:12px}
     <button class="tunerBtn" id="nightwaveNext" type="button" aria-label="Next track">&gt;|</button>
     <label class="tunerVolume" for="nightwaveVolume"><span>GAIN</span><input id="nightwaveVolume" type="range" min="0" max="1" step="0.01" value="0.42" aria-label="Music volume"></label>
   </div>
+  <div class="boomboxSpeaker right" aria-hidden="true"></div>
   <details class="tunerCredits">
     <summary>PUBLIC-DOMAIN SIGNAL CREDITS</summary>
     CC0 tracks by
@@ -3963,6 +4116,7 @@ header{align-items:flex-start;margin-bottom:12px}
   </details>
   <audio id="nightwaveAudio" preload="none"></audio>
 </section>
+</div>
 
 <div class="sectionTitle" id="poolStats">LIVE-POOL-HASHRATE</div>
 
@@ -4304,6 +4458,47 @@ TERMINUS POOL // THE LAST WORD IN MINING // DATUM-FIRST ARCHITECTURE // XBT BLAK
 <script>
 const $=id=>document.getElementById(id);
 
+function initNightwaveDock(){
+  const deck=$("nightwave");
+  const desktopDock=$("nightwaveDesktopDock");
+  const mobileDock=$("nightwaveMobileDock");
+  if(!deck||!desktopDock||!mobileDock)return;
+  const desktop=window.matchMedia("(min-width:1051px)");
+  const sync=()=>{
+    const target=desktop.matches?desktopDock:mobileDock;
+    if(deck.parentElement!==target)target.appendChild(deck);
+  };
+  desktop.addEventListener?.("change",sync);
+  sync();
+}
+
+function initStasisMode(){
+  const toggle=$("stasisToggle");
+  if(!toggle)return;
+  const storageKey="terminusStasisMode";
+  const longLabel=toggle.querySelector(".stasisLong");
+  const shortLabel=toggle.querySelector(".stasisShort");
+  let active=localStorage.getItem(storageKey)==="on";
+
+  function sync(){
+    document.documentElement.classList.toggle("stasis",active);
+    toggle.setAttribute("aria-pressed",String(active));
+    toggle.setAttribute("aria-label",active
+      ? "Disengage Stasis Mode and resume decorative motion"
+      : "Engage Stasis Mode and pause decorative motion");
+    if(longLabel)longLabel.textContent=active?"STASIS MODE · ACTIVE":"STASIS MODE · OFF";
+    if(shortLabel)shortLabel.textContent=active?"STASIS ON":"STASIS";
+    window.dispatchEvent(new CustomEvent("terminusstasischange",{detail:{active}}));
+  }
+
+  toggle.addEventListener("click",()=>{
+    active=!active;
+    localStorage.setItem(storageKey,active?"on":"off");
+    sync();
+  });
+  sync();
+}
+
 function initNeuralRain(){
   const canvas=$("neuralRain");
   const toggle=$("neuralRainToggle");
@@ -4342,7 +4537,7 @@ function initNeuralRain(){
 
   function paint(now){
     animationFrame=requestAnimationFrame(paint);
-    if(!enabled || reduced.matches || document.hidden || now-lastFrame<frameInterval)return;
+    if(!enabled || reduced.matches || document.documentElement.classList.contains("stasis") || document.hidden || now-lastFrame<frameInterval)return;
     lastFrame=now;
     ctx.clearRect(0,0,innerWidth,innerHeight);
     ctx.textAlign="center";
@@ -4367,7 +4562,7 @@ function initNeuralRain(){
   }
 
   function sync(){
-    const active=enabled && !reduced.matches;
+    const active=enabled && !reduced.matches && !document.documentElement.classList.contains("stasis");
     canvas.classList.toggle("offline",!active);
     toggle.setAttribute("aria-pressed",String(active));
     toggle.disabled=reduced.matches;
@@ -4385,6 +4580,7 @@ function initNeuralRain(){
   });
   window.addEventListener("resize",resize,{passive:true});
   reduced.addEventListener?.("change",sync);
+  window.addEventListener("terminusstasischange",sync);
   resize();
   sync();
   animationFrame=requestAnimationFrame(paint);
@@ -5824,6 +6020,8 @@ function initAirplaneFlybys(){
 }
 
 injectVisualFx();
+initNightwaveDock();
+initStasisMode();
 initNeuralRain();
 initNightwave();
 initSkyFx();
@@ -6166,7 +6364,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.51"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.52"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -6224,7 +6422,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.51"
+                                "Terminus-Umbrel-Client/0.2.52"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -6674,7 +6872,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.51"
+                                "Terminus-Umbrel-Client/0.2.52"
                         }
                     )
 
