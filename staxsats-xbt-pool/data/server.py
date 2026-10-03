@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.53"
+RELEASE_VERSION = "0.2.54"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -167,7 +167,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.53",
+                    "User-Agent": "TerminusPool-Market/0.2.54",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -1248,6 +1248,25 @@ h1{
   position:absolute;z-index:15;left:34px;top:27px;
   border-left:4px solid var(--cyan);padding-left:17px
 }
+.heroTextCompact{
+  max-width:min(570px,62%)!important;
+  padding:12px 18px 14px 19px;
+  background:linear-gradient(90deg,rgba(4,16,25,.82),rgba(4,16,25,.34) 68%,transparent);
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%);
+}
+.heroTextCompact .kicker{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  margin:0;
+  padding:5px 10px;
+  border:1px solid rgba(67,245,255,.42);
+  background:rgba(5,20,29,.72);
+  color:var(--cyan);
+  font-weight:900;
+  text-shadow:0 0 10px rgba(67,245,255,.28)
+}
+.heroTextCompact .heroMicro{margin-top:9px}
 .kicker{font-size:11px;letter-spacing:.22em;color:#77dbe4;margin-bottom:9px}
 .heroTitle{
   font-size:clamp(32px,5vw,58px);font-weight:1000;letter-spacing:.03em
@@ -3785,6 +3804,15 @@ header{align-items:flex-start;margin-bottom:12px}
         left:88%!important;
         top:8px!important;
     }
+    .hero[data-block-celebration="active"] .heroTextCompact{
+        max-width:calc(100% - 116px)!important;
+        padding-right:8px;
+    }
+    .hero[data-block-celebration="active"] .heroTextCompact .kicker{
+        font-size:8px;
+        letter-spacing:.12em;
+    }
+    .hero[data-block-celebration="active"] .heroTextCompact .heroMicro{display:none}
 }
 @media(max-width:430px){
     header .headerControls{grid-template-columns:minmax(0,1fr) auto auto}
@@ -4063,7 +4091,7 @@ html.stasis .neuralRain{opacity:0}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.53</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.54</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
@@ -4084,7 +4112,7 @@ html.stasis .neuralRain{opacity:0}
 </header>
 
 <main id="mainContent">
-<section class="hero" aria-labelledby="heroTitle">
+<section class="hero" aria-labelledby="heroKicker">
   <div class="daylightSky" aria-hidden="true"></div>
   <div class="stars"></div>
   <div class="windowBitcoin" id="windowBitcoin" role="img" aria-label="Estimated pool effort since the last Terminus block: waiting for telemetry">
@@ -4201,10 +4229,8 @@ html.stasis .neuralRain{opacity:0}
   </div>
   <div class="car"></div>
 
-  <div class="heroText">
+  <div class="heroText heroTextCompact">
     <div class="kicker" id="heroKicker">NEON HIGHWAY // MIDNIGHT RUN</div>
-    <div class="heroTitle" id="heroTitle">TERMINUS POOL</div>
-    <div class="heroSub">THE LAST WORD IN MINING</div>
     <div class="heroMicro">DATUM-FIRST // CYBER MOUNTAIN // XBT BLAKE2B</div>
     <div class="heroActions">
       <a class="primaryAction" href="#startMining">START MINING</a>
@@ -6578,7 +6604,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.53"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.54"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -6636,7 +6662,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.53"
+                                "Terminus-Umbrel-Client/0.2.54"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -7086,7 +7112,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.53"
+                                "Terminus-Umbrel-Client/0.2.54"
                         }
                     )
 

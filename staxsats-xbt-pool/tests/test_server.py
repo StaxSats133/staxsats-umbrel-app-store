@@ -31,7 +31,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.53")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.54")
         self.assertIn('card("WINDOW SHARES"', self.server.HTML)
         self.assertNotIn("SHARES SINCE BLOCK", self.server.HTML)
         self.assertIn('id="neuralRain"', self.server.HTML)
@@ -62,6 +62,15 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('class="brandWordmark"', self.server.HTML)
         self.assertIn('class="wordmarkPrimary" data-text="TERMINUS"', self.server.HTML)
         self.assertIn('class="wordmarkPool">POOL</span>', self.server.HTML)
+        self.assertIn('<section class="hero" aria-labelledby="heroKicker">', self.server.HTML)
+        self.assertIn('class="heroText heroTextCompact"', self.server.HTML)
+        hero_start = self.server.HTML.index('<section class="hero"')
+        hero_end = self.server.HTML.index('</section>', hero_start)
+        hero_markup = self.server.HTML[hero_start:hero_end]
+        self.assertNotIn('id="heroTitle"', hero_markup)
+        self.assertNotIn('class="heroSub"', hero_markup)
+        self.assertNotIn('>TERMINUS POOL<', hero_markup)
+        self.assertNotIn('>THE LAST WORD IN MINING<', hero_markup)
         self.assertEqual(self.server.HTML.count('id="nightwave"'), 1)
         self.assertEqual(self.server.HTML.count('id="nightwaveAudio"'), 1)
         self.assertIn('const collapseKey="terminusNightwaveCollapsed"', self.server.HTML)
