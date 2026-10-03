@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.54"
+RELEASE_VERSION = "0.2.55"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -167,7 +167,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.54",
+                    "User-Agent": "TerminusPool-Market/0.2.55",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -4091,7 +4091,7 @@ html.stasis .neuralRain{opacity:0}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.54</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.55</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
@@ -4523,6 +4523,11 @@ html.stasis .neuralRain{opacity:0}
 </div>
 
 <div id="miner" class="grid grid4" style="display:none"></div>
+
+<div class="accountHint">
+  VALID CONFIRMS THE XBT PAYOUT ADDRESS FORMAT ONLY // IF BLOCK FOUND NOW IS
+  CONDITIONAL ON WORK STILL HELD IN THE CURRENT PAYOUT WINDOW
+</div>
 
 <div class="sectionTitle" id="connectionDetails">PUBLIC-ACCESS</div>
 
@@ -6107,15 +6112,15 @@ async function refresh(){
 
         card("WINDOW OWNERSHIP",num(d.sharePercent,2)+"%","purple")+
         card(
-          "PROJECTED PAYOUT",
+          "IF BLOCK FOUND NOW",
           num(d.estimatedPayoutXbt,8)+" XBT",
           "gold"
         )+
         card(
-          "PAYOUT STATUS",
+          "PAYOUT ADDRESS",
           d.payable
-            ? "PAYABLE"
-            : (d.unpayableReason||"LOCKED"),
+            ? "VALID"
+            : (d.unpayableReason||"INVALID"),
           d.payable ? "ok":"bad"
         );
     }
@@ -6363,7 +6368,7 @@ ADMIN_HTML = r"""<!doctype html>
 <body>
 <main class="shell">
   <header class="top">
-    <div><div class="eyebrow">OPERATOR INTELLIGENCE // READ ONLY</div><h1>MINER ADMIN</h1><div class="sub">Accounts represented in the current RATUM payout window. Window Best comes directly from RATUM; Tracked All-Time is the highest value recorded by this dashboard since v0.2.15.</div></div>
+    <div><div class="eyebrow">OPERATOR INTELLIGENCE // READ ONLY</div><h1>MINER ADMIN</h1><div class="sub">Accounts represented in the current RATUM payout window. Window Best comes directly from RATUM; Tracked All-Time is the highest value recorded by this dashboard since v0.2.15. VALID confirms only that an identity is a usable XBT payout address; it does not mean the miner is active or currently owed.</div></div>
     <div class="private">● PRIVATE // UMBREL AUTH REQUIRED</div>
   </header>
   <div class="toolbar">
@@ -6378,10 +6383,10 @@ ADMIN_HTML = r"""<!doctype html>
     <div class="metric"><div class="label">ACTIVE</div><div class="value" id="active">—</div></div>
     <div class="metric"><div class="label">IDLE</div><div class="value" id="idle">—</div></div>
     <div class="metric"><div class="label">TOTAL HASHRATE</div><div class="value" id="hashrate">—</div></div>
-    <div class="metric"><div class="label">PROJECTED PAYOUT</div><div class="value" id="payout">—</div></div>
+    <div class="metric"><div class="label">TOTAL IF BLOCK FOUND NOW</div><div class="value" id="payout">—</div></div>
   </section>
-  <section class="panel"><div class="tableWrap"><table><thead><tr><th>STATUS</th><th>PAYOUT IDENTITY</th><th>WORKER TAG</th><th>HASHRATE</th><th>WINDOW SHARE</th><th>BEST SHARE</th><th>WINDOW WORK</th><th>PROJECTED PAYOUT</th><th>PAYOUT STATUS</th></tr></thead><tbody id="rows"><tr><td colspan="9" class="empty">LOADING MINER TELEMETRY…</td></tr></tbody></table></div></section>
-  <div class="foot"><span id="freshness">Awaiting telemetry</span><span>Addresses are masked by default. No disconnect, ban, fee, payout, or configuration controls are available.</span></div>
+  <section class="panel"><div class="tableWrap"><table><thead><tr><th>STATUS</th><th>PAYOUT IDENTITY</th><th>WORKER TAG</th><th>HASHRATE</th><th>WINDOW SHARE</th><th>BEST SHARE</th><th>WINDOW WORK</th><th>IF BLOCK FOUND NOW</th><th>ADDRESS VALIDITY</th></tr></thead><tbody id="rows"><tr><td colspan="9" class="empty">LOADING MINER TELEMETRY…</td></tr></tbody></table></div></section>
+  <div class="foot"><span id="freshness">Awaiting telemetry</span><span>IF BLOCK FOUND NOW is conditional on work still held in the current payout window. Addresses are masked by default. No disconnect, ban, fee, payout, or configuration controls are available.</span></div>
 </main>
 <script>
 const $=id=>document.getElementById(id);let all=[],revealed=false;
@@ -6391,7 +6396,7 @@ const compact=v=>{const n=Number(v||0);return Number.isFinite(n)?n.toLocaleStrin
 const share=v=>{const n=Number(v||0);return n>0?compact(n):"WAITING"};
 function rewardBadges(reward){if(!reward)return"";const items=[];if(reward.cosmic)items.push({...reward.cosmic,special:false});for(const item of(reward.specials||[]))items.push({...item,special:true});return items.length?`<span class="tagRewards" aria-label="Work rewards">${items.map(item=>`<span class="tagReward${item.special?" special":""}" role="img" title="${esc(item.label)}" aria-label="${esc(item.label)}">${esc(item.emoji)}</span>`).join("")}</span>`:""}
 function rewardLegend(scale){const tiers=(scale&&scale.tiers)||[];const cosmic=tiers.map(t=>`<span class="legendTier" title="${esc(t.label)}">${esc(t.emoji)} ${num(t.thresholdPercent,2)}%</span>`).join("");return `<strong>WORK REWARDS</strong>${cosmic}<span class="legendTier">💎 ${num(scale?.diamondThresholdPercent,0)}%</span><span class="legendTier">👑 #1</span>`}
-function render(){const q=$("search").value.trim().toLowerCase();const rows=all.filter(m=>!q||m.identity.toLowerCase().includes(q)||m.tag.toLowerCase().includes(q));$("rows").innerHTML=rows.length?rows.map(m=>`<tr><td data-label="STATUS"><span class="status ${esc(m.status)}">${esc(m.status.toUpperCase())}</span></td><td data-label="PAYOUT IDENTITY" class="identity">${esc(m.identity)}</td><td data-label="WORKER TAG" class="tag">${esc(m.tag)}${rewardBadges(m.reward)}</td><td data-label="HASHRATE">${num(m.hashrateThs,3)} TH/s</td><td data-label="WINDOW SHARE">${num(m.sharePercent,2)}%</td><td data-label="BEST SHARE"><div class="bestStack"><div class="bestPrimary">${share(m.allTimeBestShare)}<span>TRACKED ALL-TIME</span></div><div class="bestSecondary">WINDOW ${share(m.windowBestShare)}</div></div></td><td data-label="WINDOW WORK">${compact(m.work)}</td><td data-label="PROJECTED PAYOUT">${num(m.projectedPayoutXbt,8)} XBT</td><td data-label="PAYOUT STATUS" class="payable">${m.payable?"PAYABLE":esc(m.unpayableReason||"LOCKED")}</td></tr>`).join(""):`<tr><td colspan="9" class="empty">NO MATCHING MINERS</td></tr>`}
+function render(){const q=$("search").value.trim().toLowerCase();const rows=all.filter(m=>!q||m.identity.toLowerCase().includes(q)||m.tag.toLowerCase().includes(q));$("rows").innerHTML=rows.length?rows.map(m=>`<tr><td data-label="STATUS"><span class="status ${esc(m.status)}">${esc(m.status.toUpperCase())}</span></td><td data-label="PAYOUT IDENTITY" class="identity">${esc(m.identity)}</td><td data-label="WORKER TAG" class="tag">${esc(m.tag)}${rewardBadges(m.reward)}</td><td data-label="HASHRATE">${num(m.hashrateThs,3)} TH/s</td><td data-label="WINDOW SHARE">${num(m.sharePercent,2)}%</td><td data-label="BEST SHARE"><div class="bestStack"><div class="bestPrimary">${share(m.allTimeBestShare)}<span>TRACKED ALL-TIME</span></div><div class="bestSecondary">WINDOW ${share(m.windowBestShare)}</div></div></td><td data-label="WINDOW WORK">${compact(m.work)}</td><td data-label="IF BLOCK FOUND NOW">${num(m.projectedPayoutXbt,8)} XBT</td><td data-label="PAYOUT ADDRESS" class="payable">${m.payable?"VALID":esc(m.unpayableReason||"INVALID")}</td></tr>`).join(""):`<tr><td colspan="9" class="empty">NO MATCHING MINERS</td></tr>`}
 async function load(){try{const r=await fetch(`/api/admin/miners?reveal=${revealed?1:0}&ts=${Date.now()}`,{cache:"no-store",credentials:"same-origin"});if(!r.ok)throw new Error(`HTTP ${r.status}`);const d=await r.json();all=d.miners||[];const s=d.summary||{};$("rewardLegend").innerHTML=rewardLegend(d.rewardScale||{});$("accounts").textContent=s.accounts??0;$("active").textContent=s.active??0;$("idle").textContent=s.idle??0;$("hashrate").textContent=num(s.hashrateThs,3)+" TH/s";$("payout").textContent=num(s.projectedPayoutXbt,8)+" XBT";const tracked=d.allTimeTrackingSince?new Date(d.allTimeTrackingSince*1000).toLocaleString():"STARTING NOW";$("freshness").textContent="UPDATED "+new Date(d.generatedAt*1000).toLocaleString()+" // ALL-TIME TRACKING SINCE "+tracked;$("freshness").className="";render()}catch(e){$("rows").innerHTML=`<tr><td colspan="9" class="empty error">ADMIN TELEMETRY UNAVAILABLE // ${esc(e.message)}</td></tr>`;$("freshness").textContent="DATA ERROR";$("freshness").className="error"}}
 $("search").addEventListener("input",render);$("refresh").addEventListener("click",load);$("reveal").addEventListener("click",()=>{revealed=!revealed;$("reveal").textContent=revealed?"MASK ADDRESSES":"REVEAL ADDRESSES";load()});load();setInterval(()=>{if(!document.hidden)load()},15000);
 </script>
@@ -6604,7 +6609,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.54"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.55"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -6662,7 +6667,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.54"
+                                "Terminus-Umbrel-Client/0.2.55"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -7112,7 +7117,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.54"
+                                "Terminus-Umbrel-Client/0.2.55"
                         }
                     )
 
