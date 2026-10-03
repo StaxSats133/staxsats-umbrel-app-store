@@ -31,7 +31,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.48")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.49")
         self.assertIn('card("WINDOW SHARES"', self.server.HTML)
         self.assertNotIn("SHARES SINCE BLOCK", self.server.HTML)
         self.assertIn('id="neuralRain"', self.server.HTML)
@@ -102,6 +102,8 @@ class TerminusServerTests(unittest.TestCase):
         self.assertLess(endpoint_pos, quick_pubkey_pos)
         self.assertIn('id="quickCopyPrimePubkey"', self.server.HTML)
         self.assertIn('/assets/datum-pool-setup.png', self.server.HTML)
+        self.assertIn('max-width:560px', self.server.HTML)
+        self.assertIn('margin:14px auto 0', self.server.HTML)
         self.assertGreater(len(self.server.POOL_SETUP_PNG), 1000)
         self.assertIn("Sitemap: https://terminuspool.xyz/sitemap.xml", self.server.ROBOTS_TXT)
         self.assertIn("https://terminuspool.xyz/", self.server.SITEMAP_XML)

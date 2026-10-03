@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.48"
+RELEASE_VERSION = "0.2.49"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -167,7 +167,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.48",
+                    "User-Agent": "TerminusPool-Market/0.2.49",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -3113,7 +3113,9 @@ a:focus-visible,button:focus-visible,input:focus-visible{
     line-height:1.55;
 }
 .setupExample{
-    margin:14px 0 0;
+    width:100%;
+    max-width:560px;
+    margin:14px auto 0;
 }
 .setupExample img{
     display:block;
@@ -3128,6 +3130,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{
     color:#6f8f98;
     font-size:9px;
     line-height:1.5;
+    text-align:center;
 }
 .accountHint{min-height:20px}
 .copyToast[aria-live]{pointer-events:none}
@@ -3609,7 +3612,7 @@ header{align-items:flex-start;margin-bottom:12px}
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.48</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.49</div>
     </div>
   </div>
   <div class="headerControls">
@@ -5988,7 +5991,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.48"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.49"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -6046,7 +6049,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.48"
+                                "Terminus-Umbrel-Client/0.2.49"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -6496,7 +6499,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.48"
+                                "Terminus-Umbrel-Client/0.2.49"
                         }
                     )
 
