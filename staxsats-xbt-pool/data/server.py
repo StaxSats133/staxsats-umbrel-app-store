@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.49"
+RELEASE_VERSION = "0.2.50"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -167,7 +167,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.49",
+                    "User-Agent": "TerminusPool-Market/0.2.50",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -3075,12 +3075,17 @@ a:focus-visible,button:focus-visible,input:focus-visible{
 }
 .quickEndpoint{
     min-width:0;
-    padding:15px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(360px,520px);
+    gap:22px;
+    align-items:center;
+    padding:18px;
     border:1px solid #164651;
     background:#050d14;
 }
 .quickEndpoint.recommended{border-left:4px solid var(--green)}
 .quickEndpoint.legacy{border-left:4px solid var(--pink)}
+.quickConnectDetails{min-width:0}
 .quickLabel{
     color:#7a9ba5;
     font-size:9px;
@@ -3107,19 +3112,61 @@ a:focus-visible,button:focus-visible,input:focus-visible{
     line-height:1.5;
 }
 .quickNote{
-    margin-top:10px;
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr);
+    gap:5px 12px;
+    align-items:center;
+    margin-top:12px;
+    padding:12px;
+    border:1px solid rgba(67,245,255,.16);
+    background:#07131c;
     color:#819ca5;
     font-size:10px;
     line-height:1.55;
 }
+.quickNoteLabel{
+    color:var(--green);
+    font-size:8px;
+    font-weight:1000;
+    letter-spacing:.14em;
+}
+.quickNote code{
+    min-width:0;
+    color:#e7faff;
+    font:inherit;
+    overflow-wrap:anywhere;
+}
+.quickNoteHelp{
+    grid-column:1/-1;
+    color:#6f8f98;
+    font-size:8px;
+    letter-spacing:.04em;
+}
 .setupExample{
     width:100%;
-    max-width:560px;
-    margin:14px auto 0;
+    max-width:520px;
+    justify-self:end;
+    margin:0;
+    padding:12px;
+    border:1px solid rgba(67,245,255,.18);
+    border-radius:10px;
+    background:linear-gradient(145deg,rgba(8,27,37,.92),rgba(5,12,20,.98));
 }
+.setupExampleHead{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:9px;
+    color:var(--cyan);
+    font-size:8px;
+    font-weight:1000;
+    letter-spacing:.14em;
+}
+.setupExampleHead span:last-child{color:#6f8f98}
 .setupExample img{
     display:block;
     width:100%;
+    max-width:100%;
     height:auto;
     border:1px solid rgba(67,245,255,.22);
     border-radius:8px;
@@ -3131,6 +3178,14 @@ a:focus-visible,button:focus-visible,input:focus-visible{
     font-size:9px;
     line-height:1.5;
     text-align:center;
+}
+@media(max-width:900px){
+    .quickEndpoint{grid-template-columns:1fr}
+    .setupExample{
+        max-width:560px;
+        justify-self:center;
+        margin-top:2px;
+    }
 }
 .accountHint{min-height:20px}
 .copyToast[aria-live]{pointer-events:none}
@@ -3596,6 +3651,113 @@ header{align-items:flex-start;margin-bottom:12px}
     .hero[data-block-celebration="active"] .windowBitcoin{top:8px!important}
     .tunerTime{letter-spacing:.04em}
 }
+
+/* TERMINUS_PRO_CARD_SYSTEM_V1 */
+:root{
+    --module-line:rgba(67,245,255,.26);
+    --module-shadow:0 14px 38px rgba(0,0,0,.24),inset 0 1px 0 rgba(231,250,255,.025);
+    --module-radius:14px;
+    --inner-radius:10px;
+}
+.nightwave,
+.poolHashrateGraph,
+.lastBlockPanel,
+.marketTicker,
+.launchPromo,
+.quickConnect,
+.leaderboardPanel,
+.publicRewardLegend,
+.advancedFold,
+.access{
+    border-color:var(--module-line);
+    border-radius:var(--module-radius);
+    box-shadow:var(--module-shadow);
+}
+.poolHashrateGraph,
+.quickConnect,
+.leaderboardPanel,
+.publicRewardLegend,
+.advancedFold,
+.access{background:linear-gradient(145deg,rgba(7,19,29,.98),rgba(6,13,22,.98))}
+.quickConnect{
+    padding:0;
+    overflow:hidden;
+}
+.quickConnectHead{
+    margin:0;
+    padding:16px 18px 14px;
+    align-items:center;
+    border-bottom:1px solid rgba(67,245,255,.16);
+    background:linear-gradient(90deg,rgba(114,255,180,.045),transparent 72%);
+}
+.quickConnectGrid{padding:16px 18px 18px}
+.quickEndpoint{
+    border-radius:12px;
+    border-color:rgba(67,245,255,.23);
+    background:linear-gradient(145deg,rgba(5,16,24,.98),rgba(5,11,18,.98));
+    box-shadow:inset 0 1px 0 rgba(114,255,180,.035);
+}
+.setupExample,.quickNote,.historyMetric,.healthItem,.promoUnit,.publicRewardTier{
+    border-radius:var(--inner-radius);
+}
+.setupExample{
+    min-width:0;
+    overflow:hidden;
+    box-shadow:inset 0 1px 0 rgba(67,245,255,.035),0 10px 28px rgba(0,0,0,.2);
+}
+.graphTop{
+    margin:-18px -18px 12px;
+    padding:15px 18px 13px;
+    border-bottom:1px solid rgba(67,245,255,.16);
+    background:linear-gradient(90deg,rgba(67,245,255,.035),transparent 70%);
+}
+.lastBlockHead{
+    margin:-14px -16px 12px;
+    padding:14px 16px 12px;
+    border-bottom:1px solid rgba(255,200,92,.16);
+    background:linear-gradient(90deg,rgba(255,200,92,.045),transparent 72%);
+}
+.publicRewardLegendHead{
+    margin:-14px -16px 12px;
+    padding:13px 16px 11px;
+    border-bottom:1px solid rgba(67,245,255,.14);
+    background:linear-gradient(90deg,rgba(255,79,184,.035),transparent 70%);
+}
+.card{
+    min-height:108px;
+    border-radius:12px;
+    border-color:rgba(67,245,255,.20);
+    box-shadow:0 10px 28px rgba(0,0,0,.18),inset 0 1px 0 rgba(231,250,255,.02);
+}
+.card:before{width:100%;height:3px;background:linear-gradient(90deg,var(--green),transparent 72%)}
+.card.cyan:before{background:linear-gradient(90deg,var(--cyan),transparent 72%)}
+.card.purple:before{background:linear-gradient(90deg,var(--purple),transparent 72%)}
+.card.gold:before{background:linear-gradient(90deg,var(--gold),transparent 72%)}
+.card.bad:before{background:linear-gradient(90deg,#ff6f8d,transparent 72%)}
+.healthItem{box-shadow:0 10px 26px rgba(0,0,0,.16)}
+.accountSearch{
+    margin-bottom:10px;
+    padding:12px;
+    border:1px solid var(--module-line);
+    border-radius:var(--module-radius);
+    background:linear-gradient(145deg,rgba(7,19,29,.98),rgba(6,13,22,.98));
+    box-shadow:var(--module-shadow);
+}
+.accountSearch input,.accountSearch button,.copyBtn,.tunerBtn{border-radius:8px}
+.advancedFold{overflow:hidden}
+.advancedFold>summary{background:linear-gradient(90deg,rgba(255,79,184,.035),transparent 72%)}
+.sectionTitle{font-size:11px;letter-spacing:.19em}
+@media(max-width:900px){
+    .quickConnectHead{align-items:flex-start}
+}
+@media(max-width:760px){
+    .quickConnect{padding:0}
+    .quickConnectHead{padding:14px;align-items:flex-start}
+    .quickConnectGrid{padding:12px 14px 14px}
+    .quickEndpoint{padding:14px}
+    .setupExample{width:100%;max-width:100%}
+    .accountSearch{padding:9px}
+}
 </style>
 </head>
 <body>
@@ -3612,7 +3774,7 @@ header{align-items:flex-start;margin-bottom:12px}
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.49</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.50</div>
     </div>
   </div>
   <div class="headerControls">
@@ -3935,18 +4097,25 @@ header{align-items:flex-start;margin-bottom:12px}
   </div>
   <div class="quickConnectGrid">
     <div class="quickEndpoint recommended">
-      <div class="quickLabel">NATIVE DATUM // RECOMMENDED // 0% PROMO FEE</div>
-      <div class="quickValue">datum.terminuspool.xyz:28915</div>
-      <button type="button" class="copyBtn" aria-label="Copy DATUM endpoint" data-copy="datum.terminuspool.xyz:28915" onclick="copyField(this)">COPY DATUM ENDPOINT</button>
-      <div class="quickCredential">
-        <div class="quickLabel">RATUM PRIME PUBLIC KEY</div>
-        <div id="quickPrimePubkey" class="quickValue">LOADING...</div>
-        <button type="button" id="quickCopyPrimePubkey" class="copyBtn" aria-label="Copy RATUM Prime public key" data-copy="" onclick="copyField(this)">COPY PRIME PUBLIC KEY</button>
+      <div class="quickConnectDetails">
+        <div class="quickLabel">NATIVE DATUM // RECOMMENDED // 0% PROMO FEE</div>
+        <div class="quickValue">datum.terminuspool.xyz:28915</div>
+        <button type="button" class="copyBtn" aria-label="Copy DATUM endpoint" data-copy="datum.terminuspool.xyz:28915" onclick="copyField(this)">COPY DATUM ENDPOINT</button>
+        <div class="quickCredential">
+          <div class="quickLabel">RATUM PRIME PUBLIC KEY</div>
+          <div id="quickPrimePubkey" class="quickValue">LOADING...</div>
+          <button type="button" id="quickCopyPrimePubkey" class="copyBtn" aria-label="Copy RATUM Prime public key" data-copy="" onclick="copyField(this)">COPY PRIME PUBLIC KEY</button>
+        </div>
+        <div class="quickNote">
+          <span class="quickNoteLabel">USERNAME FORMAT</span>
+          <code>payout_address.worker</code>
+          <span class="quickNoteHelp">YOUR XBT PAYOUT ADDRESS IS REQUIRED // .WORKER IS OPTIONAL</span>
+        </div>
       </div>
-      <div class="quickNote">For DATUM-compatible clients · Username: <strong>payout_address.worker</strong></div>
       <figure class="setupExample">
-        <img src="/assets/datum-pool-setup.png" width="1032" height="544" loading="lazy" alt="Example DATUM pool settings showing Host datum.terminuspool.xyz, Port 28915, and the Pubkey field.">
-        <figcaption>EXAMPLE CLIENT POOL SETTINGS // COPY THE LIVE PRIME PUBLIC KEY ABOVE</figcaption>
+        <div class="setupExampleHead"><span>CLIENT FIELD MAP</span><span>VISUAL REFERENCE</span></div>
+        <img src="/assets/datum-pool-setup.png" width="1054" height="557" loading="lazy" alt="Example DATUM pool settings showing Host datum.terminuspool.xyz, Port 28915, and the Pubkey field.">
+        <figcaption>REFERENCE ONLY // USE THE LIVE ENDPOINT AND PRIME KEY SHOWN HERE</figcaption>
       </figure>
     </div>
   </div>
@@ -5991,7 +6160,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.49"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.50"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -6049,7 +6218,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.49"
+                                "Terminus-Umbrel-Client/0.2.50"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -6499,7 +6668,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.49"
+                                "Terminus-Umbrel-Client/0.2.50"
                         }
                     )
 
