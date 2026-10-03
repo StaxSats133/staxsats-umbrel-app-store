@@ -31,7 +31,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.50")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.51")
         self.assertIn('card("WINDOW SHARES"', self.server.HTML)
         self.assertNotIn("SHARES SINCE BLOCK", self.server.HTML)
         self.assertIn('id="neuralRain"', self.server.HTML)
@@ -61,6 +61,18 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('id="lastBlockDifficulty"', self.server.HTML)
         self.assertNotIn('id="lastBlockFinder"', self.server.HTML)
         self.assertIn('24H SAMPLED BEST', self.server.HTML)
+        self.assertIn('class="leaderboardRewards"', self.server.HTML)
+        reward_tier_count = (
+            self.server.HTML.count('class="leaderboardRewardTier"') +
+            self.server.HTML.count('class="leaderboardRewardTier special"')
+        )
+        self.assertEqual(reward_tier_count, 9)
+        self.assertNotIn('class="publicRewardLegend"', self.server.HTML)
+        leaderboard_head = self.server.HTML.index('class="leaderboardHead"')
+        leaderboard_rewards = self.server.HTML.index('class="leaderboardRewards"')
+        leaderboard_table = self.server.HTML.index('class="leaderboardTableWrap"')
+        self.assertLess(leaderboard_head, leaderboard_rewards)
+        self.assertLess(leaderboard_rewards, leaderboard_table)
         self.assertIn('IT IS NOT TRACKED ALL-TIME', self.server.HTML)
         self.assertIn('A TRANSIENT SHARE BETWEEN SAMPLES', self.server.HTML)
         self.assertNotIn('data-label="BEST SHARE"', self.server.HTML)

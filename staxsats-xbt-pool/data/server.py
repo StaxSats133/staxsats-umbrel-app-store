@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.50"
+RELEASE_VERSION = "0.2.51"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -167,7 +167,7 @@ def load_xbt_market(now=None):
                 NEOXEX_XBT_TICKER_URL,
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "TerminusPool-Market/0.2.50",
+                    "User-Agent": "TerminusPool-Market/0.2.51",
                 },
             )
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -1515,37 +1515,6 @@ h1{
 }
 .accountHint.good{color:var(--green)}
 .accountHint.badText{color:#ff6f8d}
-.publicRewardLegend{
-  margin:0 0 16px;
-  padding:14px 16px;
-  border:1px solid #174653;
-  background:linear-gradient(145deg,#07131d,#050b12);
-  box-shadow:0 10px 28px #0004
-}
-.publicRewardLegendHead{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  margin-bottom:10px
-}
-.publicRewardLegendTitle{
-  color:var(--pink);font-size:10px;font-weight:900;letter-spacing:.16em
-}
-.publicRewardLegendBasis{
-  color:#66858f;font-size:9px;letter-spacing:.08em;text-align:right
-}
-.publicRewardTiers{display:flex;flex-wrap:wrap;gap:7px}
-.publicRewardTier{
-  display:inline-flex;align-items:center;gap:5px;
-  min-height:28px;padding:4px 8px;
-  border:1px solid #183d48;border-radius:5px;background:#061019;
-  color:#9bb8c0;font-size:10px
-}
-.publicRewardTier span{
-  font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
-  font-size:15px
-}
-.publicRewardTier.special{border-color:#665426;color:#d8c482}
-.publicRewardNote{margin-top:9px;color:#66858f;font-size:9px;line-height:1.5}
-
 .grid{display:grid;gap:12px}
 .grid6{grid-template-columns:repeat(6,1fr)}
 .grid5{grid-template-columns:repeat(5,1fr)}
@@ -2930,16 +2899,55 @@ body{
     box-shadow:0 14px 40px rgba(0,0,0,.25);
 }
 .leaderboardHead{
-    display:flex;
-    justify-content:space-between;
+    display:grid;
+    grid-template-columns:minmax(245px,.8fr) minmax(430px,1.45fr) minmax(210px,.7fr);
     gap:18px;
-    align-items:flex-end;
+    align-items:center;
     padding:17px 19px;
     border-bottom:1px solid #153744;
 }
 .leaderboardTitle{color:var(--cyan);font-size:15px;font-weight:1000;letter-spacing:.12em}
 .leaderboardSub{margin-top:5px;color:#7895a0;font-size:9px;line-height:1.55;letter-spacing:.06em}
 .leaderboardPrivacy{color:var(--green);font-size:9px;font-weight:900;letter-spacing:.1em;text-align:right}
+.leaderboardRewards{
+    min-width:0;
+    padding:9px 11px 10px;
+    border:1px solid rgba(255,79,184,.24);
+    border-radius:10px;
+    background:linear-gradient(145deg,rgba(10,24,35,.86),rgba(5,12,20,.92));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+}
+.leaderboardRewardsHead{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:9px;
+    margin-bottom:7px;
+}
+.leaderboardRewardsTitle{color:var(--pink);font-size:8px;font-weight:1000;letter-spacing:.15em}
+.leaderboardRewardsBasis{color:#66858f;font-size:7px;letter-spacing:.08em;text-align:right}
+.leaderboardRewardTiers{display:flex;align-items:center;justify-content:center;gap:4px;min-width:0}
+.leaderboardRewardTier{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:3px;
+    min-width:0;
+    min-height:24px;
+    padding:3px 6px;
+    border:1px solid #183d48;
+    border-radius:7px;
+    background:#061019;
+    color:#9bb8c0;
+    font-size:8px;
+    white-space:nowrap;
+}
+.leaderboardRewardTier span{
+    font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+    font-size:12px;
+}
+.leaderboardRewardTier.special{border-color:#665426;color:#d8c482}
+.leaderboardRewardsNote{margin-top:7px;color:#66858f;font-size:7px;line-height:1.4;text-align:center;letter-spacing:.035em}
 .leaderboardTableWrap{overflow:auto}
 .leaderboardTable{width:100%;border-collapse:collapse;min-width:900px}
 .leaderboardTable th,.leaderboardTable td{padding:12px 14px;border-bottom:1px solid #112c37;text-align:left}
@@ -2965,9 +2973,19 @@ body{
     letter-spacing:.065em;
 }
 .leaderboardBestNote strong{color:#ffc85c}
+@media(max-width:1100px){
+    .leaderboardHead{grid-template-columns:minmax(0,1fr) auto;align-items:start}
+    .leaderboardRewards{grid-column:1/-1;grid-row:2}
+}
 @media(max-width:760px){
-    .leaderboardHead{align-items:flex-start;flex-direction:column}
+    .leaderboardHead{grid-template-columns:minmax(0,1fr);gap:12px}
     .leaderboardPrivacy{text-align:left}
+    .leaderboardRewards{grid-column:auto;grid-row:auto;padding:10px}
+    .leaderboardRewardsHead{align-items:flex-start;flex-direction:column;gap:3px}
+    .leaderboardRewardsBasis{text-align:left}
+    .leaderboardRewardTiers{flex-wrap:wrap;justify-content:flex-start}
+    .leaderboardRewardTier{flex:1 1 calc(33.333% - 4px);font-size:9px}
+    .leaderboardRewardsNote{text-align:left}
     .leaderboardTable{min-width:0}
     .leaderboardTable thead{display:none}
     .leaderboardTable tbody,.leaderboardTable tr,.leaderboardTable td{display:block;width:100%}
@@ -3215,9 +3233,6 @@ a:focus-visible,button:focus-visible,input:focus-visible{
         line-height:1.04;
     }
     .topNav{margin-top:-2px}
-    .publicRewardLegendHead{align-items:flex-start;flex-direction:column}
-    .publicRewardLegendBasis{text-align:left}
-    .publicRewardTier{flex:1 1 calc(33.333% - 7px);justify-content:center}
     .topNav a{flex:1 1 30%;padding-inline:8px}
     .heroText{right:18px}
     .heroActions{margin-top:14px}
@@ -3666,7 +3681,6 @@ header{align-items:flex-start;margin-bottom:12px}
 .launchPromo,
 .quickConnect,
 .leaderboardPanel,
-.publicRewardLegend,
 .advancedFold,
 .access{
     border-color:var(--module-line);
@@ -3676,7 +3690,6 @@ header{align-items:flex-start;margin-bottom:12px}
 .poolHashrateGraph,
 .quickConnect,
 .leaderboardPanel,
-.publicRewardLegend,
 .advancedFold,
 .access{background:linear-gradient(145deg,rgba(7,19,29,.98),rgba(6,13,22,.98))}
 .quickConnect{
@@ -3697,7 +3710,7 @@ header{align-items:flex-start;margin-bottom:12px}
     background:linear-gradient(145deg,rgba(5,16,24,.98),rgba(5,11,18,.98));
     box-shadow:inset 0 1px 0 rgba(114,255,180,.035);
 }
-.setupExample,.quickNote,.historyMetric,.healthItem,.promoUnit,.publicRewardTier{
+.setupExample,.quickNote,.historyMetric,.healthItem,.promoUnit,.leaderboardRewardTier{
     border-radius:var(--inner-radius);
 }
 .setupExample{
@@ -3716,12 +3729,6 @@ header{align-items:flex-start;margin-bottom:12px}
     padding:14px 16px 12px;
     border-bottom:1px solid rgba(255,200,92,.16);
     background:linear-gradient(90deg,rgba(255,200,92,.045),transparent 72%);
-}
-.publicRewardLegendHead{
-    margin:-14px -16px 12px;
-    padding:13px 16px 11px;
-    border-bottom:1px solid rgba(67,245,255,.14);
-    background:linear-gradient(90deg,rgba(255,79,184,.035),transparent 70%);
 }
 .card{
     min-height:108px;
@@ -3774,7 +3781,7 @@ header{align-items:flex-start;margin-bottom:12px}
       <h1>TERMINUS POOL // XBT</h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.50</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.51</div>
     </div>
   </div>
   <div class="headerControls">
@@ -4128,6 +4135,24 @@ header{align-items:flex-start;margin-bottom:12px}
       <div class="leaderboardTitle" id="leaderboardTitle">ACTIVE MINERS // ROLLING 24 HOURS</div>
       <div class="leaderboardSub">RANKED BY 24H AVERAGE HASHRATE // LIVE STATUS HAS A 10-MINUTE BUFFER</div>
     </div>
+    <div class="leaderboardRewards" aria-label="Work in Window cosmic reward progression">
+      <div class="leaderboardRewardsHead">
+        <div class="leaderboardRewardsTitle">WORK-IN-WINDOW // COSMIC REWARDS</div>
+        <div class="leaderboardRewardsBasis">% OF FULL RATUM TARGET WINDOW</div>
+      </div>
+      <div class="leaderboardRewardTiers">
+        <div class="leaderboardRewardTier"><span role="img" aria-label="Spark">✨</span>0.25%</div>
+        <div class="leaderboardRewardTier"><span role="img" aria-label="Star">⭐</span>0.75%</div>
+        <div class="leaderboardRewardTier"><span role="img" aria-label="Bright Star">🌟</span>2%</div>
+        <div class="leaderboardRewardTier"><span role="img" aria-label="Comet">☄️</span>5%</div>
+        <div class="leaderboardRewardTier"><span role="img" aria-label="Moon">🌙</span>10%</div>
+        <div class="leaderboardRewardTier"><span role="img" aria-label="Orbit">🪐</span>20%</div>
+        <div class="leaderboardRewardTier"><span role="img" aria-label="Galaxy">🌌</span>40%</div>
+        <div class="leaderboardRewardTier special"><span role="img" aria-label="Diamond Work">💎</span>75%</div>
+        <div class="leaderboardRewardTier special"><span role="img" aria-label="Current leader">👑</span>#1</div>
+      </div>
+      <div class="leaderboardRewardsNote">LIVE PAYOUT-WINDOW WORK // 👑 CURRENT LEADER // 💎 EXCEPTIONAL CONTRIBUTION</div>
+    </div>
     <div class="leaderboardPrivacy">PAYOUT ADDRESSES REDACTED // OPAQUE ALIASES ONLY</div>
   </div>
   <div class="leaderboardTableWrap">
@@ -4139,25 +4164,6 @@ header{align-items:flex-start;margin-bottom:12px}
   <div class="leaderboardBestNote"><strong>24H SAMPLED BEST</strong> = HIGHEST RATUM WINDOW-BEST OBSERVED BY THE 60-SECOND COLLECTOR IN THIS ROLLING 24H PERIOD. IT IS NOT TRACKED ALL-TIME AND A TRANSIENT SHARE BETWEEN SAMPLES — INCLUDING A BLOCK-WINNING SHARE — MAY NOT APPEAR.</div>
   <div class="leaderboardFoot"><span id="leaderboardFreshness">AWAITING ACTIVITY SAMPLES</span><span>LIVE ≤10 MIN // RECENT ≤60 MIN // SEEN WITHIN 24H</span></div>
 </section>
-
-<div class="publicRewardLegend" aria-label="Work in Window reward progression">
-  <div class="publicRewardLegendHead">
-    <div class="publicRewardLegendTitle">WORK-IN-WINDOW // COSMIC REWARDS</div>
-    <div class="publicRewardLegendBasis">% OF FULL RATUM TARGET WINDOW</div>
-  </div>
-  <div class="publicRewardTiers">
-    <div class="publicRewardTier"><span role="img" aria-label="Spark">✨</span>0.25%</div>
-    <div class="publicRewardTier"><span role="img" aria-label="Star">⭐</span>0.75%</div>
-    <div class="publicRewardTier"><span role="img" aria-label="Bright Star">🌟</span>2%</div>
-    <div class="publicRewardTier"><span role="img" aria-label="Comet">☄️</span>5%</div>
-    <div class="publicRewardTier"><span role="img" aria-label="Moon">🌙</span>10%</div>
-    <div class="publicRewardTier"><span role="img" aria-label="Orbit">🪐</span>20%</div>
-    <div class="publicRewardTier"><span role="img" aria-label="Galaxy">🌌</span>40%</div>
-    <div class="publicRewardTier special"><span role="img" aria-label="Diamond Work">💎</span>75%</div>
-    <div class="publicRewardTier special"><span role="img" aria-label="Current leader">👑</span>#1</div>
-  </div>
-  <div class="publicRewardNote">BADGES UPDATE FROM LIVE WORK IN THE CURRENT PAYOUT WINDOW. 👑 MARKS THE CURRENT WORK LEADER; 💎 IS RESERVED FOR EXCEPTIONAL WINDOW CONTRIBUTION.</div>
-</div>
 
 <div class="sectionTitle">POOL-TELEMETRY</div>
 <div id="telemetry" class="grid grid6"></div>
@@ -6160,7 +6166,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("public leaderboard upstream unavailable")
                 req = urllib.request.Request(
                     public_url,
-                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.50"}
+                    headers={"User-Agent": "Terminus-Umbrel-Client/0.2.51"}
                 )
                 with urllib.request.urlopen(req, timeout=8) as response:
                     upstream = json.load(response)
@@ -6218,7 +6224,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.50"
+                                "Terminus-Umbrel-Client/0.2.51"
                         }
                     )
                     with urllib.request.urlopen(req, timeout=8) as response:
@@ -6668,7 +6674,7 @@ class Handler(BaseHTTPRequestHandler):
                         public_url,
                         headers={
                             "User-Agent":
-                                "Terminus-Umbrel-Client/0.2.50"
+                                "Terminus-Umbrel-Client/0.2.51"
                         }
                     )
 
