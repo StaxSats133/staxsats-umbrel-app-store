@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.64"
+RELEASE_VERSION = "0.2.65"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -4188,7 +4188,7 @@ html.stasis .neuralRain{opacity:0}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.64</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.65</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
@@ -4553,7 +4553,7 @@ html.stasis .neuralRain{opacity:0}
       <img class="routeHashLogo" src="/assets/routehash-logo.png" width="62" height="62" loading="lazy" alt="RouteHash logo">
       <div class="routeHashCopy">
         <div class="routeHashTitle" id="routeHashTitle">NEED HASHRATE?</div>
-        <div class="routeHashText">Rent XBT hashrate or explore node options on RouteHash. Point it to Terminus with the DATUM details above.</div>
+        <div class="routeHashText">Rent XBT hashrate or explore node options on RouteHash. Select Terminus as your segment pool to connect automatically.</div>
         <div class="routeHashDisclosure">THIRD-PARTY SERVICE // ROUTEHASH TERMS APPLY</div>
       </div>
     </div>

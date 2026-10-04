@@ -31,7 +31,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.64")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.65")
         self.assertIn('staxsats-xbt-pool/icon-v0264.png', self.server.HTML)
         self.assertIn('@media(min-width:821px)', self.server.HTML)
         self.assertIn('width:min(calc(100% - 32px),1080px)', self.server.HTML)
@@ -44,6 +44,7 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('id="graphMiners" class="graphPill">0 LIVE MINERS', self.server.HTML)
         self.assertIn('card("LIVE MINERS",num(d.poolMiners,0))', self.server.HTML)
         self.assertIn('id="routeHashTitle">NEED HASHRATE?', self.server.HTML)
+        self.assertIn('Select Terminus as your segment pool to connect automatically.', self.server.HTML)
         self.assertIn('class="routeHashLogo" src="/assets/routehash-logo.png"', self.server.HTML)
         self.assertIn('alt="RouteHash logo"', self.server.HTML)
         self.assertIn('.routeHashBrand{align-items:center;flex-direction:column;text-align:center}', self.server.HTML)
