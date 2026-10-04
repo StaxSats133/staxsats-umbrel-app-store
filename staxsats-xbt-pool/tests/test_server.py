@@ -31,13 +31,15 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.59")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.60")
         self.assertIn('@media(min-width:821px)', self.server.HTML)
         self.assertIn('width:min(calc(100% - 32px),1080px)', self.server.HTML)
         self.assertIn('max-width:1080px', self.server.HTML)
         self.assertIn('@media(min-width:1101px)', self.server.HTML)
         self.assertIn('grid-template-columns:minmax(440px,1fr) minmax(0,560px)!important', self.server.HTML)
         self.assertIn('grid-template-areas:"brand controls" "boombox boombox"', self.server.HTML)
+        self.assertIn('#telemetry{\n        grid-template-columns:repeat(3,minmax(0,1fr))!important', self.server.HTML)
+        self.assertIn('#telemetry .value{\n        word-break:normal', self.server.HTML)
         self.assertIn('id="graphMiners" class="graphPill">0 LIVE MINERS', self.server.HTML)
         self.assertIn('card("LIVE MINERS",num(d.poolMiners,0))', self.server.HTML)
         self.assertNotIn('new Date().toLocaleTimeString()', self.server.HTML)

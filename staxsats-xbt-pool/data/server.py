@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.59"
+RELEASE_VERSION = "0.2.60"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -3983,6 +3983,14 @@ html.stasis *,html.stasis *::before,html.stasis *::after{
 }
 html.stasis .neuralRain{opacity:0}
 @media(min-width:1101px){
+    #telemetry{
+        grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    }
+    #telemetry .value{
+        word-break:normal;
+        overflow-wrap:normal;
+        font-size:clamp(20px,2vw,26px);
+    }
     header{
         display:grid;
         grid-template-columns:minmax(440px,1fr) minmax(0,560px)!important;
@@ -4107,7 +4115,7 @@ html.stasis .neuralRain{opacity:0}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.59</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.60</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
