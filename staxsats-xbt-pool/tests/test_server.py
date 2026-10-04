@@ -31,7 +31,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.61")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.62")
         self.assertIn('@media(min-width:821px)', self.server.HTML)
         self.assertIn('width:min(calc(100% - 32px),1080px)', self.server.HTML)
         self.assertIn('max-width:1080px', self.server.HTML)
@@ -43,6 +43,10 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('id="graphMiners" class="graphPill">0 LIVE MINERS', self.server.HTML)
         self.assertIn('card("LIVE MINERS",num(d.poolMiners,0))', self.server.HTML)
         self.assertIn('id="routeHashTitle">NEED HASHRATE?', self.server.HTML)
+        self.assertIn('class="routeHashLogo" src="/assets/routehash-logo.png"', self.server.HTML)
+        self.assertIn('alt="RouteHash logo"', self.server.HTML)
+        self.assertIn('.routeHashBrand{align-items:center;flex-direction:column;text-align:center}', self.server.HTML)
+        self.assertGreater(len(self.server.ROUTEHASH_LOGO_PNG), 1000)
         self.assertIn('href="https://app.routehash.com/"', self.server.HTML)
         self.assertIn('rel="noopener noreferrer"', self.server.HTML)
         self.assertIn('THIRD-PARTY SERVICE // ROUTEHASH TERMS APPLY', self.server.HTML)
