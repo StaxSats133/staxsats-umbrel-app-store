@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.56"
+RELEASE_VERSION = "0.2.57"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -3974,12 +3974,12 @@ html.stasis *,html.stasis *::before,html.stasis *::after{
     scroll-behavior:auto!important;
 }
 html.stasis .neuralRain{opacity:0}
-@media(min-width:1051px){
+@media(min-width:1101px){
     header{
         display:grid;
-        grid-template-columns:minmax(280px,1fr) minmax(650px,720px);
-        grid-template-areas:"brand controls" "brand boombox";
-        column-gap:24px;
+        grid-template-columns:minmax(440px,1fr) minmax(0,560px)!important;
+        grid-template-areas:"brand controls" "boombox boombox";
+        column-gap:20px;
         row-gap:8px;
         align-items:start;
     }
@@ -4062,7 +4062,7 @@ html.stasis .neuralRain{opacity:0}
     .headerBoombox.collapsed .tunerMeta{grid-column:2}
     .headerBoombox.collapsed .boomboxSpeaker.right{grid-column:3}
 }
-@media(max-width:1050px){
+@media(max-width:1100px){
     .nightwaveDesktopDock{display:none}
     .nightwaveMobileDock{display:block}
     .headerControls .stasisToggle{min-height:38px;padding-inline:9px;font-size:8px}
@@ -4099,7 +4099,7 @@ html.stasis .neuralRain{opacity:0}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.56</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.57</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">

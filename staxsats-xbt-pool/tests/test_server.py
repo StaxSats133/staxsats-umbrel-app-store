@@ -31,10 +31,13 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.56")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.57")
         self.assertIn('@media(min-width:821px)', self.server.HTML)
         self.assertIn('width:min(calc(100% - 32px),1080px)', self.server.HTML)
         self.assertIn('max-width:1080px', self.server.HTML)
+        self.assertIn('@media(min-width:1101px)', self.server.HTML)
+        self.assertIn('grid-template-columns:minmax(440px,1fr) minmax(0,560px)!important', self.server.HTML)
+        self.assertIn('grid-template-areas:"brand controls" "boombox boombox"', self.server.HTML)
         self.assertIn('"IF BLOCK FOUND NOW"', self.server.HTML)
         self.assertIn('"PAYOUT ADDRESS"', self.server.HTML)
         self.assertIn('? "VALID"', self.server.HTML)
