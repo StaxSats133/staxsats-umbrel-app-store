@@ -4,7 +4,7 @@ name: Terminus Pool
 tagline: The last word in mining
 icon: https://raw.githubusercontent.com/StaxSats133/staxsats-umbrel-app-store/main/staxsats-xbt-pool/icon.svg
 category: bitcoin
-version: "0.2.55"
+version: "0.2.56"
 port: 8081
 description: >-
   Terminus Pool is an XBT BLAKE2b mining pool dashboard for RATUM Prime and DATUM.
@@ -19,10 +19,10 @@ repo: https://github.com/StaxSats133/staxsats-umbrel-app-store
 support: https://github.com/StaxSats133/staxsats-umbrel-app-store/issues
 gallery: []
 releaseNotes: >-
-  Terminus Pool v0.2.55 clarifies per-miner payout accounting. Conditional
-  estimates now read "If Block Found Now," while RATUM's payable flag is shown
-  truthfully as XBT payout-address validity rather than current payment status.
-  Pool accounting, payout logic, privacy, and telemetry remain unchanged.
+  Terminus Pool v0.2.56 caps the desktop dashboard at a focused 1080px canvas,
+  giving the scenic hero and live-hashrate graph more balanced proportions on
+  wide screens. Tablet and phone layouts, payout accounting, privacy, and
+  telemetry remain unchanged.
 dependencies: []
 path: ""
 defaultUsername: ""
