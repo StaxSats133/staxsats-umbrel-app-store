@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.57"
+RELEASE_VERSION = "0.2.58"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -576,6 +576,14 @@ def _number(value, default=0.0):
         return float(value or 0)
     except (TypeError, ValueError):
         return default
+
+
+def count_live_pool_miners(raw_miners):
+    """Count miners currently contributing positive hashrate."""
+    return sum(
+        1 for miner in raw_miners
+        if _number(miner.get("hashrate_hs", 0), 0) > 0
+    )
 
 
 DIFFICULTY_ONE_TARGET = int(
@@ -4099,7 +4107,7 @@ html.stasis .neuralRain{opacity:0}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.57</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.58</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
@@ -4306,7 +4314,7 @@ html.stasis .neuralRain{opacity:0}
     </div>
 
     <div class="graphStats">
-      <span id="graphMiners" class="graphPill">0 POOL MINERS</span>
+      <span id="graphMiners" class="graphPill">0 LIVE MINERS</span>
       <div id="graphNow">0.000 TH/s</div>
     </div>
   </div>
@@ -4647,7 +4655,7 @@ function initNightwaveDock(){
   const desktopDock=$("nightwaveDesktopDock");
   const mobileDock=$("nightwaveMobileDock");
   if(!deck||!desktopDock||!mobileDock)return;
-  const desktop=window.matchMedia("(min-width:1051px)");
+  const desktop=window.matchMedia("(min-width:1101px)");
   const sync=()=>{
     const target=desktop.matches?desktopDock:mobileDock;
     if(deck.parentElement!==target)target.appendChild(deck);
@@ -6050,7 +6058,7 @@ async function refresh(){
     $("telemetry").innerHTML=
       card("SYSTEM STATUS",d.status||"Unknown",ready?"ok":"bad")+
       card("LIVE POOL HASHRATE",num(d.hashrate,3)+" TH/s","cyan")+
-      card("POOL MINERS",num(d.poolMiners,0))+
+      card("LIVE MINERS",num(d.poolMiners,0))+
       card("WINDOW SHARES",num(d.windowShares,0),"purple")+
       card("POOL SHARE FLOOR",compact(Number(d.shareDifficulty)||1024),"cyan")+
       card("BLOCKS FOUND",num(d.blocks,0),Number(d.blocks)>0?"gold":"");
@@ -6141,7 +6149,7 @@ async function refresh(){
 
     $("graphNow").textContent=num(d.hashrate,3)+" TH/s";
     $("graphMiners").textContent=
-      num(d.poolMiners,0)+" POOL MINERS";
+      num(d.poolMiners,0)+" LIVE MINERS";
 
     if(Array.isArray(d.hashHistory)) drawGraph(d.hashHistory);
 
@@ -6788,7 +6796,8 @@ class Handler(BaseHTTPRequestHandler):
                 )
                 pool_hash_th=pool_hash_hs/1_000_000_000_000
 
-                pool_miner_count=len(miners)
+                window_miner_count=len(miners)
+                pool_miner_count=count_live_pool_miners(miners)
                 target_window_work=int(
                     _number(window.get("target_work",0))
                 )
@@ -6905,6 +6914,9 @@ class Handler(BaseHTTPRequestHandler):
 
                     "poolMiners":
                         pool_miner_count,
+
+                    "windowMiners":
+                        window_miner_count,
 
                     "primeHashrate":
                         prime_hash_th,

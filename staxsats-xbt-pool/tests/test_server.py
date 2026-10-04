@@ -31,13 +31,15 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.57")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.58")
         self.assertIn('@media(min-width:821px)', self.server.HTML)
         self.assertIn('width:min(calc(100% - 32px),1080px)', self.server.HTML)
         self.assertIn('max-width:1080px', self.server.HTML)
         self.assertIn('@media(min-width:1101px)', self.server.HTML)
         self.assertIn('grid-template-columns:minmax(440px,1fr) minmax(0,560px)!important', self.server.HTML)
         self.assertIn('grid-template-areas:"brand controls" "boombox boombox"', self.server.HTML)
+        self.assertIn('id="graphMiners" class="graphPill">0 LIVE MINERS', self.server.HTML)
+        self.assertIn('card("LIVE MINERS",num(d.poolMiners,0))', self.server.HTML)
         self.assertIn('"IF BLOCK FOUND NOW"', self.server.HTML)
         self.assertIn('"PAYOUT ADDRESS"', self.server.HTML)
         self.assertIn('? "VALID"', self.server.HTML)
@@ -72,7 +74,7 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('id="nightwaveDesktopDock"', self.server.HTML)
         self.assertIn('id="nightwaveMobileDock"', self.server.HTML)
         self.assertIn('function initNightwaveDock()', self.server.HTML)
-        self.assertIn('window.matchMedia("(min-width:1051px)")', self.server.HTML)
+        self.assertIn('window.matchMedia("(min-width:1101px)")', self.server.HTML)
         self.assertIn('id="stasisToggle"', self.server.HTML)
         self.assertIn('STASIS MODE · OFF', self.server.HTML)
         self.assertIn('function initStasisMode()', self.server.HTML)
@@ -159,6 +161,15 @@ class TerminusServerTests(unittest.TestCase):
         difficulty = self.server._share_difficulty_from_block_hash(block_hash)
         self.assertAlmostEqual(difficulty, 6768482938.1588, places=4)
         self.assertEqual(self.server._share_difficulty_from_block_hash("bad"), 0.0)
+
+    def test_live_pool_miners_excludes_window_only_accounts(self):
+        miners = [
+            {"hashrate_hs": 12_000_000_000_000},
+            {"hashrate_hs": "9000000000000"},
+            {"hashrate_hs": 0},
+            {"hashrate_hs": None},
+        ]
+        self.assertEqual(self.server.count_live_pool_miners(miners), 2)
 
     def test_quick_connect_places_prime_pubkey_below_datum_endpoint(self):
         start_mining_pos = self.server.HTML.index('id="startMining"')
