@@ -31,7 +31,8 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.62")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.63")
+        self.assertIn('staxsats-xbt-pool/icon.png', self.server.HTML)
         self.assertIn('@media(min-width:821px)', self.server.HTML)
         self.assertIn('width:min(calc(100% - 32px),1080px)', self.server.HTML)
         self.assertIn('max-width:1080px', self.server.HTML)

@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.62"
+RELEASE_VERSION = "0.2.63"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -1081,7 +1081,7 @@ HTML = r"""<!doctype html>
 <meta property="og:title" content="Terminus Pool // XBT">
 <meta property="og:description" content="Non-custodial, DATUM-first XBT BLAKE2b mining with live pool telemetry.">
 <meta property="og:url" content="https://terminuspool.xyz/">
-<meta property="og:image" content="https://raw.githubusercontent.com/StaxSats133/staxsats-umbrel-app-store/main/staxsats-xbt-pool/icon.svg">
+<meta property="og:image" content="https://raw.githubusercontent.com/StaxSats133/staxsats-umbrel-app-store/main/staxsats-xbt-pool/icon.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Terminus Pool // XBT">
 <meta name="twitter:description" content="Non-custodial, DATUM-first XBT BLAKE2b mining with live pool telemetry.">
@@ -4188,7 +4188,7 @@ html.stasis .neuralRain{opacity:0}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.62</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.63</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
