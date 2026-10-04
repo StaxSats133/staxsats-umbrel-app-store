@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.58"
+RELEASE_VERSION = "0.2.59"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -4107,7 +4107,7 @@ html.stasis .neuralRain{opacity:0}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.58</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.59</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
@@ -6052,8 +6052,7 @@ async function refresh(){
     $("live").className=ready?"live":"live bad";
     $("live").innerHTML=
       `<span class="liveLong">${ready?"● NODE LINK ACTIVE":"● NODE LINK DEGRADED"}</span>`+
-      `<span class="liveShort">${ready?"● NODE OK":"● NODE WARN"}</span>`+
-      `<span class="liveClock">&nbsp;// ${new Date().toLocaleTimeString()}</span>`;
+      `<span class="liveShort">${ready?"● NODE OK":"● NODE WARN"}</span>`;
 
     $("telemetry").innerHTML=
       card("SYSTEM STATUS",d.status||"Unknown",ready?"ok":"bad")+

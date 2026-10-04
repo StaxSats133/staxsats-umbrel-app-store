@@ -31,7 +31,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.58")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.59")
         self.assertIn('@media(min-width:821px)', self.server.HTML)
         self.assertIn('width:min(calc(100% - 32px),1080px)', self.server.HTML)
         self.assertIn('max-width:1080px', self.server.HTML)
@@ -40,6 +40,7 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('grid-template-areas:"brand controls" "boombox boombox"', self.server.HTML)
         self.assertIn('id="graphMiners" class="graphPill">0 LIVE MINERS', self.server.HTML)
         self.assertIn('card("LIVE MINERS",num(d.poolMiners,0))', self.server.HTML)
+        self.assertNotIn('new Date().toLocaleTimeString()', self.server.HTML)
         self.assertIn('"IF BLOCK FOUND NOW"', self.server.HTML)
         self.assertIn('"PAYOUT ADDRESS"', self.server.HTML)
         self.assertIn('? "VALID"', self.server.HTML)
