@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.60"
+RELEASE_VERSION = "0.2.61"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -3235,6 +3235,59 @@ a:focus-visible,button:focus-visible,input:focus-visible{
     padding-top:12px;
     border-top:1px solid rgba(67,245,255,.16);
 }
+.routeHashPath{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:22px;
+    margin-top:14px;
+    padding:15px 17px;
+    border:1px solid rgba(170,114,255,.34);
+    border-left:4px solid var(--purple);
+    border-radius:10px;
+    background:linear-gradient(120deg,rgba(18,10,32,.94),rgba(5,17,27,.96));
+    box-shadow:0 10px 28px rgba(0,0,0,.18);
+}
+.routeHashCopy{min-width:0}
+.routeHashTitle{
+    color:#d4b4ff;
+    font-size:11px;
+    font-weight:1000;
+    letter-spacing:.14em;
+}
+.routeHashText{
+    margin-top:6px;
+    color:#a8c1c9;
+    font-size:10px;
+    line-height:1.55;
+}
+.routeHashDisclosure{
+    margin-top:5px;
+    color:#66858f;
+    font-size:7px;
+    letter-spacing:.1em;
+}
+.routeHashCta{
+    flex:0 0 auto;
+    min-height:42px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:10px 14px;
+    border:1px solid rgba(170,114,255,.72);
+    border-radius:6px;
+    background:rgba(22,10,38,.88);
+    color:#d4b4ff;
+    font-size:9px;
+    font-weight:1000;
+    letter-spacing:.12em;
+    text-decoration:none;
+    white-space:nowrap;
+}
+.routeHashCta:hover,.routeHashCta:focus-visible{
+    border-color:var(--cyan);
+    color:var(--cyan);
+}
 .quickCredential .quickValue{
     font-size:10px;
     line-height:1.5;
@@ -3805,6 +3858,8 @@ header{align-items:flex-start;margin-bottom:12px}
     .promoUnit{padding:6px 3px}
     .promoNumber{font-size:17px}
     .quickConnect{padding:14px;margin-top:12px}
+    .routeHashPath{align-items:stretch;flex-direction:column;gap:12px;padding:14px}
+    .routeHashCta{width:100%}
     .sectionTitle{margin:23px 0 11px!important}
     .hero[data-block-celebration="active"] .windowBitcoin{
         width:78px!important;
@@ -4115,7 +4170,7 @@ html.stasis .neuralRain{opacity:0}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.60</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.61</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
@@ -4475,6 +4530,14 @@ html.stasis .neuralRain{opacity:0}
       </figure>
     </div>
   </div>
+  <aside class="routeHashPath" aria-labelledby="routeHashTitle">
+    <div class="routeHashCopy">
+      <div class="routeHashTitle" id="routeHashTitle">NEED HASHRATE?</div>
+      <div class="routeHashText">Rent XBT hashrate or explore node options on RouteHash. Point it to Terminus with the DATUM details above.</div>
+      <div class="routeHashDisclosure">THIRD-PARTY SERVICE // ROUTEHASH TERMS APPLY</div>
+    </div>
+    <a class="routeHashCta" href="https://app.routehash.com/" target="_blank" rel="noopener noreferrer" aria-label="Open the independent RouteHash marketplace in a new tab">OPEN ROUTEHASH ↗</a>
+  </aside>
 </section>
 
 <div class="sectionTitle" id="leaderboard">24H-HASHING-LEADERBOARD</div>
