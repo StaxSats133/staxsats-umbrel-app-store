@@ -31,7 +31,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.65")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.66")
         self.assertIn('staxsats-xbt-pool/icon-v0264.png', self.server.HTML)
         self.assertIn('@media(min-width:821px)', self.server.HTML)
         self.assertIn('width:min(calc(100% - 32px),1080px)', self.server.HTML)
@@ -152,14 +152,21 @@ class TerminusServerTests(unittest.TestCase):
         self.assertEqual(self.server.HTML.count('https://opengameart.org/sites/default/files/'), 20)
         tuner_pos = self.server.HTML.index('id="nightwave"')
         graph_pos = self.server.HTML.index('id="poolStats"')
+        advanced_network_pos = self.server.HTML.index('ADVANCED NETWORK + POOL IDENTITY')
         last_block_pos = self.server.HTML.index('id="lastBlockFound"')
         market_pos = self.server.HTML.index('id="xbtMarket"')
         start_mining_pos = self.server.HTML.index('id="startMining"')
         self.assertLess(tuner_pos, graph_pos)
+        self.assertLess(graph_pos, advanced_network_pos)
+        self.assertLess(advanced_network_pos, last_block_pos)
         self.assertLess(graph_pos, market_pos)
         self.assertLess(graph_pos, last_block_pos)
         self.assertLess(last_block_pos, market_pos)
         self.assertLess(market_pos, start_mining_pos)
+        self.assertIn(
+            'card("NETWORK HASHRATE",num(Number(d.networkTh||0)/1000,3)+" PH/s","small")',
+            self.server.HTML,
+        )
         self.assertTrue(any(
             "media-src 'self' https://opengameart.org" in value
             for value in self.server.Handler.send_security_headers.__code__.co_consts

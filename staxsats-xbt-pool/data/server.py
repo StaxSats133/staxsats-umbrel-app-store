@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.65"
+RELEASE_VERSION = "0.2.66"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -4188,7 +4188,7 @@ html.stasis .neuralRain{opacity:0}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.65</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.66</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
@@ -4406,6 +4406,68 @@ html.stasis .neuralRain{opacity:0}
   </svg>
   <div id="historySummary" class="historySummary" aria-label="24-hour pool summary"></div>
 </div>
+
+<details class="advancedFold">
+  <summary>ADVANCED NETWORK + POOL IDENTITY</summary>
+  <div class="advancedFoldBody">
+    <div class="sectionTitle">NETWORK-UPLINK</div>
+    <div id="network" class="grid grid4"></div>
+
+<div class="access identityAccess">
+  <h3>POOL IDENTITY // RATUM PRIME</h3>
+  <div class="mode">VERIFY YOUR TERMINUS CONNECTION</div>
+
+  <div class="identityGrid">
+
+    <div>
+      <div class="accessLabel">PRIME PUBLIC KEY</div>
+      <div class="copyRow">
+        <div id="primePubkey" class="copyText">LOADING...</div>
+        <button
+          type="button"
+          id="copyPrimePubkey"
+          class="copyBtn"
+          aria-label="Copy Prime public key"
+          data-copy=""
+          onclick="copyField(this)"
+        >COPY</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="accessLabel">POOL PAYOUT SCRIPT</div>
+      <div class="copyRow">
+        <div id="poolPayoutScript" class="copyText">LOADING...</div>
+        <button
+          type="button"
+          id="copyPayoutScript"
+          class="copyBtn"
+          aria-label="Copy pool payout script"
+          data-copy=""
+          onclick="copyField(this)"
+        >COPY</button>
+      </div>
+    </div>
+
+    <div class="identityWide">
+      <div class="accessLabel">COINBASE TAG</div>
+      <div class="copyRow">
+        <div id="coinbaseTag" class="copyText">LOADING...</div>
+        <button
+          type="button"
+          id="copyCoinbaseTag"
+          class="copyBtn"
+          aria-label="Copy coinbase tag"
+          data-copy=""
+          onclick="copyField(this)"
+        >COPY</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+</details>
 
 <section class="lastBlockPanel" id="lastBlockFound" aria-labelledby="lastBlockTitle">
   <div class="lastBlockHead">
@@ -4667,68 +4729,6 @@ html.stasis .neuralRain{opacity:0}
   </div>
 
 </div>
-
-<details class="advancedFold">
-  <summary>ADVANCED NETWORK + POOL IDENTITY</summary>
-  <div class="advancedFoldBody">
-    <div class="sectionTitle">NETWORK-UPLINK</div>
-    <div id="network" class="grid grid4"></div>
-
-<div class="access identityAccess">
-  <h3>POOL IDENTITY // RATUM PRIME</h3>
-  <div class="mode">VERIFY YOUR TERMINUS CONNECTION</div>
-
-  <div class="identityGrid">
-
-    <div>
-      <div class="accessLabel">PRIME PUBLIC KEY</div>
-      <div class="copyRow">
-        <div id="primePubkey" class="copyText">LOADING...</div>
-        <button
-          type="button"
-          id="copyPrimePubkey"
-          class="copyBtn"
-          aria-label="Copy Prime public key"
-          data-copy=""
-          onclick="copyField(this)"
-        >COPY</button>
-      </div>
-    </div>
-
-    <div>
-      <div class="accessLabel">POOL PAYOUT SCRIPT</div>
-      <div class="copyRow">
-        <div id="poolPayoutScript" class="copyText">LOADING...</div>
-        <button
-          type="button"
-          id="copyPayoutScript"
-          class="copyBtn"
-          aria-label="Copy pool payout script"
-          data-copy=""
-          onclick="copyField(this)"
-        >COPY</button>
-      </div>
-    </div>
-
-    <div class="identityWide">
-      <div class="accessLabel">COINBASE TAG</div>
-      <div class="copyRow">
-        <div id="coinbaseTag" class="copyText">LOADING...</div>
-        <button
-          type="button"
-          id="copyCoinbaseTag"
-          class="copyBtn"
-          aria-label="Copy coinbase tag"
-          data-copy=""
-          onclick="copyField(this)"
-        >COPY</button>
-      </div>
-    </div>
-
-  </div>
-</div>
-</div>
-</details>
 
 <div id="blockBanner" class="blockBanner"></div>
 </main>
@@ -6236,7 +6236,7 @@ async function refresh(){
       card("CHAIN HEIGHT",num(d.height,0))+
       card("NETWORK DIFFICULTY",(Number(d.difficulty||0)/1e9).toFixed(2)+"G","small")+
       card("COINBASE VALUE",num(d.blockValue,8)+" XBT","gold")+
-      card("NETWORK HASHRATE",num(d.networkTh,2)+" TH/s","small");
+      card("NETWORK HASHRATE",num(Number(d.networkTh||0)/1000,3)+" PH/s","small");
 
     $("graphNow").textContent=num(d.hashrate,3)+" TH/s";
     $("graphMiners").textContent=
