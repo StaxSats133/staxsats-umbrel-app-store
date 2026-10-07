@@ -31,7 +31,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.68")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.69")
         self.assertIn('<title>TERMINUS POOL // DATUM</title>', self.server.HTML)
         self.assertIn('content="Terminus Pool // DATUM"', self.server.HTML)
         self.assertIn(
@@ -53,7 +53,8 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('id="coinMaturityMatrix"', self.server.HTML)
         self.assertIn('FROM MINED TIMESTAMP', self.server.HTML)
         self.assertIn('MISSING SAMPLES ARE UNKNOWN', self.server.HTML)
-        self.assertIn('RATUM PRIME DOES NOT PUBLISH ACCEPTED / REJECTED / STALE', self.server.HTML)
+        self.assertNotIn('SHARE ACCEPTANCE', self.server.HTML)
+        self.assertNotIn('RATUM PRIME DOES NOT PUBLISH ACCEPTED / REJECTED / STALE', self.server.HTML)
         self.assertIn('staxsats-xbt-pool/icon-v0264.png', self.server.HTML)
         self.assertIn('@media(min-width:821px)', self.server.HTML)
         self.assertIn('width:min(calc(100% - 32px),1080px)', self.server.HTML)
@@ -438,8 +439,8 @@ class TerminusServerTests(unittest.TestCase):
         now = 1_800_000_000
         day = 24 * 60 * 60
         maturity = self.server.build_coin_maturity([
-            {"height": 100, "found_at": now - 10 * day},
-            {"height": 90, "found_at": now - 50 * day},
+            {"height": 100, "found_at": now - 10 * day, "confirmations": 50},
+            {"height": 90, "found_at": now - 50 * day, "confirmations": 100},
         ], now=now)
         self.assertEqual(maturity["basis"], "block-found-timestamp-plus-45-days")
         self.assertEqual(maturity["periodDays"], 45)
@@ -447,6 +448,7 @@ class TerminusServerTests(unittest.TestCase):
         self.assertEqual(maturity["matureBlocks"], 1)
         self.assertEqual(maturity["nextMaturityHeight"], 100)
         self.assertEqual(maturity["blocks"][1]["remainingSeconds"], 35 * day)
+        self.assertEqual(maturity["blocks"][1]["confirmations"], 50)
         self.assertAlmostEqual(
             maturity["blocks"][1]["progressPercent"],
             10 * 100 / 45,

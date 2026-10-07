@@ -4,7 +4,7 @@ name: Terminus Pool
 tagline: The last word in mining
 icon: https://raw.githubusercontent.com/StaxSats133/staxsats-umbrel-app-store/main/staxsats-xbt-pool/icon-v0264.png
 category: bitcoin
-version: "0.2.68"
+version: "0.2.69"
 port: 8081
 description: >-
   Terminus Pool is an XBT BLAKE2b mining pool dashboard for DATUM.
@@ -19,11 +19,11 @@ repo: https://github.com/StaxSats133/staxsats-umbrel-app-store
 support: https://github.com/StaxSats133/staxsats-umbrel-app-store/issues
 gallery: []
 releaseNotes: >-
-  Terminus Pool v0.2.68 adds a Reliability Command Center with persistent 1-hour
+  Terminus Pool v0.2.69 adds a Reliability Command Center with persistent 1-hour
   and 24-hour telemetry coverage, a per-block 45-day reward maturity tracker based
   on each mined timestamp, mining-signal visibility, collector freshness, gap
-  detection, RATUM runtime health, and explicit disclosure when upstream
-  share-acceptance counters are unavailable.
+  detection, and RATUM runtime health. This release also removes the unavailable
+  share-acceptance card from the dashboard UI.
 dependencies: []
 path: ""
 defaultUsername: ""

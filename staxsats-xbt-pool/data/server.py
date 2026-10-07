@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.68"
+RELEASE_VERSION = "0.2.69"
 RELIABILITY_WINDOWS = {
     "1h": 60 * 60,
     "24h": 24 * 60 * 60,
@@ -672,6 +672,7 @@ def build_coin_maturity(recent_blocks, now=None):
         mature_at = found_at + MATURITY_PERIOD_SECONDS
         maturity_blocks.append({
             "height": int(_number(block.get("height", 0))),
+            "confirmations": int(_number(block.get("confirmations", 0))),
             "foundAt": found_at,
             "matureAt": mature_at,
             "elapsedSeconds": min(MATURITY_PERIOD_SECONDS, elapsed),
@@ -2008,6 +2009,48 @@ h1{
   font-size:9px;
   line-height:1.5
 }
+.maturityGrid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px
+}
+.maturityCard{
+  border:1px solid #5d4924;
+  background:linear-gradient(145deg,#151006,#080b10);
+  padding:17px;
+  min-width:0
+}
+.maturityHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px
+}
+.maturityHeight{color:var(--gold);font-size:13px;font-weight:1000;letter-spacing:.1em}
+.maturityStatus{color:#9ab0b8;font-size:9px;font-weight:900;letter-spacing:.12em}
+.maturityStatus.complete{color:var(--green)}
+.maturityProgress{
+  height:10px;
+  margin-top:14px;
+  border:1px solid #5d4924;
+  background:#05080c;
+  overflow:hidden
+}
+.maturityProgress>span{
+  display:block;
+  height:100%;
+  background:linear-gradient(90deg,#ffb82e,var(--gold));
+  box-shadow:0 0 12px #ffd16655
+}
+.maturityFacts{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:9px;
+  margin-top:14px
+}
+.maturityFact{border-top:1px solid #3e321e;padding-top:8px;min-width:0}
+.maturityFact span{display:block;color:#7895a0;font-size:8px;letter-spacing:.12em}
+.maturityFact strong{display:block;margin-top:4px;color:#d8e3e6;font-size:10px;overflow-wrap:anywhere}
 .poolHashrateGraph{
   margin-top:0;
   box-shadow:inset 0 0 35px #43f5ff08
@@ -2077,6 +2120,7 @@ footer{
     .advancedFold>.advancedFoldBody{padding:0 14px 16px}
     .advancedFold .sectionTitle{margin-top:18px!important}
   .shell{padding:20px 14px 45px}
+  .maturityGrid{grid-template-columns:1fr}
   header{align-items:flex-start}
   .badge{width:58px;height:58px;flex-basis:58px;font-size:18px}
   h1{font-size:clamp(22px,7.2vw,34px)}
@@ -4343,7 +4387,7 @@ html.stasis .neuralRain{opacity:0}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.68</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.69</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
@@ -4822,8 +4866,12 @@ html.stasis .neuralRain{opacity:0}
   <div class="sectionTitle" id="reliabilityTitle">RELIABILITY COMMAND CENTER // OBSERVED TELEMETRY</div>
   <div id="reliabilityMatrix" class="healthMatrix" aria-live="polite"></div>
   <div class="leaderboardBestNote"><strong>OBSERVATION BASIS</strong> = ONE-MINUTE COLLECTOR SAMPLES. COVERAGE MEASURES TELEMETRY AVAILABILITY; MINING SIGNAL MEASURES SAMPLES WITH LIVE MINERS AND NON-ZERO HASHRATE. MISSING SAMPLES ARE UNKNOWN — NOT CLAIMED AS POOL DOWNTIME.</div>
+</section>
+
+<section class="maturitySection" aria-labelledby="maturityTitle">
   <div class="sectionTitle" id="maturityTitle">45-DAY BLOCK REWARD MATURITY // FROM MINED TIMESTAMP</div>
-  <div id="coinMaturityMatrix" class="healthMatrix" aria-live="polite"></div>
+  <div id="maturitySummary" class="historySummary" aria-live="polite"></div>
+  <div id="coinMaturityMatrix" class="maturityGrid" aria-live="polite"></div>
   <div class="leaderboardBestNote"><strong>MATURITY BASIS</strong> = EACH REPORTED BLOCK’S MINED TIMESTAMP + 45 DAYS. THIS CLOCK IS INDEPENDENT OF DASHBOARD TELEMETRY HISTORY AND SURVIVES RESTARTS BECAUSE RATUM PRIME REMAINS THE READ-ONLY BLOCK SOURCE.</div>
 </section>
 
@@ -5480,6 +5528,32 @@ function reliabilityItem(name,value,detail,status="healthy"){
     <div class="healthState">${escapeHtml(value)}</div>
     <div class="healthDetail">${escapeHtml(detail)}</div>
   </div>`;
+}
+
+function maturityItem(block){
+  const progress=Math.min(100,Math.max(0,Number(block.progressPercent||0)));
+  const elapsed=Number(block.elapsedSeconds||0)/86400;
+  const remaining=Number(block.remainingSeconds||0)/86400;
+  const foundAt=Number(block.foundAt||0);
+  const matureAt=Number(block.matureAt||0);
+  const date=value=>value
+    ? new Date(value*1000).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"})
+    : "UNAVAILABLE";
+  return `<article class="maturityCard">
+    <div class="maturityHead">
+      <div class="maturityHeight">BLOCK ${escapeHtml(num(Number(block.height||0),0))}</div>
+      <div class="maturityStatus ${block.mature?"complete":""}">${block.mature?"MATURE":"MATURING"}</div>
+    </div>
+    <div class="maturityProgress" role="progressbar" aria-label="Block ${escapeHtml(num(Number(block.height||0),0))} maturity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${escapeHtml(num(progress,2))}"><span style="width:${progress}%"></span></div>
+    <div class="maturityFacts">
+      <div class="maturityFact"><span>PROGRESS</span><strong>${escapeHtml(num(progress,2))}%</strong></div>
+      <div class="maturityFact"><span>CONFIRMATIONS</span><strong>${escapeHtml(num(Number(block.confirmations||0),0))}</strong></div>
+      <div class="maturityFact"><span>MINED</span><strong>${escapeHtml(date(foundAt))}</strong></div>
+      <div class="maturityFact"><span>MATURES</span><strong>${escapeHtml(date(matureAt))}</strong></div>
+      <div class="maturityFact"><span>ELAPSED</span><strong>${escapeHtml(num(elapsed,1))} DAYS</strong></div>
+      <div class="maturityFact"><span>REMAINING</span><strong>${block.mature?"COMPLETE":escapeHtml(num(remaining,1))+" DAYS"}</strong></div>
+    </div>
+  </article>`;
 }
 
 function historyMetric(label,value){
@@ -6341,14 +6415,10 @@ async function refresh(){
     const coverage=Number(day.coveragePercent||0);
     const signal=Number(day.miningSignalPercent||0);
     const gaps=Number(day.gapIncidents||0);
-    const shares=reliability.shareAccounting||{};
     const primeReliability=reliability.prime||{};
     const coinMaturity=reliability.coinMaturity||{};
     const maturityBlocks=Array.isArray(coinMaturity.blocks)?coinMaturity.blocks:[];
     const pendingBlocks=Number(coinMaturity.pendingBlocks||0);
-    const nextRemaining=maturityBlocks
-      .filter(block=>!block.mature)
-      .reduce((best,block)=>Math.min(best,Number(block.remainingSeconds||0)),Infinity);
     const coverageState=coverage>=98?"healthy":coverage>=90?"degraded":"offline";
     const freshnessState=Number.isFinite(age)&&age<=150?"healthy":Number.isFinite(age)&&age<=300?"degraded":"offline";
     $("reliabilityMatrix").innerHTML=
@@ -6356,24 +6426,17 @@ async function refresh(){
       reliabilityItem("24H MINING SIGNAL",num(signal,2)+"%","EXPECTED MINUTES WITH HASHRATE + MINERS",signal>0?"healthy":"degraded")+
       reliabilityItem("LATEST SAMPLE AGE",Number.isFinite(age)?num(age,0)+" SEC":"UNAVAILABLE","COLLECTOR DATABASE FRESHNESS",freshnessState)+
       reliabilityItem("24H COLLECTION GAPS",num(gaps,0),`LONGEST ${num(Number(day.longestMissingSeconds||0)/60,0)} MIN`,gaps===0?"healthy":"degraded")+
-      reliabilityItem("45D BLOCK MATURITY",pendingBlocks?num(pendingBlocks,0)+" PENDING":num(Number(coinMaturity.matureBlocks||0),0)+" MATURE",pendingBlocks&&Number.isFinite(nextRemaining)?`NEXT IN ${num(nextRemaining/86400,1)} DAYS // HEIGHT ${num(Number(coinMaturity.nextMaturityHeight||0),0)}`:"NO PENDING REPORTED BLOCKS",pendingBlocks?"degraded":"healthy")+
-      reliabilityItem("RATUM PRIME RUNTIME",primeReliability.version||"UNKNOWN",`${num(Number(d.connections||0),0)} / ${num(Number(primeReliability.connectionCapacity||0),0)} CONNECTIONS // ${num(Number(primeReliability.nodeWarningCount||0),0)} WARNINGS`,Number(primeReliability.nodeWarningCount||0)===0?"healthy":"degraded")+
-      reliabilityItem("SHARE ACCEPTANCE",shares.available?"AVAILABLE":"NOT EXPOSED",shares.available?"UPSTREAM COUNTERS PRESENT":"RATUM PRIME DOES NOT PUBLISH ACCEPTED / REJECTED / STALE",shares.available?"healthy":"unknown");
+      reliabilityItem("RATUM PRIME RUNTIME",primeReliability.version||"UNKNOWN",`${num(Number(d.connections||0),0)} / ${num(Number(primeReliability.connectionCapacity||0),0)} CONNECTIONS // ${num(Number(primeReliability.nodeWarningCount||0),0)} WARNINGS`,Number(primeReliability.nodeWarningCount||0)===0?"healthy":"degraded");
+
+    const nextMaturityAt=Number(coinMaturity.nextMaturityAt||0);
+    $("maturitySummary").innerHTML=
+      historyMetric("MATURITY PERIOD","45 DAYS")+
+      historyMetric("BLOCKS MATURING",num(pendingBlocks,0))+
+      historyMetric("NEXT BLOCK",coinMaturity.nextMaturityHeight?"#"+num(Number(coinMaturity.nextMaturityHeight),0):"NONE")+
+      historyMetric("NEXT MATURITY",nextMaturityAt?new Date(nextMaturityAt*1000).toLocaleDateString():"COMPLETE");
 
     $("coinMaturityMatrix").innerHTML=maturityBlocks.length
-      ? maturityBlocks.map(block=>{
-          const progress=Number(block.progressPercent||0);
-          const remaining=Number(block.remainingSeconds||0)/86400;
-          const matureAt=Number(block.matureAt||0);
-          return reliabilityItem(
-            "BLOCK "+num(Number(block.height||0),0),
-            block.mature?"MATURE":num(progress,2)+"%",
-            block.mature
-              ? "45-DAY MATURITY COMPLETE"
-              : `${num(remaining,1)} DAYS REMAINING // ${matureAt?new Date(matureAt*1000).toLocaleDateString():"DATE UNAVAILABLE"}`,
-            block.mature?"healthy":"degraded"
-          );
-        }).join("")
+      ? maturityBlocks.map(maturityItem).join("")
       : reliabilityItem("BLOCK REWARDS","AWAITING DATA","NO REPORTED MINED BLOCK TIMESTAMPS","unknown");
 
     const historySummary=d.historySummary||{};
@@ -7497,14 +7560,6 @@ class Handler(BaseHTTPRequestHandler):
                             "% observed 24h coverage"
                             if history_persistent
                             else "current-sample fallback active"
-                        ),
-                    },
-                    {
-                        "name": "SHARE ACCOUNTING",
-                        "status": "unknown",
-                        "detail": (
-                            "accepted / rejected / stale counters are not "
-                            "exposed by RATUM Prime"
                         ),
                     },
                 ]
