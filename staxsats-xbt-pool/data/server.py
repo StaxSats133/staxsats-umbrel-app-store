@@ -46,7 +46,13 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.67"
+RELEASE_VERSION = "0.2.68"
+RELIABILITY_WINDOWS = {
+    "1h": 60 * 60,
+    "24h": 24 * 60 * 60,
+}
+MATURITY_PERIOD_SECONDS = 45 * 24 * 60 * 60
+RELIABILITY_GAP_INCIDENT_SECONDS = 3 * 60
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -550,6 +556,153 @@ def load_history_summary(hours=24):
         "averageHashrate": float(row[1] or 0),
         "peakHashrate": float(row[2] or 0),
         "lowHashrate": float(row[3] or 0),
+    }
+
+
+def load_reliability_summary(now=None):
+    """Summarize collector observations without claiming service uptime.
+
+    Coverage is the fraction of expected one-minute samples that exist in the
+    local history database. Mining signal is the fraction of those expected
+    minutes where both non-zero hashrate and at least one live miner were
+    observed. Missing samples remain unknown, never inferred as downtime.
+    """
+    measured_at = int(time.time() if now is None else now)
+    current_minute = measured_at // 60 * 60
+    oldest_cutoff = current_minute - max(RELIABILITY_WINDOWS.values())
+
+    with HISTORY_LOCK:
+        with _history_connection() as connection:
+            earliest_row = connection.execute(
+                "SELECT MIN(minute) FROM pool_history"
+            ).fetchone()
+            rows = connection.execute(
+                """
+                SELECT minute, hashrate, miners
+                FROM pool_history
+                WHERE minute >= ? AND minute <= ?
+                ORDER BY minute ASC
+                """,
+                (oldest_cutoff, current_minute),
+            ).fetchall()
+
+    earliest = int(earliest_row[0]) if earliest_row and earliest_row[0] else 0
+    latest = int(rows[-1][0]) if rows else 0
+    windows = {}
+
+    for label, seconds in RELIABILITY_WINDOWS.items():
+        cutoff = current_minute - seconds + 60
+        tracking_start = max(cutoff, earliest) if earliest else cutoff
+        window_rows = [row for row in rows if row[0] >= tracking_start]
+        expected = (
+            max(0, ((current_minute - tracking_start) // 60) + 1)
+            if earliest else 0
+        )
+        observed = len(window_rows)
+        positive = sum(
+            1 for _, hashrate, miners in window_rows
+            if float(hashrate or 0) > 0 and int(miners or 0) > 0
+        )
+
+        missing_spans = []
+        if window_rows:
+            first_minute = int(window_rows[0][0])
+            head_missing = max(0, first_minute - tracking_start)
+            if head_missing:
+                missing_spans.append(head_missing)
+            for previous, current in zip(window_rows, window_rows[1:]):
+                missing = max(0, int(current[0]) - int(previous[0]) - 60)
+                if missing:
+                    missing_spans.append(missing)
+            tail_missing = max(0, current_minute - int(window_rows[-1][0]))
+            if tail_missing:
+                missing_spans.append(tail_missing)
+        elif expected:
+            missing_spans.append(expected * 60)
+
+        windows[label] = {
+            "expectedSamples": expected,
+            "observedSamples": observed,
+            "positiveSignalSamples": positive,
+            "coveragePercent": (
+                min(100.0, observed * 100.0 / expected) if expected else 0.0
+            ),
+            "miningSignalPercent": (
+                min(100.0, positive * 100.0 / expected) if expected else 0.0
+            ),
+            "gapIncidents": sum(
+                1 for span in missing_spans
+                if span >= RELIABILITY_GAP_INCIDENT_SECONDS
+            ),
+            "longestMissingSeconds": max(missing_spans, default=0),
+            "matureWindow": bool(earliest and earliest <= cutoff),
+        }
+
+    return {
+        "basis": "observed-one-minute-telemetry",
+        "trackingSince": earliest,
+        "latestSampleAt": latest,
+        "latestSampleAgeSeconds": (
+            max(0, measured_at - latest) if latest else None
+        ),
+        "gapIncidentThresholdSeconds": RELIABILITY_GAP_INCIDENT_SECONDS,
+        "windows": windows,
+        "definitions": {
+            "coverage": "observed one-minute samples divided by expected samples",
+            "miningSignal": (
+                "expected minutes with non-zero hashrate and at least one live miner"
+            ),
+            "missing": "unknown telemetry, not inferred pool downtime",
+        },
+    }
+
+
+def build_coin_maturity(recent_blocks, now=None):
+    """Build privacy-safe 45-day maturity clocks from mined-block timestamps."""
+    measured_at = int(time.time() if now is None else now)
+    maturity_blocks = []
+
+    for block in recent_blocks or []:
+        if not isinstance(block, dict):
+            continue
+        found_at = int(_number(block.get("found_at", 0)))
+        if found_at <= 0:
+            continue
+        elapsed = max(0, measured_at - found_at)
+        mature_at = found_at + MATURITY_PERIOD_SECONDS
+        maturity_blocks.append({
+            "height": int(_number(block.get("height", 0))),
+            "foundAt": found_at,
+            "matureAt": mature_at,
+            "elapsedSeconds": min(MATURITY_PERIOD_SECONDS, elapsed),
+            "remainingSeconds": max(0, mature_at - measured_at),
+            "progressPercent": min(
+                100.0,
+                elapsed * 100.0 / MATURITY_PERIOD_SECONDS,
+            ),
+            "mature": measured_at >= mature_at,
+        })
+
+    maturity_blocks.sort(key=lambda item: item["foundAt"])
+    pending = [item for item in maturity_blocks if not item["mature"]]
+    mature = [item for item in maturity_blocks if item["mature"]]
+    next_maturity = min(
+        pending,
+        key=lambda item: item["matureAt"],
+        default=None,
+    )
+    return {
+        "basis": "block-found-timestamp-plus-45-days",
+        "periodDays": 45,
+        "pendingBlocks": len(pending),
+        "matureBlocks": len(mature),
+        "nextMaturityAt": (
+            next_maturity["matureAt"] if next_maturity else 0
+        ),
+        "nextMaturityHeight": (
+            next_maturity["height"] if next_maturity else 0
+        ),
+        "blocks": maturity_blocks,
     }
 
 
@@ -1833,6 +1986,7 @@ h1{
 }
 .healthItem.degraded:before{background:var(--gold)}
 .healthItem.offline:before{background:#ff5975}
+.healthItem.unknown:before{background:#718b96}
 .healthName{
   color:#8eb4be;
   font-size:9px;
@@ -1847,6 +2001,7 @@ h1{
 }
 .healthItem.degraded .healthState{color:var(--gold)}
 .healthItem.offline .healthState{color:#ff7890}
+.healthItem.unknown .healthState{color:#9ab0b8}
 .healthDetail{
   margin-top:7px;
   color:#7895a0;
@@ -4188,7 +4343,7 @@ html.stasis .neuralRain{opacity:0}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.67</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.68</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
@@ -4662,6 +4817,15 @@ html.stasis .neuralRain{opacity:0}
 
 <div class="sectionTitle">POOL-TELEMETRY</div>
 <div id="telemetry" class="grid grid6"></div>
+
+<section aria-labelledby="reliabilityTitle">
+  <div class="sectionTitle" id="reliabilityTitle">RELIABILITY COMMAND CENTER // OBSERVED TELEMETRY</div>
+  <div id="reliabilityMatrix" class="healthMatrix" aria-live="polite"></div>
+  <div class="leaderboardBestNote"><strong>OBSERVATION BASIS</strong> = ONE-MINUTE COLLECTOR SAMPLES. COVERAGE MEASURES TELEMETRY AVAILABILITY; MINING SIGNAL MEASURES SAMPLES WITH LIVE MINERS AND NON-ZERO HASHRATE. MISSING SAMPLES ARE UNKNOWN — NOT CLAIMED AS POOL DOWNTIME.</div>
+  <div class="sectionTitle" id="maturityTitle">45-DAY BLOCK REWARD MATURITY // FROM MINED TIMESTAMP</div>
+  <div id="coinMaturityMatrix" class="healthMatrix" aria-live="polite"></div>
+  <div class="leaderboardBestNote"><strong>MATURITY BASIS</strong> = EACH REPORTED BLOCK’S MINED TIMESTAMP + 45 DAYS. THIS CLOCK IS INDEPENDENT OF DASHBOARD TELEMETRY HISTORY AND SURVIVES RESTARTS BECAUSE RATUM PRIME REMAINS THE READ-ONLY BLOCK SOURCE.</div>
+</section>
 
 <details class="advancedFold">
   <summary>ADVANCED OPERATOR HEALTH</summary>
@@ -5296,14 +5460,25 @@ function card(label,value,cls=""){
 
 function healthItem(component){
   const state=String(component.status||"offline").toLowerCase();
-  const safeState=["healthy","degraded","offline"].includes(state)
+  const safeState=["healthy","degraded","offline","unknown"].includes(state)
     ? state
     : "offline";
 
   return `<div class="healthItem ${safeState}">
-    <div class="healthName">${component.name||"UNKNOWN COMPONENT"}</div>
+    <div class="healthName">${escapeHtml(component.name||"UNKNOWN COMPONENT")}</div>
     <div class="healthState">${safeState.toUpperCase()}</div>
-    <div class="healthDetail">${component.detail||"NO TELEMETRY"}</div>
+    <div class="healthDetail">${escapeHtml(component.detail||"NO TELEMETRY")}</div>
+  </div>`;
+}
+
+function reliabilityItem(name,value,detail,status="healthy"){
+  const safeState=["healthy","degraded","offline","unknown"].includes(status)
+    ? status
+    : "unknown";
+  return `<div class="healthItem ${safeState}">
+    <div class="healthName">${escapeHtml(name)}</div>
+    <div class="healthState">${escapeHtml(value)}</div>
+    <div class="healthDetail">${escapeHtml(detail)}</div>
   </div>`;
 }
 
@@ -6158,6 +6333,49 @@ async function refresh(){
       .map(healthItem)
       .join("");
 
+    const reliability=d.reliability||{};
+    const windows=reliability.windows||{};
+    const day=windows["24h"]||{};
+    const ageAvailable=reliability.latestSampleAgeSeconds!==null&&reliability.latestSampleAgeSeconds!==undefined;
+    const age=ageAvailable?Number(reliability.latestSampleAgeSeconds):NaN;
+    const coverage=Number(day.coveragePercent||0);
+    const signal=Number(day.miningSignalPercent||0);
+    const gaps=Number(day.gapIncidents||0);
+    const shares=reliability.shareAccounting||{};
+    const primeReliability=reliability.prime||{};
+    const coinMaturity=reliability.coinMaturity||{};
+    const maturityBlocks=Array.isArray(coinMaturity.blocks)?coinMaturity.blocks:[];
+    const pendingBlocks=Number(coinMaturity.pendingBlocks||0);
+    const nextRemaining=maturityBlocks
+      .filter(block=>!block.mature)
+      .reduce((best,block)=>Math.min(best,Number(block.remainingSeconds||0)),Infinity);
+    const coverageState=coverage>=98?"healthy":coverage>=90?"degraded":"offline";
+    const freshnessState=Number.isFinite(age)&&age<=150?"healthy":Number.isFinite(age)&&age<=300?"degraded":"offline";
+    $("reliabilityMatrix").innerHTML=
+      reliabilityItem("24H TELEMETRY COVERAGE",num(coverage,2)+"%",`${day.observedSamples||0} / ${day.expectedSamples||0} SAMPLES`,coverageState)+
+      reliabilityItem("24H MINING SIGNAL",num(signal,2)+"%","EXPECTED MINUTES WITH HASHRATE + MINERS",signal>0?"healthy":"degraded")+
+      reliabilityItem("LATEST SAMPLE AGE",Number.isFinite(age)?num(age,0)+" SEC":"UNAVAILABLE","COLLECTOR DATABASE FRESHNESS",freshnessState)+
+      reliabilityItem("24H COLLECTION GAPS",num(gaps,0),`LONGEST ${num(Number(day.longestMissingSeconds||0)/60,0)} MIN`,gaps===0?"healthy":"degraded")+
+      reliabilityItem("45D BLOCK MATURITY",pendingBlocks?num(pendingBlocks,0)+" PENDING":num(Number(coinMaturity.matureBlocks||0),0)+" MATURE",pendingBlocks&&Number.isFinite(nextRemaining)?`NEXT IN ${num(nextRemaining/86400,1)} DAYS // HEIGHT ${num(Number(coinMaturity.nextMaturityHeight||0),0)}`:"NO PENDING REPORTED BLOCKS",pendingBlocks?"degraded":"healthy")+
+      reliabilityItem("RATUM PRIME RUNTIME",primeReliability.version||"UNKNOWN",`${num(Number(d.connections||0),0)} / ${num(Number(primeReliability.connectionCapacity||0),0)} CONNECTIONS // ${num(Number(primeReliability.nodeWarningCount||0),0)} WARNINGS`,Number(primeReliability.nodeWarningCount||0)===0?"healthy":"degraded")+
+      reliabilityItem("SHARE ACCEPTANCE",shares.available?"AVAILABLE":"NOT EXPOSED",shares.available?"UPSTREAM COUNTERS PRESENT":"RATUM PRIME DOES NOT PUBLISH ACCEPTED / REJECTED / STALE",shares.available?"healthy":"unknown");
+
+    $("coinMaturityMatrix").innerHTML=maturityBlocks.length
+      ? maturityBlocks.map(block=>{
+          const progress=Number(block.progressPercent||0);
+          const remaining=Number(block.remainingSeconds||0)/86400;
+          const matureAt=Number(block.matureAt||0);
+          return reliabilityItem(
+            "BLOCK "+num(Number(block.height||0),0),
+            block.mature?"MATURE":num(progress,2)+"%",
+            block.mature
+              ? "45-DAY MATURITY COMPLETE"
+              : `${num(remaining,1)} DAYS REMAINING // ${matureAt?new Date(matureAt*1000).toLocaleDateString():"DATE UNAVAILABLE"}`,
+            block.mature?"healthy":"degraded"
+          );
+        }).join("")
+      : reliabilityItem("BLOCK REWARDS","AWAITING DATA","NO REPORTED MINED BLOCK TIMESTAMPS","unknown");
+
     const historySummary=d.historySummary||{};
     $("historySummary").innerHTML=
       historyMetric(
@@ -6986,6 +7204,17 @@ class Handler(BaseHTTPRequestHandler):
                         max_miner_work > 0
                     )
                 )
+                node_warnings = prime.get("node_warnings", [])
+                if isinstance(node_warnings, (list, tuple, dict)):
+                    node_warning_count = len(node_warnings)
+                else:
+                    node_warning_count = int(_number(node_warnings))
+                prime_version = str(
+                    prime.get("version", "") or
+                    prime.get("ratum_version", "") or
+                    pool.get("version", "") or
+                    "unknown"
+                ).strip()
 
                 data={
                     "accountQuery":
@@ -7114,7 +7343,19 @@ class Handler(BaseHTTPRequestHandler):
                     } if last_block else {},
 
                     "lastBlockAt":
-                        last_block_at
+                        last_block_at,
+
+                    "primeTelemetry": {
+                        "version": prime_version,
+                        "generatedAt": int(_number(prime.get("generated_at", 0))),
+                        "nodeWarningCount": node_warning_count,
+                        "connectionCapacity": int(
+                            _number(prime_connections.get("max", 0))
+                        ),
+                        "observedBlockSeconds": float(
+                            _number(network.get("observed_block_seconds", 0))
+                        ),
+                    },
                 }
 
                 history_persistent = True
@@ -7168,6 +7409,43 @@ class Handler(BaseHTTPRequestHandler):
                     }
 
                 chain_height = int(data.get("height",0) or 0)
+                try:
+                    reliability = load_reliability_summary()
+                except Exception:
+                    reliability = {
+                        "basis": "observed-one-minute-telemetry",
+                        "trackingSince": 0,
+                        "latestSampleAt": 0,
+                        "latestSampleAgeSeconds": None,
+                        "gapIncidentThresholdSeconds": (
+                            RELIABILITY_GAP_INCIDENT_SECONDS
+                        ),
+                        "windows": {},
+                    }
+                reliability["prime"] = data["primeTelemetry"]
+                reliability["coinMaturity"] = build_coin_maturity(
+                    recent_blocks
+                )
+                reliability["shareAccounting"] = {
+                    "available": False,
+                    "accepted": None,
+                    "rejected": None,
+                    "stale": None,
+                    "reason": (
+                        "RATUM Prime does not expose pool accepted, rejected, "
+                        "or stale share counters"
+                    ),
+                }
+                data["reliability"] = reliability
+                day_reliability = reliability.get("windows", {}).get(
+                    "24h", {}
+                )
+                telemetry_coverage = float(
+                    day_reliability.get("coveragePercent", 0) or 0
+                )
+                latest_sample_age = reliability.get(
+                    "latestSampleAgeSeconds"
+                )
 
                 if response_view != "live":
                     data["history24h"] = history_points
@@ -7180,10 +7458,15 @@ class Handler(BaseHTTPRequestHandler):
                 data["health"] = [
                     {
                         "name": "RATUM PRIME",
-                        "status": "healthy",
+                        "status": (
+                            "healthy" if node_warning_count == 0
+                            else "degraded"
+                        ),
                         "detail": (
+                            prime_version + " // " +
                             str(pool_miner_count) +
-                            " miners represented in payout window"
+                            " live miners // " +
+                            str(node_warning_count) + " node warnings"
                         ),
                     },
                     {
@@ -7198,15 +7481,30 @@ class Handler(BaseHTTPRequestHandler):
                         ),
                     },
                     {
-                        "name": "24H HISTORY",
+                        "name": "TELEMETRY COLLECTOR",
                         "status": (
-                            "healthy" if history_persistent else "degraded"
+                            "healthy"
+                            if (
+                                history_persistent and
+                                latest_sample_age is not None and
+                                latest_sample_age <= 150 and
+                                telemetry_coverage >= 98
+                            )
+                            else "degraded"
                         ),
                         "detail": (
-                            str(history_summary.get("samples",0)) +
-                            " durable samples"
+                            format(telemetry_coverage, ".2f") +
+                            "% observed 24h coverage"
                             if history_persistent
                             else "current-sample fallback active"
+                        ),
+                    },
+                    {
+                        "name": "SHARE ACCOUNTING",
+                        "status": "unknown",
+                        "detail": (
+                            "accepted / rejected / stale counters are not "
+                            "exposed by RATUM Prime"
                         ),
                     },
                 ]

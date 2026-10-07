@@ -31,7 +31,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.67")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.68")
         self.assertIn('<title>TERMINUS POOL // DATUM</title>', self.server.HTML)
         self.assertIn('content="Terminus Pool // DATUM"', self.server.HTML)
         self.assertIn(
@@ -47,6 +47,13 @@ class TerminusServerTests(unittest.TestCase):
             self.server.HTML,
         )
         self.assertNotIn('DATUM-first XBT BLAKE2b mining', self.server.HTML)
+        self.assertIn('RELIABILITY COMMAND CENTER', self.server.HTML)
+        self.assertIn('id="reliabilityMatrix"', self.server.HTML)
+        self.assertIn('45-DAY BLOCK REWARD MATURITY', self.server.HTML)
+        self.assertIn('id="coinMaturityMatrix"', self.server.HTML)
+        self.assertIn('FROM MINED TIMESTAMP', self.server.HTML)
+        self.assertIn('MISSING SAMPLES ARE UNKNOWN', self.server.HTML)
+        self.assertIn('RATUM PRIME DOES NOT PUBLISH ACCEPTED / REJECTED / STALE', self.server.HTML)
         self.assertIn('staxsats-xbt-pool/icon-v0264.png', self.server.HTML)
         self.assertIn('@media(min-width:821px)', self.server.HTML)
         self.assertIn('width:min(calc(100% - 32px),1080px)', self.server.HTML)
@@ -388,6 +395,63 @@ class TerminusServerTests(unittest.TestCase):
         self.assertEqual(len(points), 1)
         self.assertEqual(summary["samples"], 1)
         self.assertEqual(self.server.load_history_summary()["samples"], 1)
+
+    def test_reliability_summary_counts_coverage_signal_and_gaps(self):
+        now = 1_800_000_600
+        samples = [
+            (now - 600, 12.5, 2),
+            (now - 540, 12.0, 2),
+            (now - 480, 0, 0),
+            (now - 240, 11.0, 2),
+            (now - 180, 10.0, 1),
+            (now - 120, 10.5, 1),
+            (now - 60, 11.5, 2),
+            (now, 12.5, 2),
+        ]
+        for sampled_at, hashrate, miners in samples:
+            self.server.record_history({
+                "hashrate": hashrate,
+                "poolMiners": miners,
+                "connections": miners,
+                "height": 974025,
+            }, now=sampled_at)
+
+        summary = self.server.load_reliability_summary(now=now)
+        day = summary["windows"]["24h"]
+        self.assertEqual(day["expectedSamples"], 11)
+        self.assertEqual(day["observedSamples"], 8)
+        self.assertEqual(day["positiveSignalSamples"], 7)
+        self.assertAlmostEqual(day["coveragePercent"], 800 / 11)
+        self.assertAlmostEqual(day["miningSignalPercent"], 700 / 11)
+        self.assertEqual(day["gapIncidents"], 1)
+        self.assertEqual(day["longestMissingSeconds"], 180)
+        self.assertFalse(day["matureWindow"])
+        self.assertEqual(summary["latestSampleAgeSeconds"], 0)
+        restarted = load_server(self.temp.name)
+        persisted = restarted.load_reliability_summary(now=now)
+        self.assertEqual(
+            persisted["windows"]["24h"]["observedSamples"],
+            8,
+        )
+
+    def test_coin_maturity_starts_from_each_block_mined_timestamp(self):
+        now = 1_800_000_000
+        day = 24 * 60 * 60
+        maturity = self.server.build_coin_maturity([
+            {"height": 100, "found_at": now - 10 * day},
+            {"height": 90, "found_at": now - 50 * day},
+        ], now=now)
+        self.assertEqual(maturity["basis"], "block-found-timestamp-plus-45-days")
+        self.assertEqual(maturity["periodDays"], 45)
+        self.assertEqual(maturity["pendingBlocks"], 1)
+        self.assertEqual(maturity["matureBlocks"], 1)
+        self.assertEqual(maturity["nextMaturityHeight"], 100)
+        self.assertEqual(maturity["blocks"][1]["remainingSeconds"], 35 * day)
+        self.assertAlmostEqual(
+            maturity["blocks"][1]["progressPercent"],
+            10 * 100 / 45,
+        )
+        self.assertTrue(maturity["blocks"][0]["mature"])
 
     def test_block_effort_persists_and_resets_only_on_new_block(self):
         base = {
