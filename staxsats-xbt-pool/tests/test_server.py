@@ -31,7 +31,22 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.66")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.67")
+        self.assertIn('<title>TERMINUS POOL // DATUM</title>', self.server.HTML)
+        self.assertIn('content="Terminus Pool // DATUM"', self.server.HTML)
+        self.assertIn(
+            'content="Non-custodial DATUM mining with live pool telemetry."',
+            self.server.HTML,
+        )
+        self.assertNotIn(
+            'property="og:title" content="Terminus Pool // XBT"',
+            self.server.HTML,
+        )
+        self.assertNotIn(
+            'name="twitter:title" content="Terminus Pool // XBT"',
+            self.server.HTML,
+        )
+        self.assertNotIn('DATUM-first XBT BLAKE2b mining', self.server.HTML)
         self.assertIn('staxsats-xbt-pool/icon-v0264.png', self.server.HTML)
         self.assertIn('@media(min-width:821px)', self.server.HTML)
         self.assertIn('width:min(calc(100% - 32px),1080px)', self.server.HTML)

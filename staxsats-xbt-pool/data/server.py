@@ -46,7 +46,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.66"
+RELEASE_VERSION = "0.2.67"
 HASHES_PER_DIFFICULTY = 4_294_967_296.0
 BLOCK_EFFORT_MAX_SAMPLE_GAP = 5 * 60
 BLOCK_CELEBRATION_SECONDS = 24 * 60 * 60
@@ -1073,18 +1073,18 @@ HTML = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TERMINUS POOL // XBT</title>
-<meta name="description" content="Terminus Pool is a non-custodial, DATUM-native XBT BLAKE2b mining pool with live telemetry and public DATUM access.">
+<title>TERMINUS POOL // DATUM</title>
+<meta name="description" content="Terminus Pool is a non-custodial DATUM mining pool with live telemetry and public DATUM access.">
 <meta name="theme-color" content="#050912">
 <link rel="canonical" href="https://terminuspool.xyz/">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Terminus Pool // XBT">
-<meta property="og:description" content="Non-custodial, DATUM-first XBT BLAKE2b mining with live pool telemetry.">
+<meta property="og:title" content="Terminus Pool // DATUM">
+<meta property="og:description" content="Non-custodial DATUM mining with live pool telemetry.">
 <meta property="og:url" content="https://terminuspool.xyz/">
 <meta property="og:image" content="https://raw.githubusercontent.com/StaxSats133/staxsats-umbrel-app-store/main/staxsats-xbt-pool/icon-v0264.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Terminus Pool // XBT">
-<meta name="twitter:description" content="Non-custodial, DATUM-first XBT BLAKE2b mining with live pool telemetry.">
+<meta name="twitter:title" content="Terminus Pool // DATUM">
+<meta name="twitter:description" content="Non-custodial DATUM mining with live pool telemetry.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23050912'/%3E%3Cpath d='M14 16h36v9H37v25H27V25H14z' fill='%2343f5ff'/%3E%3C/svg%3E">
 <style>
 :root{
@@ -4188,7 +4188,7 @@ html.stasis .neuralRain{opacity:0}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.66</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.67</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
