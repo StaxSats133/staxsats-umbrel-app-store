@@ -31,7 +31,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.69")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.70")
         self.assertIn('<title>TERMINUS POOL // DATUM</title>', self.server.HTML)
         self.assertIn('content="Terminus Pool // DATUM"', self.server.HTML)
         self.assertIn(
@@ -52,6 +52,8 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('45-DAY BLOCK REWARD MATURITY', self.server.HTML)
         self.assertIn('id="coinMaturityMatrix"', self.server.HTML)
         self.assertIn('FROM MINED TIMESTAMP', self.server.HTML)
+        self.assertIn('MY MINER // ROLLING 24 HOURS', self.server.HTML)
+        self.assertIn('id="personalMinerDashboard"', self.server.HTML)
         self.assertIn('MISSING SAMPLES ARE UNKNOWN', self.server.HTML)
         self.assertNotIn('SHARE ACCEPTANCE', self.server.HTML)
         self.assertNotIn('RATUM PRIME DOES NOT PUBLISH ACCEPTED / REJECTED / STALE', self.server.HTML)
@@ -454,6 +456,50 @@ class TerminusServerTests(unittest.TestCase):
             10 * 100 / 45,
         )
         self.assertTrue(maturity["blocks"][0]["mature"])
+
+    def test_personal_miner_dashboard_is_scoped_and_counts_missing_as_zero(self):
+        now = 1_800_000_600
+        identity = "bc1qpersonaltestaddress000000000000000000"
+        fingerprint = self.server._identity_fingerprint(identity)
+        for sampled_at in (now - 120, now - 60, now):
+            self.server.record_history({
+                "hashrate": 10,
+                "poolMiners": 2,
+                "connections": 2,
+                "height": 974025,
+            }, now=sampled_at)
+        with self.server._history_connection() as connection:
+            connection.executemany(
+                """
+                INSERT INTO miner_activity (
+                    minute, identity_hash, worker_tag, hashrate_hs,
+                    work, best_share, target_work
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    (now - 120, fingerprint, "PERSONAL", 3e12, 10, 50, 100),
+                    (now - 60, fingerprint, "PERSONAL", 0, 10, 30, 100),
+                ],
+            )
+            connection.execute(
+                """
+                INSERT INTO miner_best_share (
+                    identity_hash, best_share, first_seen_at, updated_at
+                ) VALUES (?, ?, ?, ?)
+                """,
+                (fingerprint, 100, now - 120, now - 60),
+            )
+        dashboard = self.server.load_miner_dashboard(identity, now=now)
+        self.assertTrue(dashboard["available"])
+        self.assertEqual(dashboard["trackedSamples"], 3)
+        self.assertEqual(dashboard["activeMinutes"], 1)
+        self.assertAlmostEqual(dashboard["activityPercent"], 100 / 3)
+        self.assertEqual(dashboard["averageHashrateThs"], 1)
+        self.assertEqual(dashboard["peakHashrateThs"], 3)
+        self.assertEqual(dashboard["sampledBestShare"], 50)
+        self.assertEqual(dashboard["allTimeBestShare"], 100)
+        self.assertEqual(len(dashboard["points"]), 3)
+        self.assertNotIn(identity, str(dashboard))
 
     def test_block_effort_persists_and_resets_only_on_new_block(self):
         base = {

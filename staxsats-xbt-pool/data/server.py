@@ -6,6 +6,7 @@ import hashlib
 import json
 import math
 import os
+import re
 import sqlite3
 import threading
 import time
@@ -46,7 +47,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.69"
+RELEASE_VERSION = "0.2.70"
 RELIABILITY_WINDOWS = {
     "1h": 60 * 60,
     "24h": 24 * 60 * 60,
@@ -904,6 +905,94 @@ def load_stable_tags(raw_miners):
     return {
         identity: by_hash.get(fingerprint, "")
         for identity, fingerprint in pairs
+    }
+
+
+def load_miner_dashboard(identity, now=None, max_points=288):
+    """Return 24h history for one explicitly requested payout identity."""
+    identity_hash = _identity_fingerprint(identity)
+    if not identity_hash:
+        return {"available": False}
+    measured_at = int(time.time() if now is None else now)
+    cutoff = measured_at - LEADERBOARD_WINDOW_SECONDS
+
+    with HISTORY_LOCK:
+        with _history_connection() as connection:
+            pool_minutes = [
+                int(row[0]) for row in connection.execute(
+                    "SELECT minute FROM pool_history WHERE minute >= ? "
+                    "ORDER BY minute ASC",
+                    (cutoff,),
+                ).fetchall()
+            ]
+            activity_rows = connection.execute(
+                """
+                SELECT minute, hashrate_hs, best_share
+                FROM miner_activity
+                WHERE identity_hash = ? AND minute >= ?
+                ORDER BY minute ASC
+                """,
+                (identity_hash, cutoff),
+            ).fetchall()
+            best_row = connection.execute(
+                """
+                SELECT best_share, first_seen_at, updated_at
+                FROM miner_best_share WHERE identity_hash = ?
+                """,
+                (identity_hash,),
+            ).fetchone()
+
+    activity = {
+        int(minute): (max(0.0, _number(hashrate_hs)), max(0.0, _number(best)))
+        for minute, hashrate_hs, best in activity_rows
+    }
+    if not pool_minutes:
+        pool_minutes = sorted(activity)
+    full_points = [
+        {
+            "ts": minute,
+            "hashrateThs": activity.get(minute, (0.0, 0.0))[0] /
+            1_000_000_000_000,
+        }
+        for minute in pool_minutes
+    ]
+    active_points = [point for point in full_points if point["hashrateThs"] > 0]
+    total_samples = len(full_points)
+    stride = max(1, math.ceil(total_samples / max_points)) if total_samples else 1
+    points = full_points[::stride]
+    if full_points and points[-1] != full_points[-1]:
+        points.append(full_points[-1])
+    points = points[-max_points:]
+    total_hashrate = sum(point["hashrateThs"] for point in full_points)
+    last_active = max(
+        (point["ts"] for point in active_points),
+        default=0,
+    )
+    sampled_best = max(
+        (best for _, best in activity.values()),
+        default=0.0,
+    )
+    return {
+        "available": total_samples > 0,
+        "windowHours": 24,
+        "basis": "one-minute-pool-observations-missing-account-samples-zero",
+        "trackedSamples": total_samples,
+        "activeMinutes": len(active_points),
+        "activityPercent": (
+            len(active_points) * 100.0 / total_samples if total_samples else 0.0
+        ),
+        "averageHashrateThs": (
+            total_hashrate / total_samples if total_samples else 0.0
+        ),
+        "peakHashrateThs": max(
+            (point["hashrateThs"] for point in full_points),
+            default=0.0,
+        ),
+        "sampledBestShare": sampled_best,
+        "lastActiveAt": last_active,
+        "allTimeBestShare": float(best_row[0] or 0) if best_row else sampled_best,
+        "allTimeTrackingSince": int(best_row[1] or 0) if best_row else 0,
+        "points": points,
     }
 
 
@@ -2051,6 +2140,26 @@ h1{
 .maturityFact{border-top:1px solid #3e321e;padding-top:8px;min-width:0}
 .maturityFact span{display:block;color:#7895a0;font-size:8px;letter-spacing:.12em}
 .maturityFact strong{display:block;margin-top:4px;color:#d8e3e6;font-size:10px;overflow-wrap:anywhere}
+.personalMinerDashboard{
+  display:none;
+  margin-top:18px;
+  border:1px solid #183f4a;
+  background:linear-gradient(145deg,#07131b,#050b11);
+  padding:16px
+}
+.personalMinerGraph{
+  width:100%;
+  height:150px;
+  margin-top:12px;
+  border:1px solid #143842;
+  background:#040a10
+}
+.personalMinerGraph polyline{
+  fill:none;
+  stroke:var(--cyan);
+  stroke-width:3;
+  vector-effect:non-scaling-stroke
+}
 .poolHashrateGraph{
   margin-top:0;
   box-shadow:inset 0 0 35px #43f5ff08
@@ -4387,7 +4496,7 @@ html.stasis .neuralRain{opacity:0}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.69</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.70</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
@@ -4905,6 +5014,15 @@ html.stasis .neuralRain{opacity:0}
 </div>
 
 <div id="miner" class="grid grid4" style="display:none"></div>
+
+<section id="personalMinerDashboard" class="personalMinerDashboard" aria-labelledby="personalMinerTitle">
+  <div class="sectionTitle" id="personalMinerTitle">MY MINER // ROLLING 24 HOURS</div>
+  <div id="personalMinerSummary" class="historySummary"></div>
+  <svg class="personalMinerGraph" viewBox="0 0 1000 150" role="img" aria-label="Personal miner 24-hour hashrate history">
+    <polyline id="personalMinerGraphLine" points=""></polyline>
+  </svg>
+  <div id="personalMinerFreshness" class="leaderboardBestNote"></div>
+</section>
 
 <div class="accountHint">
   VALID CONFIRMS THE XBT PAYOUT ADDRESS FORMAT ONLY // IF BLOCK FOUND NOW IS
@@ -5561,6 +5679,22 @@ function historyMetric(label,value){
     <div class="label">${label}</div>
     <div class="value">${value}</div>
   </div>`;
+}
+
+function drawPersonalMinerHistory(points){
+  const line=$("personalMinerGraphLine");
+  if(!line)return;
+  const samples=Array.isArray(points)?points:[];
+  const peak=Math.max(0,...samples.map(point=>Number(point.hashrateThs||0)));
+  if(!samples.length||peak<=0){
+    line.setAttribute("points","");
+    return;
+  }
+  line.setAttribute("points",samples.map((point,index)=>{
+    const x=samples.length===1?500:index*1000/(samples.length-1);
+    const y=140-(Number(point.hashrateThs||0)/peak)*130;
+    return `${x.toFixed(2)},${y.toFixed(2)}`;
+  }).join(" "));
 }
 
 let windowBitcoinProgress=0;
@@ -6467,6 +6601,7 @@ async function refresh(){
 
       $("miner").style.display="none";
       $("miner").innerHTML="";
+      $("personalMinerDashboard").style.display="none";
 
     }else if(!d.accountFound){
 
@@ -6477,6 +6612,7 @@ async function refresh(){
 
       $("miner").style.display="none";
       $("miner").innerHTML="";
+      $("personalMinerDashboard").style.display="none";
 
     }else{
 
@@ -6511,6 +6647,22 @@ async function refresh(){
             : (d.unpayableReason||"INVALID"),
           d.payable ? "ok":"bad"
         );
+
+      const personal=d.minerDashboard||{};
+      $("personalMinerDashboard").style.display="block";
+      $("personalMinerSummary").innerHTML=
+        historyMetric("24H AVERAGE",num(Number(personal.averageHashrateThs||0),3)+" TH/s")+
+        historyMetric("24H PEAK",num(Number(personal.peakHashrateThs||0),3)+" TH/s")+
+        historyMetric("ACTIVE MINUTES",num(Number(personal.activeMinutes||0),0))+
+        historyMetric("ACTIVITY SIGNAL",num(Number(personal.activityPercent||0),2)+"%")+
+        historyMetric("24H SAMPLED BEST",bestShareFmt(personal.sampledBestShare))+
+        historyMetric("TRACKED ALL-TIME BEST",bestShareFmt(personal.allTimeBestShare))+
+        historyMetric("LAST ACTIVE",personal.lastActiveAt?new Date(Number(personal.lastActiveAt)*1000).toLocaleString():"NO ACTIVE SAMPLE")+
+        historyMetric("TRACKED SAMPLES",num(Number(personal.trackedSamples||0),0));
+      drawPersonalMinerHistory(personal.points||[]);
+      $("personalMinerFreshness").textContent=
+        "PERSONAL HISTORY IS DERIVED FROM ONE-MINUTE POOL OBSERVATIONS // MISSING ACCOUNT SAMPLES COUNT AS ZERO // ALL-TIME BEST TRACKING SINCE "+
+        (personal.allTimeTrackingSince?new Date(Number(personal.allTimeTrackingSince)*1000).toLocaleString():"FIRST OBSERVATION");
     }
 
     $("network").innerHTML=
@@ -6795,6 +6947,17 @@ class Handler(BaseHTTPRequestHandler):
 
     server_version = "TerminusDashboard"
     sys_version = ""
+
+    def log_message(self, format, *args):
+        sanitized = list(args)
+        if sanitized:
+            sanitized[0] = re.sub(
+                r"([?&]address=)[^& ]+",
+                r"\1REDACTED",
+                str(sanitized[0]),
+                flags=re.IGNORECASE,
+            )
+        super().log_message(format, *sanitized)
 
     def version_string(self):
         return self.server_version
@@ -7517,6 +7680,10 @@ class Handler(BaseHTTPRequestHandler):
                     ]
                 data["historySummary"] = history_summary
                 data["historyPersistent"] = history_persistent
+                data["minerDashboard"] = (
+                    load_miner_dashboard(normalized_account)
+                    if account_found else {}
+                )
                 data["lastUpdated"] = int(time.time())
                 data["health"] = [
                     {
