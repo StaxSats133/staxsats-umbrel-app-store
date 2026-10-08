@@ -47,7 +47,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.70"
+RELEASE_VERSION = "0.2.72"
 RELIABILITY_WINDOWS = {
     "1h": 60 * 60,
     "24h": 24 * 60 * 60,
@@ -1111,9 +1111,12 @@ def load_public_leaderboard(limit=100):
     return {
         "generatedAt": now,
         "windowHours": 24,
+        "scope": "rolling-24h-activity-not-current-payout-window",
         "liveGraceMinutes": LEADERBOARD_LIVE_GRACE_SECONDS // 60,
         "recentGraceMinutes": LEADERBOARD_RECENT_GRACE_SECONDS // 60,
         "ranking": "average-hashrate",
+        "hashrateBasis": "average-over-all-observed-pool-minutes",
+        "bestShareBasis": "highest-one-minute-window-best-sample-in-24h",
         "privacy": "opaque-aliases-no-payout-addresses",
         "miners": miners,
     }
@@ -1239,6 +1242,19 @@ def load_admin_snapshot(reveal=False):
         (int(_number(raw.get("work", 0))) for raw in raw_miners),
         default=0
     )
+    try:
+        public_24h = load_public_leaderboard(limit=1000)
+    except Exception:
+        # Current-window admin telemetry remains useful if the separate
+        # rolling-history database is temporarily unavailable.
+        public_24h = {
+            "scope": "rolling-24h-activity-unavailable",
+            "miners": [],
+        }
+    public_by_alias = {
+        str(item.get("alias", "")): item
+        for item in public_24h.get("miners", [])
+    }
     miners = []
 
     for raw in raw_miners:
@@ -1247,6 +1263,8 @@ def load_admin_snapshot(reveal=False):
         payout_sats = int(_number(raw.get("payout_sats", 0)))
         miner_work = int(_number(raw.get("work", 0)))
         window_best_share = _number(raw.get("best_share", 0))
+        public_alias = "MINER-" + _identity_fingerprint(identity)[:8].upper()
+        public_row = public_by_alias.get(public_alias)
         miners.append({
             "identity": identity if reveal else _mask_identity(identity),
             "identityMasked": not reveal,
@@ -1274,6 +1292,22 @@ def load_admin_snapshot(reveal=False):
             "unpayableReason": str(
                 raw.get("unpayable_reason", "") or ""
             ),
+            "public24h": ({
+                "alias": public_alias,
+                "rank": int(public_row.get("rank", 0)),
+                "status": str(public_row.get("status", "seen")),
+                "averageHashrateThs": _number(
+                    public_row.get("averageHashrateThs", 0)
+                ),
+                "peakHashrateThs": _number(
+                    public_row.get("peakHashrateThs", 0)
+                ),
+                "activeMinutes": int(public_row.get("activeMinutes", 0)),
+                "sampledBestShare": _number(
+                    public_row.get("bestShare", 0)
+                ),
+                "lastActiveAt": int(public_row.get("lastActiveAt", 0)),
+            } if public_row else None),
         })
 
     miners.sort(
@@ -1284,6 +1318,11 @@ def load_admin_snapshot(reveal=False):
     return {
         "generatedAt": int(time.time()),
         "scope": "ratum-payout-window",
+        "comparison": {
+            "adminBasis": "current-ratum-payout-window-and-current-hashrate",
+            "publicBasis": public_24h.get("scope", "rolling-24h-activity"),
+            "sameValuesExpected": False,
+        },
         "privacy": "revealed" if reveal else "masked",
         "allTimeTrackingSince": all_time_tracking_since,
         "rewardScale": {
@@ -1303,6 +1342,7 @@ def load_admin_snapshot(reveal=False):
             "accounts": len(miners),
             "active": active,
             "idle": len(miners) - active,
+            "leaderboard24hAccounts": len(public_24h.get("miners", [])),
             "hashrateThs": sum(m["hashrateThs"] for m in miners),
             "projectedPayoutXbt": sum(
                 m["projectedPayoutXbt"] for m in miners
@@ -4496,7 +4536,7 @@ html.stasis .neuralRain{opacity:0}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.70</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.72</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
@@ -4935,8 +4975,8 @@ html.stasis .neuralRain{opacity:0}
 <section class="leaderboardPanel" aria-labelledby="leaderboardTitle">
   <div class="leaderboardHead">
     <div>
-      <div class="leaderboardTitle" id="leaderboardTitle">ACTIVE MINERS // ROLLING 24 HOURS</div>
-      <div class="leaderboardSub">RANKED BY 24H AVERAGE HASHRATE // LIVE STATUS HAS A 10-MINUTE BUFFER</div>
+      <div class="leaderboardTitle" id="leaderboardTitle">PUBLIC ACTIVITY // ROLLING 24 HOURS</div>
+      <div class="leaderboardSub">NOT THE CURRENT PAYOUT WINDOW // RANKED BY 24H AVERAGE HASHRATE // SAMPLED STATE USES TIME BUFFERS</div>
     </div>
     <div class="leaderboardRewards" aria-label="Work in Window cosmic reward progression">
       <div class="leaderboardRewardsHead">
@@ -4960,12 +5000,12 @@ html.stasis .neuralRain{opacity:0}
   </div>
   <div class="leaderboardTableWrap">
     <table class="leaderboardTable">
-      <thead><tr><th>RANK</th><th>MINER</th><th>STATE</th><th>24H AVG</th><th>24H PEAK</th><th>ACTIVE MIN</th><th title="Highest RATUM window-best value captured by the one-minute collector during this rolling 24-hour period">24H SAMPLED BEST</th><th>LAST ACTIVE</th></tr></thead>
+      <thead><tr><th>24H RANK</th><th>PUBLIC ALIAS</th><th>24H STATE</th><th>24H AVG</th><th>24H PEAK</th><th>ACTIVE MIN</th><th title="Highest RATUM window-best value captured by the one-minute collector during this rolling 24-hour period">24H SAMPLED BEST</th><th>LAST ACTIVE</th></tr></thead>
       <tbody id="leaderboardRows"><tr><td colspan="8" class="leaderboardEmpty">BUILDING 24H ACTIVITY WINDOW…</td></tr></tbody>
     </table>
   </div>
-  <div class="leaderboardBestNote"><strong>24H SAMPLED BEST</strong> = HIGHEST RATUM WINDOW-BEST OBSERVED BY THE 60-SECOND COLLECTOR IN THIS ROLLING 24H PERIOD. IT IS NOT TRACKED ALL-TIME AND A TRANSIENT SHARE BETWEEN SAMPLES — INCLUDING A BLOCK-WINNING SHARE — MAY NOT APPEAR.</div>
-  <div class="leaderboardFoot"><span id="leaderboardFreshness">AWAITING ACTIVITY SAMPLES</span><span>LIVE ≤10 MIN // RECENT ≤60 MIN // SEEN WITHIN 24H</span></div>
+  <div class="leaderboardBestNote"><strong>WHY ADMIN MAY DIFFER</strong> = THIS TABLE IS ROLLING 24H HISTORY. ADMIN SHOWS CURRENT PAYOUT-WINDOW ACCOUNTS, CURRENT HASHRATE, WINDOW BEST, AND TRACKED ALL-TIME BEST. <strong>24H SAMPLED BEST</strong> IS ONLY THE HIGHEST WINDOW-BEST SEEN BY THE 60-SECOND COLLECTOR DURING THIS PERIOD; IT IS NOT TRACKED ALL-TIME, AND A TRANSIENT SHARE BETWEEN SAMPLES — INCLUDING A BLOCK-WINNING SHARE — MAY NOT APPEAR.</div>
+  <div class="leaderboardFoot"><span id="leaderboardFreshness">AWAITING ACTIVITY SAMPLES</span><span>SAMPLED ≤10 MIN // SAMPLED ≤60 MIN // SAMPLED WITHIN 24H</span></div>
 </section>
 
 <div class="sectionTitle">POOL-TELEMETRY</div>
@@ -5586,6 +5626,13 @@ function relativeAge(timestamp){
   return hours+" HR AGO";
 }
 
+function leaderboardStateLabel(status){
+  const state=String(status||"seen").toLowerCase();
+  if(state==="live")return "SAMPLED ≤10M";
+  if(state==="recent")return "SAMPLED ≤60M";
+  return "SAMPLED ≤24H";
+}
+
 async function loadLeaderboard(){
   const rows=$("leaderboardRows");
   if(!rows)return;
@@ -5601,7 +5648,7 @@ async function loadLeaderboard(){
       <tr>
         <td data-label="RANK" class="leaderRank">#${Number(miner.rank||0)}</td>
         <td data-label="MINER"><div class="leaderTag">${escapeHtml(miner.tag||"UNTAGGED")}${workRewardMarkup(miner.reward)}</div><div class="leaderAlias">${escapeHtml(miner.alias||"REDACTED")}</div></td>
-        <td data-label="STATE"><span class="leaderStatus ${escapeHtml(miner.status||"seen")}">${escapeHtml(String(miner.status||"seen").toUpperCase())}</span></td>
+        <td data-label="24H STATE"><span class="leaderStatus ${escapeHtml(miner.status||"seen")}">${leaderboardStateLabel(miner.status)}</span></td>
         <td data-label="24H AVG">${num(miner.averageHashrateThs,3)} TH/s</td>
         <td data-label="24H PEAK">${num(miner.peakHashrateThs,3)} TH/s</td>
         <td data-label="ACTIVE MIN">${num(miner.activeMinutes,0)}</td>
@@ -6667,9 +6714,9 @@ async function refresh(){
 
     $("network").innerHTML=
       card("CHAIN HEIGHT",num(d.height,0))+
-      card("NETWORK DIFFICULTY",(Number(d.difficulty||0)/1e9).toFixed(2)+"G","small")+
+      card("BLAKE2B DIFFICULTY",(Number(d.difficulty||0)/1e9).toFixed(2)+"G","small")+
       card("COINBASE VALUE",num(d.blockValue,8)+" XBT","gold")+
-      card("NETWORK HASHRATE",num(Number(d.networkTh||0)/1000,3)+" PH/s","small");
+      card("120-BLOCK NETWORK ESTIMATE",num(Number(d.networkTh||0)/1000,3)+" PH/s","small");
 
     $("graphNow").textContent=num(d.hashrate,3)+" TH/s";
     $("graphMiners").textContent=
@@ -6899,7 +6946,7 @@ ADMIN_HTML = r"""<!doctype html>
 <meta name="theme-color" content="#050912">
 <style>
 :root{--bg:#050912;--panel:#08131d;--line:#174655;--cyan:#43f5ff;--green:#72ffb4;--pink:#ff4fb8;--gold:#ffc85c;--text:#e7faff;--muted:#7895a0}
-*{box-sizing:border-box}body{margin:0;color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:radial-gradient(circle at 50% -10%,#10243b 0,var(--bg) 45%);min-height:100vh}.shell{max-width:1440px;margin:auto;padding:28px}.top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:22px}.eyebrow{color:var(--pink);font-size:11px;letter-spacing:.2em;font-weight:900}h1{margin:8px 0 5px;font-size:clamp(28px,5vw,54px);letter-spacing:.05em}.sub{color:var(--muted);line-height:1.55;max-width:780px}.private{border:1px solid #2c6b56;color:var(--green);padding:10px 13px;font-size:11px;white-space:nowrap}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.toolbar input{flex:1;min-width:220px}.toolbar input,.toolbar button,.toolbar a{border:1px solid var(--line);background:#06101a;color:var(--text);padding:12px 14px;font:inherit}.toolbar button,.toolbar a{cursor:pointer;color:var(--cyan);font-weight:900;text-decoration:none}.rewardLegend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-5px 0 18px;padding:10px 12px;border:1px solid #163440;background:#06101a;color:var(--muted);font-size:10px}.rewardLegend strong{color:var(--pink);letter-spacing:.12em}.legendTier{display:inline-flex;gap:4px;align-items:center;color:#a7c4cc}.summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}.metric,.panel{border:1px solid var(--line);background:linear-gradient(145deg,#07131d,#08101a);box-shadow:0 12px 35px #0005}.metric{padding:16px}.label{color:var(--muted);font-size:9px;letter-spacing:.15em}.value{margin-top:8px;font-size:clamp(19px,3vw,28px);font-weight:1000;color:var(--cyan)}.panel{overflow:hidden}.tableWrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:1050px}th,td{text-align:left;padding:13px 14px;border-bottom:1px solid #112c37}th{position:sticky;top:0;background:#091722;color:#7ca8b2;font-size:9px;letter-spacing:.13em}td{font-size:12px}.identity{color:var(--cyan)}.tag{color:var(--green)}.tagRewards{display:inline-flex;gap:3px;margin-left:5px;vertical-align:middle}.tagReward,.legendTier{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}.tagReward{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 2px;border:1px solid #24505d;border-radius:4px;background:#07131b;font-size:13px;line-height:1}.tagReward.special{border-color:#775f27}.status{display:inline-block;border:1px solid;padding:4px 7px;font-size:9px;letter-spacing:.12em}.status.active{color:var(--green);border-color:#287559}.status.idle{color:#a3abb2;border-color:#4c5860}.payable{color:var(--gold)}.empty{padding:45px;text-align:center;color:var(--muted)}.foot{display:flex;justify-content:space-between;gap:15px;margin-top:12px;color:var(--muted);font-size:10px;line-height:1.5}.error{color:#ff7890}.sr{position:absolute;left:-9999px}@media(max-width:900px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.top{flex-direction:column}.private{white-space:normal}}@media(max-width:520px){.shell{padding:18px 12px}.summary{grid-template-columns:1fr 1fr}.metric:last-child{grid-column:1/-1}.toolbar>*{width:100%}.foot{flex-direction:column}.rewardLegend{align-items:flex-start}}
+*{box-sizing:border-box}body{margin:0;color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:radial-gradient(circle at 50% -10%,#10243b 0,var(--bg) 45%);min-height:100vh}.shell{max-width:1440px;margin:auto;padding:28px}.top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:22px}.eyebrow{color:var(--pink);font-size:11px;letter-spacing:.2em;font-weight:900}h1{margin:8px 0 5px;font-size:clamp(28px,5vw,54px);letter-spacing:.05em}.sub{color:var(--muted);line-height:1.55;max-width:900px}.private{border:1px solid #2c6b56;color:var(--green);padding:10px 13px;font-size:11px;white-space:nowrap}.scopeGuide{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 18px}.scopeCard{border:1px solid var(--line);background:#06101a;padding:13px;color:var(--muted);font-size:10px;line-height:1.55}.scopeCard strong{display:block;margin-bottom:4px;color:var(--cyan);letter-spacing:.12em}.scopeCard.public strong{color:var(--pink)}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.toolbar input{flex:1;min-width:220px}.toolbar input,.toolbar button,.toolbar a{border:1px solid var(--line);background:#06101a;color:var(--text);padding:12px 14px;font:inherit}.toolbar button,.toolbar a{cursor:pointer;color:var(--cyan);font-weight:900;text-decoration:none}.rewardLegend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-5px 0 18px;padding:10px 12px;border:1px solid #163440;background:#06101a;color:var(--muted);font-size:10px}.rewardLegend strong{color:var(--pink);letter-spacing:.12em}.legendTier{display:inline-flex;gap:4px;align-items:center;color:#a7c4cc}.summary{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-bottom:18px}.metric,.panel{border:1px solid var(--line);background:linear-gradient(145deg,#07131d,#08101a);box-shadow:0 12px 35px #0005}.metric{padding:16px}.label{color:var(--muted);font-size:9px;letter-spacing:.15em}.value{margin-top:8px;font-size:clamp(19px,3vw,28px);font-weight:1000;color:var(--cyan)}.panel{overflow:hidden}.tableWrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:1320px}th,td{text-align:left;padding:13px 14px;border-bottom:1px solid #112c37}th{position:sticky;top:0;background:#091722;color:#7ca8b2;font-size:9px;letter-spacing:.13em}td{font-size:12px}.identity{color:var(--cyan)}.tag{color:var(--green)}.tagRewards{display:inline-flex;gap:3px;margin-left:5px;vertical-align:middle}.tagReward,.legendTier{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}.tagReward{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 2px;border:1px solid #24505d;border-radius:4px;background:#07131b;font-size:13px;line-height:1}.tagReward.special{border-color:#775f27}.status{display:inline-block;border:1px solid;padding:4px 7px;font-size:9px;letter-spacing:.12em}.status.active{color:var(--green);border-color:#287559}.status.idle{color:#a3abb2;border-color:#4c5860}.publicCompare{color:#9ccbd4;line-height:1.5}.publicCompare strong{color:var(--pink)}.publicCompare span{display:block;font-size:9px}.payable{color:var(--gold)}.empty{padding:45px;text-align:center;color:var(--muted)}.foot{display:flex;justify-content:space-between;gap:15px;margin-top:12px;color:var(--muted);font-size:10px;line-height:1.5}.error{color:#ff7890}.sr{position:absolute;left:-9999px}@media(max-width:900px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.scopeGuide{grid-template-columns:1fr}.top{flex-direction:column}.private{white-space:normal}}@media(max-width:520px){.shell{padding:18px 12px}.summary{grid-template-columns:1fr 1fr}.toolbar>*{width:100%}.foot{flex-direction:column}.rewardLegend{align-items:flex-start}}
 .bestStack{display:flex;flex-direction:column;align-items:flex-start}.bestPrimary{color:var(--gold);font-weight:900}.bestPrimary span,.bestSecondary{display:block;margin-top:3px;color:var(--muted);font-size:8px;letter-spacing:.11em}.bestSecondary{color:#9ccbd4}
 @media(max-width:760px){table{min-width:0}thead{display:none}tbody,tr,td{display:block;width:100%}tr{padding:10px 14px;border-bottom:1px solid var(--line)}td{display:flex;justify-content:space-between;gap:18px;padding:8px 0;border:0;text-align:right;overflow-wrap:anywhere}td:before{content:attr(data-label);color:var(--muted);font-size:9px;letter-spacing:.12em;text-align:left;flex:0 0 38%}.empty{display:block;text-align:center;padding:32px 10px}.empty:before{display:none}}
 @media(max-width:760px){.bestStack{align-items:flex-end}}
@@ -6908,9 +6955,13 @@ ADMIN_HTML = r"""<!doctype html>
 <body>
 <main class="shell">
   <header class="top">
-    <div><div class="eyebrow">OPERATOR INTELLIGENCE // READ ONLY</div><h1>MINER ADMIN</h1><div class="sub">Accounts represented in the current RATUM payout window. Window Best comes directly from RATUM; Tracked All-Time is the highest value recorded by this dashboard since v0.2.15. VALID confirms only that an identity is a usable XBT payout address; it does not mean the miner is active or currently owed.</div></div>
+    <div><div class="eyebrow">OPERATOR INTELLIGENCE // READ ONLY</div><h1>MINER ADMIN</h1><div class="sub">Current RATUM payout-window accounting with a direct comparison to the public rolling-24-hour leaderboard. The two scopes intentionally differ; each row now shows both bases together.</div></div>
     <div class="private">● PRIVATE // UMBREL AUTH REQUIRED</div>
   </header>
+  <section class="scopeGuide" aria-label="Telemetry scope comparison">
+    <div class="scopeCard"><strong>ADMIN // CURRENT PAYOUT WINDOW</strong>Accounts held in RATUM now. Hashrate is current; Window Best, share, work, and conditional payout are current-window values. Tracked All-Time is the dashboard's durable maximum.</div>
+    <div class="scopeCard public"><strong>PUBLIC // ROLLING 24 HOURS</strong>Accounts active at least once during the last 24 hours. Rank and hashrate use 24H average; sampled best is the highest one-minute observation in that period.</div>
+  </section>
   <div class="toolbar">
     <label class="sr" for="search">Filter miners</label><input id="search" type="search" placeholder="Filter by address or worker tag" autocomplete="off">
     <button id="reveal" type="button">REVEAL ADDRESSES</button>
@@ -6919,14 +6970,15 @@ ADMIN_HTML = r"""<!doctype html>
   </div>
   <div class="rewardLegend" id="rewardLegend" aria-label="Work reward progression"><strong>WORK REWARDS</strong><span>Loading calibrated tiers…</span></div>
   <section class="summary" aria-label="Miner summary">
-    <div class="metric"><div class="label">WINDOW ACCOUNTS</div><div class="value" id="accounts">—</div></div>
-    <div class="metric"><div class="label">ACTIVE</div><div class="value" id="active">—</div></div>
-    <div class="metric"><div class="label">IDLE</div><div class="value" id="idle">—</div></div>
-    <div class="metric"><div class="label">TOTAL HASHRATE</div><div class="value" id="hashrate">—</div></div>
+    <div class="metric"><div class="label">PAYOUT-WINDOW ACCOUNTS</div><div class="value" id="accounts">—</div></div>
+    <div class="metric"><div class="label">ACTIVE NOW</div><div class="value" id="active">—</div></div>
+    <div class="metric"><div class="label">IDLE IN WINDOW</div><div class="value" id="idle">—</div></div>
+    <div class="metric"><div class="label">CURRENT HASHRATE</div><div class="value" id="hashrate">—</div></div>
+    <div class="metric"><div class="label">PUBLIC 24H ACCOUNTS</div><div class="value" id="publicAccounts">—</div></div>
     <div class="metric"><div class="label">TOTAL IF BLOCK FOUND NOW</div><div class="value" id="payout">—</div></div>
   </section>
-  <section class="panel"><div class="tableWrap"><table><thead><tr><th>STATUS</th><th>PAYOUT IDENTITY</th><th>WORKER TAG</th><th>HASHRATE</th><th>WINDOW SHARE</th><th>BEST SHARE</th><th>WINDOW WORK</th><th>IF BLOCK FOUND NOW</th><th>ADDRESS VALIDITY</th></tr></thead><tbody id="rows"><tr><td colspan="9" class="empty">LOADING MINER TELEMETRY…</td></tr></tbody></table></div></section>
-  <div class="foot"><span id="freshness">Awaiting telemetry</span><span>IF BLOCK FOUND NOW is conditional on work still held in the current payout window. Addresses are masked by default. No disconnect, ban, fee, payout, or configuration controls are available.</span></div>
+  <section class="panel"><div class="tableWrap"><table><thead><tr><th>STATUS NOW</th><th>PAYOUT IDENTITY</th><th>WORKER TAG</th><th>HASHRATE NOW</th><th>WINDOW SHARE</th><th>WINDOW / ALL-TIME BEST</th><th>WINDOW WORK</th><th>IF BLOCK FOUND NOW</th><th>PUBLIC 24H COMPARISON</th><th>ADDRESS VALIDITY</th></tr></thead><tbody id="rows"><tr><td colspan="10" class="empty">LOADING MINER TELEMETRY…</td></tr></tbody></table></div></section>
+  <div class="foot"><span id="freshness">Awaiting telemetry</span><span>PUBLIC 24H values are historical comparisons, not current-window accounting. IF BLOCK FOUND NOW is conditional on work still held in the current payout window. Addresses are masked by default.</span></div>
 </main>
 <script>
 const $=id=>document.getElementById(id);let all=[],revealed=false;
@@ -6936,8 +6988,10 @@ const compact=v=>{const n=Number(v||0);return Number.isFinite(n)?n.toLocaleStrin
 const share=v=>{const n=Number(v||0);return n>0?compact(n):"WAITING"};
 function rewardBadges(reward){if(!reward)return"";const items=[];if(reward.cosmic)items.push({...reward.cosmic,special:false});for(const item of(reward.specials||[]))items.push({...item,special:true});return items.length?`<span class="tagRewards" aria-label="Work rewards">${items.map(item=>`<span class="tagReward${item.special?" special":""}" role="img" title="${esc(item.label)}" aria-label="${esc(item.label)}">${esc(item.emoji)}</span>`).join("")}</span>`:""}
 function rewardLegend(scale){const tiers=(scale&&scale.tiers)||[];const cosmic=tiers.map(t=>`<span class="legendTier" title="${esc(t.label)}">${esc(t.emoji)} ${num(t.thresholdPercent,2)}%</span>`).join("");return `<strong>WORK REWARDS</strong>${cosmic}<span class="legendTier">💎 ${num(scale?.diamondThresholdPercent,0)}%</span><span class="legendTier">👑 #1</span>`}
-function render(){const q=$("search").value.trim().toLowerCase();const rows=all.filter(m=>!q||m.identity.toLowerCase().includes(q)||m.tag.toLowerCase().includes(q));$("rows").innerHTML=rows.length?rows.map(m=>`<tr><td data-label="STATUS"><span class="status ${esc(m.status)}">${esc(m.status.toUpperCase())}</span></td><td data-label="PAYOUT IDENTITY" class="identity">${esc(m.identity)}</td><td data-label="WORKER TAG" class="tag">${esc(m.tag)}${rewardBadges(m.reward)}</td><td data-label="HASHRATE">${num(m.hashrateThs,3)} TH/s</td><td data-label="WINDOW SHARE">${num(m.sharePercent,2)}%</td><td data-label="BEST SHARE"><div class="bestStack"><div class="bestPrimary">${share(m.allTimeBestShare)}<span>TRACKED ALL-TIME</span></div><div class="bestSecondary">WINDOW ${share(m.windowBestShare)}</div></div></td><td data-label="WINDOW WORK">${compact(m.work)}</td><td data-label="IF BLOCK FOUND NOW">${num(m.projectedPayoutXbt,8)} XBT</td><td data-label="PAYOUT ADDRESS" class="payable">${m.payable?"VALID":esc(m.unpayableReason||"INVALID")}</td></tr>`).join(""):`<tr><td colspan="9" class="empty">NO MATCHING MINERS</td></tr>`}
-async function load(){try{const r=await fetch(`/api/admin/miners?reveal=${revealed?1:0}&ts=${Date.now()}`,{cache:"no-store",credentials:"same-origin"});if(!r.ok)throw new Error(`HTTP ${r.status}`);const d=await r.json();all=d.miners||[];const s=d.summary||{};$("rewardLegend").innerHTML=rewardLegend(d.rewardScale||{});$("accounts").textContent=s.accounts??0;$("active").textContent=s.active??0;$("idle").textContent=s.idle??0;$("hashrate").textContent=num(s.hashrateThs,3)+" TH/s";$("payout").textContent=num(s.projectedPayoutXbt,8)+" XBT";const tracked=d.allTimeTrackingSince?new Date(d.allTimeTrackingSince*1000).toLocaleString():"STARTING NOW";$("freshness").textContent="UPDATED "+new Date(d.generatedAt*1000).toLocaleString()+" // ALL-TIME TRACKING SINCE "+tracked;$("freshness").className="";render()}catch(e){$("rows").innerHTML=`<tr><td colspan="9" class="empty error">ADMIN TELEMETRY UNAVAILABLE // ${esc(e.message)}</td></tr>`;$("freshness").textContent="DATA ERROR";$("freshness").className="error"}}
+function public24hState(status){const state=String(status||"seen").toLowerCase();return state==="live"?"SAMPLED ≤10M":state==="recent"?"SAMPLED ≤60M":"SAMPLED ≤24H"}
+function public24hCell(m){const p=m.public24h;if(!p)return`<div class="publicCompare">NOT ON 24H BOARD<span>No sampled activity in the rolling period</span></div>`;return`<div class="publicCompare"><strong>#${num(p.rank,0)} ${esc(p.alias)}</strong><span>${public24hState(p.status)} // AVG ${num(p.averageHashrateThs,3)} TH/s</span><span>SAMPLED BEST ${share(p.sampledBestShare)}</span></div>`}
+function render(){const q=$("search").value.trim().toLowerCase();const rows=all.filter(m=>!q||m.identity.toLowerCase().includes(q)||m.tag.toLowerCase().includes(q)||String(m.public24h?.alias||"").toLowerCase().includes(q));$("rows").innerHTML=rows.length?rows.map(m=>`<tr><td data-label="STATUS NOW"><span class="status ${esc(m.status)}">${esc(m.status.toUpperCase())}</span></td><td data-label="PAYOUT IDENTITY" class="identity">${esc(m.identity)}</td><td data-label="WORKER TAG" class="tag">${esc(m.tag)}${rewardBadges(m.reward)}</td><td data-label="HASHRATE NOW">${num(m.hashrateThs,3)} TH/s</td><td data-label="WINDOW SHARE">${num(m.sharePercent,2)}%</td><td data-label="WINDOW / ALL-TIME BEST"><div class="bestStack"><div class="bestPrimary">${share(m.windowBestShare)}<span>WINDOW BEST</span></div><div class="bestSecondary">TRACKED ALL-TIME ${share(m.allTimeBestShare)}</div></div></td><td data-label="WINDOW WORK">${compact(m.work)}</td><td data-label="IF BLOCK FOUND NOW">${num(m.projectedPayoutXbt,8)} XBT</td><td data-label="PUBLIC 24H COMPARISON">${public24hCell(m)}</td><td data-label="PAYOUT ADDRESS" class="payable">${m.payable?"VALID":esc(m.unpayableReason||"INVALID")}</td></tr>`).join(""):`<tr><td colspan="10" class="empty">NO MATCHING MINERS</td></tr>`}
+async function load(){try{const r=await fetch(`/api/admin/miners?reveal=${revealed?1:0}&ts=${Date.now()}`,{cache:"no-store",credentials:"same-origin"});if(!r.ok)throw new Error(`HTTP ${r.status}`);const d=await r.json();all=d.miners||[];const s=d.summary||{};$("rewardLegend").innerHTML=rewardLegend(d.rewardScale||{});$("accounts").textContent=s.accounts??0;$("active").textContent=s.active??0;$("idle").textContent=s.idle??0;$("hashrate").textContent=num(s.hashrateThs,3)+" TH/s";$("publicAccounts").textContent=s.leaderboard24hAccounts??0;$("payout").textContent=num(s.projectedPayoutXbt,8)+" XBT";const tracked=d.allTimeTrackingSince?new Date(d.allTimeTrackingSince*1000).toLocaleString():"STARTING NOW";$("freshness").textContent="UPDATED "+new Date(d.generatedAt*1000).toLocaleString()+" // ALL-TIME TRACKING SINCE "+tracked;$("freshness").className="";render()}catch(e){$("rows").innerHTML=`<tr><td colspan="10" class="empty error">ADMIN TELEMETRY UNAVAILABLE // ${esc(e.message)}</td></tr>`;$("freshness").textContent="DATA ERROR";$("freshness").className="error"}}
 $("search").addEventListener("input",render);$("refresh").addEventListener("click",load);$("reveal").addEventListener("click",()=>{revealed=!revealed;$("reveal").textContent=revealed?"MASK ADDRESSES":"REVEAL ADDRESSES";load()});load();setInterval(()=>{if(!document.hidden)load()},15000);
 </script>
 </body>

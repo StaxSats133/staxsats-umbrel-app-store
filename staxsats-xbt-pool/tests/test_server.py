@@ -1,4 +1,6 @@
 import importlib.util
+import io
+import json
 import os
 import sqlite3
 import tempfile
@@ -31,7 +33,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.70")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.72")
         self.assertIn('<title>TERMINUS POOL // DATUM</title>', self.server.HTML)
         self.assertIn('content="Terminus Pool // DATUM"', self.server.HTML)
         self.assertIn(
@@ -89,6 +91,12 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('data-label="IF BLOCK FOUND NOW"', self.server.ADMIN_HTML)
         self.assertIn('data-label="PAYOUT ADDRESS"', self.server.ADMIN_HTML)
         self.assertIn('m.payable?"VALID"', self.server.ADMIN_HTML)
+        self.assertIn('ADMIN // CURRENT PAYOUT WINDOW', self.server.ADMIN_HTML)
+        self.assertIn('PUBLIC // ROLLING 24 HOURS', self.server.ADMIN_HTML)
+        self.assertIn('PUBLIC 24H COMPARISON', self.server.ADMIN_HTML)
+        self.assertIn('PUBLIC 24H ACCOUNTS', self.server.ADMIN_HTML)
+        self.assertIn('WINDOW / ALL-TIME BEST', self.server.ADMIN_HTML)
+        self.assertIn('public24hCell(m)', self.server.ADMIN_HTML)
         self.assertNotIn('PROJECTED PAYOUT', self.server.ADMIN_HTML)
         self.assertNotIn('PAYOUT STATUS', self.server.ADMIN_HTML)
         self.assertNotIn('m.payable?"PAYABLE"', self.server.ADMIN_HTML)
@@ -155,6 +163,11 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('id="lastBlockDifficulty"', self.server.HTML)
         self.assertNotIn('id="lastBlockFinder"', self.server.HTML)
         self.assertIn('24H SAMPLED BEST', self.server.HTML)
+        self.assertIn('NOT THE CURRENT PAYOUT WINDOW', self.server.HTML)
+        self.assertIn('WHY ADMIN MAY DIFFER', self.server.HTML)
+        self.assertIn('function leaderboardStateLabel(status)', self.server.HTML)
+        self.assertIn('SAMPLED ≤10 MIN', self.server.HTML)
+        self.assertNotIn('LIVE ≤10 MIN // RECENT ≤60 MIN', self.server.HTML)
         self.assertIn('class="leaderboardRewards"', self.server.HTML)
         reward_tier_count = (
             self.server.HTML.count('class="leaderboardRewardTier"') +
@@ -189,9 +202,12 @@ class TerminusServerTests(unittest.TestCase):
         self.assertLess(last_block_pos, market_pos)
         self.assertLess(market_pos, start_mining_pos)
         self.assertIn(
-            'card("NETWORK HASHRATE",num(Number(d.networkTh||0)/1000,3)+" PH/s","small")',
+            'card("120-BLOCK NETWORK ESTIMATE",num(Number(d.networkTh||0)/1000,3)+" PH/s","small")',
             self.server.HTML,
         )
+        self.assertIn('card("BLAKE2B DIFFICULTY"', self.server.HTML)
+        self.assertNotIn('card("NETWORK HASHRATE"', self.server.HTML)
+        self.assertNotIn('card("NETWORK DIFFICULTY"', self.server.HTML)
         self.assertTrue(any(
             "media-src 'self' https://opengameart.org" in value
             for value in self.server.Handler.send_security_headers.__code__.co_consts
@@ -624,6 +640,71 @@ class TerminusServerTests(unittest.TestCase):
         rendered = str(payload)
         self.assertNotIn(identity, rendered)
         self.assertTrue(payload["miners"][0]["alias"].startswith("MINER-"))
+        self.assertEqual(
+            payload["scope"],
+            "rolling-24h-activity-not-current-payout-window",
+        )
+        self.assertEqual(payload["ranking"], "average-hashrate")
+        self.assertEqual(
+            payload["bestShareBasis"],
+            "highest-one-minute-window-best-sample-in-24h",
+        )
+
+    def test_admin_reconciles_current_window_with_public_24h(self):
+        identity = "bc1qexampleidentitythatmustneverleak"
+        alias = "MINER-" + self.server._identity_fingerprint(
+            identity
+        )[:8].upper()
+        prime = {
+            "window": {
+                "target_work": 10_000,
+                "miners": [{
+                    "identity": identity,
+                    "tag": "TerminusPool",
+                    "hashrate_hs": 2_000_000_000_000,
+                    "share_percent": 100,
+                    "work": 500,
+                    "best_share": 1234,
+                    "payout_sats": 25,
+                    "payable": True,
+                }],
+            }
+        }
+        public = {
+            "scope": "rolling-24h-activity-not-current-payout-window",
+            "miners": [{
+                "alias": alias,
+                "rank": 2,
+                "status": "live",
+                "averageHashrateThs": 1.5,
+                "peakHashrateThs": 2.5,
+                "activeMinutes": 1200,
+                "bestShare": 9876,
+                "lastActiveAt": 1_800_000_000,
+            }],
+        }
+        with mock.patch.object(
+            self.server.urllib.request,
+            "urlopen",
+            return_value=io.BytesIO(json.dumps(prime).encode()),
+        ), mock.patch.object(
+            self.server,
+            "load_public_leaderboard",
+            return_value=public,
+        ):
+            payload = self.server.load_admin_snapshot(reveal=False)
+
+        self.assertEqual(payload["scope"], "ratum-payout-window")
+        self.assertFalse(payload["comparison"]["sameValuesExpected"])
+        self.assertEqual(payload["summary"]["accounts"], 1)
+        self.assertEqual(payload["summary"]["leaderboard24hAccounts"], 1)
+        self.assertNotIn(identity, str(payload))
+        row = payload["miners"][0]
+        self.assertEqual(row["windowBestShare"], 1234)
+        self.assertEqual(row["public24h"]["alias"], alias)
+        self.assertEqual(row["public24h"]["rank"], 2)
+        self.assertEqual(row["public24h"]["averageHashrateThs"], 1.5)
+        self.assertEqual(row["public24h"]["sampledBestShare"], 9876)
 
     def test_admin_disabled_by_default(self):
         self.assertFalse(self.server.ADMIN_ENABLED)
