@@ -115,6 +115,15 @@ class TerminusServerTests(unittest.TestCase):
             'name="twitter:image:alt" content="Terminus Pool logo"',
             self.server.HTML,
         )
+        miners_page = self.server.render_public_page("/miners")
+        self.assertIn(
+            '<link rel="canonical" href="https://terminuspool.xyz/miners">',
+            miners_page,
+        )
+        self.assertIn(
+            '<meta property="og:url" content="https://terminuspool.xyz/miners">',
+            miners_page,
+        )
         self.assertEqual(len(self.server.SOCIAL_CARD_PNG), 395887)
         self.assertEqual(
             hashlib.sha256(self.server.SOCIAL_CARD_PNG).hexdigest(),

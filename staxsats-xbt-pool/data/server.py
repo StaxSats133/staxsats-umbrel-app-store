@@ -6942,6 +6942,32 @@ setInterval(renderPromoCountdown, 1000);
 </html>
 """
 
+def render_public_page(path):
+    page = HTML
+    if path == "/miners":
+        page = page.replace(
+            '<link rel="canonical" href="https://terminuspool.xyz/">',
+            '<link rel="canonical" href="https://terminuspool.xyz/miners">'
+        )
+        page = page.replace(
+            '<meta property="og:url" content="https://terminuspool.xyz/">',
+            '<meta property="og:url" content="https://terminuspool.xyz/miners">'
+        )
+    if ADMIN_ENABLED:
+        page = page.replace(
+            "<!-- TERMINUS_ADMIN_LINK -->",
+            '<a href="/admin">ADMIN</a>'
+        )
+        page = page.replace(
+            "<!-- TERMINUS_ADMIN_MOBILE_LINK -->",
+            '<a class="adminMobileLink" href="/admin">ADMIN →</a>'
+        )
+    else:
+        page = page.replace("<!-- TERMINUS_ADMIN_LINK -->", "")
+        page = page.replace("<!-- TERMINUS_ADMIN_MOBILE_LINK -->", "")
+    return page
+
+
 ADMIN_HTML = r"""<!doctype html>
 <html lang="en">
 <head>
@@ -7092,7 +7118,7 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         known_paths = {
-            "/", "/index.html", "/robots.txt", "/sitemap.xml",
+            "/", "/index.html", "/miners", "/robots.txt", "/sitemap.xml",
             "/favicon.ico", "/favicon.svg", "/admin",
             "/assets/datum-pool-setup.png", "/assets/routehash-logo.png",
             "/assets/terminus-logo-v0274.png",
@@ -7881,24 +7907,9 @@ class Handler(BaseHTTPRequestHandler):
                         502
                     )
 
-        elif parsed.path in ("/", "/index.html"):
+        elif parsed.path in ("/", "/index.html", "/miners"):
 
-            page = HTML
-            if ADMIN_ENABLED:
-                page = page.replace(
-                    "<!-- TERMINUS_ADMIN_LINK -->",
-                    '<a href="/admin">ADMIN</a>'
-                )
-                page = page.replace(
-                    "<!-- TERMINUS_ADMIN_MOBILE_LINK -->",
-                    '<a class="adminMobileLink" href="/admin">ADMIN →</a>'
-                )
-            else:
-                page = page.replace("<!-- TERMINUS_ADMIN_LINK -->", "")
-                page = page.replace(
-                    "<!-- TERMINUS_ADMIN_MOBILE_LINK -->",
-                    ""
-                )
+            page = render_public_page(parsed.path)
 
             body=page.encode()
 
