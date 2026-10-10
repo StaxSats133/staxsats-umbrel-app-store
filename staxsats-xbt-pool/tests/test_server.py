@@ -61,7 +61,7 @@ class TerminusServerTests(unittest.TestCase):
         self.assertEqual(len(isolated.SOCIAL_CARD_PNG), 395887)
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.74")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.75")
         self.assertIn('<title>TERMINUS POOL // DATUM</title>', self.server.HTML)
         self.assertIn('content="Terminus Pool // DATUM"', self.server.HTML)
         self.assertIn(

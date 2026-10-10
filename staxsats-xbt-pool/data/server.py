@@ -47,7 +47,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.74"
+RELEASE_VERSION = "0.2.75"
 RELIABILITY_WINDOWS = {
     "1h": 60 * 60,
     "24h": 24 * 60 * 60,
@@ -4523,6 +4523,278 @@ html.stasis .neuralRain{opacity:0}
         margin-inline:auto;
     }
 }
+
+/* TERMINUS_OPERATOR_REFRESH_V2 */
+:root{
+    --bg:#03070d;
+    --panel:#07111a;
+    --panel2:#091620;
+    --surface:rgba(7,17,26,.97);
+    --surface-raised:rgba(9,22,32,.98);
+    --line:rgba(93,207,224,.20);
+    --line-strong:rgba(93,225,240,.34);
+    --text:#e9f8fb;
+    --muted:#76919a;
+    --module-radius:12px;
+    --inner-radius:8px;
+    --module-shadow:0 12px 30px rgba(0,0,0,.25),inset 0 1px 0 rgba(232,252,255,.025);
+}
+html{background:var(--bg)}
+body{
+    background:
+      radial-gradient(circle at 18% -8%,rgba(31,101,129,.14),transparent 31%),
+      radial-gradient(circle at 82% 0,rgba(91,37,99,.10),transparent 28%),
+      linear-gradient(rgba(57,137,154,.025) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(57,137,154,.025) 1px,transparent 1px),
+      #03070d;
+    background-size:auto,auto,40px 40px,40px 40px,auto;
+}
+.neuralRain{opacity:.20}
+.shell{
+    width:min(calc(100% - 28px),1120px)!important;
+    max-width:1120px!important;
+    padding:18px 0 50px!important;
+}
+header{margin-bottom:10px!important}
+.brand{gap:14px}
+.badge.piggyBrand{
+    width:68px!important;
+    height:68px!important;
+    flex-basis:68px!important;
+    border-radius:15px!important;
+    border-color:rgba(91,226,240,.42)!important;
+    box-shadow:0 10px 28px rgba(0,0,0,.28),0 0 18px rgba(67,245,255,.08)!important;
+}
+header .brand h1{font-size:clamp(31px,3.2vw,42px)!important;line-height:.9!important}
+.wordmarkPrimary{filter:drop-shadow(0 0 8px rgba(67,245,255,.10))}
+.wordmarkRail{min-height:24px;gap:8px}
+.wordmarkPool{min-height:24px;padding-inline:11px}
+.tagline{margin-top:6px;font-size:10px;letter-spacing:.20em}
+.stackline{margin-top:4px;font-size:9px;color:#6e9aa4}
+.versionBadge{margin-top:5px;padding:3px 7px;font-size:7px;border-color:rgba(67,245,255,.24);box-shadow:none}
+.headerControls{
+    gap:5px!important;
+    padding:15px 7px 7px!important;
+    border-color:var(--line)!important;
+    border-radius:9px!important;
+    background:linear-gradient(135deg,rgba(7,20,29,.96),rgba(7,12,20,.98))!important;
+    box-shadow:var(--module-shadow)!important;
+}
+.headerControls::before{top:4px;left:9px;color:#c36d9f;font-size:6px;letter-spacing:.16em}
+.headerControls .live,
+.headerControls .neuralRainToggle,
+.headerControls .stasisToggle,
+.headerControls .topNav a{
+    min-height:33px!important;
+    padding:7px 9px!important;
+    border-radius:5px!important;
+    font-size:7px!important;
+    box-shadow:none!important;
+}
+.headerControls .live{background:#06131b;border-color:rgba(67,245,255,.28)}
+.headerControls .neuralRainToggle{background:#071a19;border-color:rgba(114,255,180,.42)}
+.headerControls .stasisToggle{background:#170a17;border-color:rgba(255,79,184,.38)}
+.topNav{gap:5px!important}
+.topNav a,.heroActions a,.copyBtn,.routeHashCta,.accountSearch button,.tunerBtn,.tunerGenre,.tunerCollapse{
+    transition:border-color .16s ease,color .16s ease,background .16s ease,transform .16s ease;
+}
+.topNav a:hover,.heroActions a:hover,.copyBtn:hover,.routeHashCta:hover{
+    transform:translateY(-1px);
+}
+.nightwave,
+.poolHashrateGraph,
+.lastBlockPanel,
+.marketTicker,
+.launchPromo,
+.quickConnect,
+.leaderboardPanel,
+.advancedFold,
+.access,
+.accountSearch{
+    border-color:var(--line)!important;
+    border-radius:var(--module-radius)!important;
+    background:linear-gradient(145deg,var(--surface-raised),var(--surface))!important;
+    box-shadow:var(--module-shadow)!important;
+}
+.nightwave{margin:8px 0 10px!important}
+.hero{
+    height:312px!important;
+    border-color:var(--line-strong)!important;
+    border-radius:12px!important;
+    box-shadow:0 16px 42px rgba(0,0,0,.32),inset 0 0 54px rgba(0,0,0,.34)!important;
+}
+.heroText{top:18px;left:28px}
+.heroTextCompact{
+    max-width:min(510px,61%)!important;
+    padding:10px 14px 11px 15px;
+    border:1px solid rgba(67,245,255,.16);
+    border-left:3px solid var(--cyan);
+    background:linear-gradient(90deg,rgba(4,15,23,.87),rgba(4,15,23,.48) 72%,transparent)!important;
+    clip-path:none;
+}
+.heroTextCompact .kicker{min-height:24px;padding:4px 8px;font-size:9px;letter-spacing:.18em}
+.heroTextCompact .heroMicro{margin-top:7px;font-size:9px;color:#78929b}
+.heroActions{gap:7px;margin-top:10px}
+.heroActions a{min-height:36px;padding:8px 11px;font-size:8px;border-radius:6px}
+.sectionTitle{
+    gap:9px!important;
+    margin:19px 0 8px!important;
+    color:#db71ad!important;
+    font-size:9px!important;
+    letter-spacing:.18em!important;
+}
+.sectionTitle:before{width:3px;height:14px;background:var(--green);box-shadow:0 0 9px rgba(114,255,180,.28)}
+.sectionTitle:after{background:linear-gradient(90deg,rgba(255,79,184,.30),rgba(67,245,255,.08),transparent)}
+.grid{gap:9px}
+.card{
+    min-height:92px!important;
+    padding:14px!important;
+    border-color:var(--line)!important;
+    border-radius:9px!important;
+    background:linear-gradient(145deg,rgba(8,20,29,.96),rgba(5,11,17,.98))!important;
+    box-shadow:0 8px 22px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.018)!important;
+}
+.card:before{height:2px!important;box-shadow:none!important;opacity:.8}
+.label{font-size:8px;letter-spacing:.12em}
+.value{margin-top:8px;font-size:clamp(17px,1.9vw,24px)}
+.card.small .value{font-size:16px}.card.tiny .value{font-size:12px}
+.graphCard{margin-top:8px;padding:14px!important}
+.graphTop{
+    margin:-14px -14px 10px!important;
+    padding:12px 14px 10px!important;
+    border-bottom-color:rgba(67,245,255,.12)!important;
+}
+.graphTitle{font-size:9px!important;letter-spacing:.15em!important}
+.graphStats{gap:10px!important}
+.graphPill{padding:6px 9px!important;font-size:8px!important}
+#graphNow{font-size:17px!important}
+.poolHashrateGraph>svg{display:block;height:178px}
+.historySummary{gap:8px;margin-top:8px}
+.historyMetric{padding:9px 10px;border-color:var(--line);border-radius:7px;background:#050c12}
+.historyMetric .value{font-size:12px}
+.lastBlockPanel{margin:9px 0 11px;padding:12px 14px!important}
+.lastBlockHead{margin:-12px -14px 10px!important;padding:11px 14px 9px!important}
+.lastBlockGrid{gap:8px 14px}.lastBlockValue{font-size:13px}.lastBlockHash{font-size:9px}
+.marketTicker{margin:10px 0!important;padding:12px 14px!important;gap:14px!important}
+.marketKicker{font-size:8px}.marketPair{font-size:16px}.marketPrice{font-size:clamp(22px,2.7vw,32px)}
+.marketStat{padding:7px 9px}.marketFresh{font-size:7px}
+.launchPromo{margin:0 0 12px!important;padding:14px 16px!important;gap:17px!important}
+.launchPromoKicker{font-size:8px}.launchPromoTitle{font-size:23px}.launchPromoText{margin-top:7px;font-size:11px}
+.launchPromoMeta{margin-top:7px;font-size:8px}.launchPromoClock{padding-left:17px}.promoUnit{padding:7px 4px}.promoNumber{font-size:18px}
+.quickConnect{margin:10px 0 16px!important}
+.quickConnectHead{padding:13px 15px 11px!important}
+.quickConnectHead h2{font-size:18px}.quickConnectHead p{font-size:10px}.quickConnectHead a{font-size:8px}
+.quickConnectGrid{padding:12px 14px 14px!important}
+.quickEndpoint{gap:16px;padding:14px!important;border-radius:9px!important}
+.quickEndpoint .copyBtn{min-height:38px}.quickLabel{font-size:8px}.quickValue{margin:6px 0 8px;font-size:11px}
+.quickCredential{margin-top:10px;padding-top:10px}.quickNote{margin-top:10px;padding:9px}
+.setupExample{max-width:460px;padding:9px}.setupExampleHead{margin-bottom:7px}.setupExample figcaption{font-size:8px}
+.routeHashPath{gap:14px;margin-top:10px;padding:11px 13px;border-radius:9px}
+.routeHashLogo{width:46px;height:46px;flex-basis:46px}.routeHashText{margin-top:4px;font-size:9px}.routeHashCta{min-height:38px}
+.leaderboardPanel{margin-bottom:14px!important}
+.leaderboardHead{gap:12px;padding:13px 15px!important}
+.leaderboardTitle{font-size:12px}.leaderboardSub{font-size:8px}.leaderboardPrivacy{font-size:8px}
+.leaderboardRewards{padding:7px 9px 8px}.leaderboardRewardTiers{gap:3px}.leaderboardRewardTier{min-height:22px;padding:3px 5px;font-size:7px}
+.leaderboardTable th,.leaderboardTable td{padding:9px 11px}.leaderboardTable td{font-size:10px}
+.leaderboardFoot{padding:9px 13px}.leaderboardBestNote{padding:8px 13px}
+.healthMatrix{gap:9px}
+.healthItem{min-height:92px;padding:13px;border-color:var(--line);border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,.16)}
+.healthState{margin-top:7px;font-size:14px}.healthDetail{font-size:9px!important;line-height:1.45!important}
+.advancedFold{margin-top:12px!important}
+.advancedFold>summary{padding:10px 13px;font-size:8px}
+.advancedFold>.advancedFoldBody{padding:0 12px 13px}
+.advancedFold .sectionTitle{margin-top:14px!important}
+.accountSearch{gap:8px;margin-bottom:8px;padding:9px!important}
+.accountSearch input,.accountSearch button{min-height:40px;padding:10px 12px}
+.accountHint{margin-bottom:10px;font-size:8px;line-height:1.5}
+.access{padding:15px!important;min-height:148px}.access h3{font-size:14px}.access .mode{margin-bottom:13px;font-size:8px}
+.accessLabel{margin:12px 0 6px;font-size:8px}.copyText{padding:9px 10px;font-size:10px}.copyBtn{min-width:68px;font-size:8px}
+.note{margin-top:9px;font-size:10px;line-height:1.55}
+
+@media(min-width:1101px){
+    header{
+        grid-template-columns:minmax(390px,.82fr) minmax(0,1.18fr)!important;
+        column-gap:16px!important;
+        row-gap:7px!important;
+    }
+    .headerBoombox.nightwave{
+        grid-template-columns:42px 58px minmax(170px,1fr) auto 42px!important;
+        gap:7px!important;
+        min-height:66px!important;
+        padding:7px 9px!important;
+        border-radius:10px!important;
+        box-shadow:0 9px 24px rgba(0,0,0,.22),inset 3px 0 0 rgba(255,79,184,.72),inset -2px 0 0 rgba(114,255,180,.72)!important;
+    }
+    .headerBoombox .boomboxSpeaker{width:42px!important;height:42px!important}
+    .headerBoombox .tunerScope{height:42px!important}
+    .headerBoombox .tunerControls{grid-template-columns:repeat(3,31px)!important}
+    .headerBoombox .tunerBtn{width:31px!important;height:31px!important}
+    .headerBoombox .tunerTitle{font-size:12px!important}
+    .headerBoombox .tunerCredits{margin-left:49px!important}
+}
+
+@media(max-width:1100px){
+    .shell{width:min(calc(100% - 22px),900px)!important}
+    header{gap:10px!important;margin-bottom:8px!important}
+    .nightwave{margin:8px 0!important}
+    .hero{height:282px!important}
+    .quickEndpoint{grid-template-columns:1fr}
+    .setupExample{max-width:560px;justify-self:center}
+}
+
+@media(max-width:760px){
+    .shell{width:calc(100% - 20px)!important;padding:10px 0 34px!important}
+    header{gap:7px!important;margin-bottom:8px!important}
+    .brand{gap:9px}
+    .badge.piggyBrand{width:48px!important;height:48px!important;flex-basis:48px!important;border-radius:11px!important}
+    header .brand h1{font-size:clamp(22px,7.3vw,28px)!important}
+    .wordmarkRail{min-height:20px}.wordmarkPool{min-height:20px;padding-inline:8px}
+    .tagline{font-size:8px;letter-spacing:.17em}.stackline{display:none}.versionBadge{font-size:6px}
+    header .headerControls{
+        grid-template-columns:minmax(0,1fr) auto auto!important;
+        gap:4px!important;
+        padding:14px 5px 5px!important;
+    }
+    .headerControls .live,.headerControls .neuralRainToggle,.headerControls .stasisToggle,.adminMobileLink{
+        min-height:34px!important;
+        padding:7px!important;
+        font-size:7px!important;
+    }
+    .hero{height:228px!important;border-radius:10px!important}
+    .heroText{top:13px;left:14px;right:14px}
+    .heroTextCompact{max-width:calc(100% - 28px)!important;padding:8px 10px 9px 11px}
+    .heroTextCompact .kicker{min-height:22px;font-size:8px;letter-spacing:.14em}
+    .heroTextCompact .heroMicro{margin-top:5px;font-size:7px}
+    .nightwave{grid-template-columns:54px minmax(0,1fr)!important;gap:7px!important;padding:8px!important;border-radius:10px!important}
+    .tunerScope{height:40px!important;padding:5px 4px!important}.tunerTitle{font-size:12px!important}.tunerKicker{font-size:6px!important}
+    .tunerGenre{min-height:24px!important;font-size:6px!important}.tunerControls{grid-template-columns:repeat(3,40px) minmax(70px,1fr)!important}
+    .tunerBtn{width:40px!important;height:40px!important}.tunerCollapse{min-height:24px!important;font-size:6px!important}
+    .sectionTitle{margin:16px 0 7px!important;font-size:8px!important}
+    .graphCard{padding:11px!important}.graphTop{margin:-11px -11px 8px!important;padding:10px 11px 9px!important}
+    .poolHashrateGraph>svg{height:142px}.graphTitle{max-width:52%;line-height:1.45}.graphStats{gap:7px!important}#graphNow{font-size:15px!important}
+    .historySummary{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.historyMetric{padding:8px}.historyMetric .value{font-size:11px}
+    .grid{gap:7px}.card{min-height:84px!important;padding:12px!important}.value{font-size:17px}
+    .lastBlockPanel{padding:10px 11px!important}.lastBlockHead{margin:-10px -11px 9px!important;padding:10px 11px 8px!important}
+    .marketTicker{padding:11px!important;gap:10px!important}.marketStats{gap:0!important}
+    .launchPromo{padding:12px!important;gap:9px!important}.launchPromoClock{padding-top:10px!important}.launchPromoTitle{font-size:20px}.launchPromoText{font-size:10px}
+    .quickConnectHead{padding:12px!important}.quickConnectGrid{padding:10px 12px 12px!important}.quickEndpoint{padding:12px!important}
+    .routeHashPath{align-items:center!important;flex-direction:row!important;text-align:left!important}.routeHashBrand{align-items:center!important;flex-direction:row!important;text-align:left!important}.routeHashCta{width:auto!important}
+    .leaderboardHead{gap:9px;padding:11px 12px!important}.leaderboardRewards{padding:8px}.leaderboardRewardTier{font-size:8px}
+    .healthMatrix{gap:7px}.healthItem{min-height:84px;padding:11px}
+    .accountSearch{padding:7px!important}.accountSearch input,.accountSearch button{min-height:42px}
+    .access{padding:13px!important}.copyRow{gap:6px}.copyText{font-size:9px}.copyBtn{min-width:62px}
+}
+
+@media(max-width:430px){
+    .shell{width:calc(100% - 16px)!important}
+    .hero{height:220px!important}
+    .heroTextCompact{max-width:calc(100% - 20px)!important}
+    .hero[data-block-celebration="active"] .heroTextCompact{max-width:calc(100% - 103px)!important}
+    .nightwave{grid-template-columns:50px minmax(0,1fr)!important}
+    .tunerScope{height:38px!important}.tunerControls{grid-template-columns:repeat(3,38px) minmax(64px,1fr)!important}.tunerBtn{width:38px!important;height:38px!important}
+    .marketTicker{grid-template-columns:1fr auto!important}.marketPrice{font-size:24px}
+    .routeHashPath{align-items:stretch!important;flex-direction:column!important}.routeHashBrand{flex-direction:row!important}.routeHashCta{width:100%!important}
+}
 </style>
 </head>
 <body>
@@ -4545,7 +4817,7 @@ html.stasis .neuralRain{opacity:0}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.74</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.75</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
