@@ -1,4 +1,5 @@
 import importlib.util
+import hashlib
 import io
 import json
 import os
@@ -33,7 +34,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.73")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.74")
         self.assertIn('<title>TERMINUS POOL // DATUM</title>', self.server.HTML)
         self.assertIn('content="Terminus Pool // DATUM"', self.server.HTML)
         self.assertIn(
@@ -59,7 +60,39 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('MISSING SAMPLES ARE UNKNOWN', self.server.HTML)
         self.assertNotIn('SHARE ACCEPTANCE', self.server.HTML)
         self.assertNotIn('RATUM PRIME DOES NOT PUBLISH ACCEPTED / REJECTED / STALE', self.server.HTML)
-        self.assertIn('staxsats-xbt-pool/icon-v0264.png', self.server.HTML)
+        social_card_url = (
+            "https://terminuspool.xyz/assets/terminus-logo-v0274.png"
+        )
+        self.assertIn(
+            f'property="og:image" content="{social_card_url}"',
+            self.server.HTML,
+        )
+        self.assertIn(
+            f'name="twitter:image" content="{social_card_url}"',
+            self.server.HTML,
+        )
+        self.assertIn('name="twitter:card" content="summary"', self.server.HTML)
+        self.assertIn(
+            'name="twitter:site" content="@TerminusPool"',
+            self.server.HTML,
+        )
+        self.assertIn(
+            'property="og:image:width" content="1254"',
+            self.server.HTML,
+        )
+        self.assertIn(
+            'property="og:image:height" content="1254"',
+            self.server.HTML,
+        )
+        self.assertIn(
+            'name="twitter:image:alt" content="Terminus Pool logo"',
+            self.server.HTML,
+        )
+        self.assertEqual(len(self.server.SOCIAL_CARD_PNG), 395887)
+        self.assertEqual(
+            hashlib.sha256(self.server.SOCIAL_CARD_PNG).hexdigest(),
+            "1cdeee66c7b1c43f39ae81596e2acab8b781bf65aadaf832afb13dd43918fcb6",
+        )
         self.assertIn('@media(min-width:821px)', self.server.HTML)
         self.assertIn('width:min(calc(100% - 32px),1080px)', self.server.HTML)
         self.assertIn('max-width:1080px', self.server.HTML)
