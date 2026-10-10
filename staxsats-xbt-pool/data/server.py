@@ -99,6 +99,8 @@ SOCIAL_CARD_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     "terminus-logo-v0274.png",
 )
+if not os.path.isfile(SOCIAL_CARD_PATH):
+    SOCIAL_CARD_PATH = os.path.join(STATE_DIR, "terminus-logo-v0274.png")
 with open(SOCIAL_CARD_PATH, "rb") as social_card_file:
     SOCIAL_CARD_PNG = social_card_file.read()
 POOL_SETUP_PNG = base64.b64decode(

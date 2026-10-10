@@ -3,6 +3,7 @@ import hashlib
 import io
 import json
 import os
+import shutil
 import sqlite3
 import tempfile
 import unittest
@@ -32,6 +33,32 @@ class TerminusServerTests(unittest.TestCase):
 
     def tearDown(self):
         self.temp.cleanup()
+
+    def test_social_card_loads_from_state_dir_before_container_recreate(self):
+        isolated_server = os.path.join(self.temp.name, "server.py")
+        state_dir = os.path.join(self.temp.name, "state")
+        os.makedirs(state_dir)
+        shutil.copy2(SERVER_PATH, isolated_server)
+        shutil.copy2(
+            os.path.join(
+                os.path.dirname(SERVER_PATH),
+                "terminus-logo-v0274.png",
+            ),
+            os.path.join(state_dir, "terminus-logo-v0274.png"),
+        )
+        os.environ["TERMINUS_STATE_DIR"] = state_dir
+        os.environ["TERMINUS_COLLECTOR_ENABLED"] = "false"
+        spec = importlib.util.spec_from_file_location(
+            "terminus_server_isolated",
+            isolated_server,
+        )
+        isolated = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(isolated)
+        self.assertEqual(
+            isolated.SOCIAL_CARD_PATH,
+            os.path.join(state_dir, "terminus-logo-v0274.png"),
+        )
+        self.assertEqual(len(isolated.SOCIAL_CARD_PNG), 395887)
 
     def test_release_version_and_static_assets(self):
         self.assertEqual(self.server.RELEASE_VERSION, "0.2.74")
