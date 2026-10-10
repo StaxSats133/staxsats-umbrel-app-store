@@ -47,7 +47,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.72"
+RELEASE_VERSION = "0.2.73"
 RELIABILITY_WINDOWS = {
     "1h": 60 * 60,
     "24h": 24 * 60 * 60,
@@ -988,7 +988,6 @@ def load_miner_dashboard(identity, now=None, max_points=288):
             (point["hashrateThs"] for point in full_points),
             default=0.0,
         ),
-        "sampledBestShare": sampled_best,
         "lastActiveAt": last_active,
         "allTimeBestShare": float(best_row[0] or 0) if best_row else sampled_best,
         "allTimeTrackingSince": int(best_row[1] or 0) if best_row else 0,
@@ -1019,7 +1018,6 @@ def load_public_leaderboard(limit=100):
                     MAX(activity.hashrate_hs),
                     SUM(CASE WHEN activity.hashrate_hs > 0 THEN 1 ELSE 0 END),
                     MAX(CASE WHEN activity.hashrate_hs > 0 THEN activity.minute END),
-                    MAX(activity.best_share),
                     (
                         SELECT latest.work
                         FROM miner_activity AS latest
@@ -1055,7 +1053,7 @@ def load_public_leaderboard(limit=100):
     for rank, row in enumerate(rows, 1):
         (
             identity_hash, tag, total_hs, peak_hs, active_minutes,
-            last_active, best, latest_work, latest_target, last_observed
+            last_active, latest_work, latest_target, last_observed
         ) = row
         inactive_for = max(0, now - int(last_active))
         if inactive_for <= LEADERBOARD_LIVE_GRACE_SECONDS:
@@ -1076,7 +1074,6 @@ def load_public_leaderboard(limit=100):
             "peakHashrateThs": _number(peak_hs) / 1_000_000_000_000,
             "activeMinutes": int(active_minutes or 0),
             "lastActiveAt": int(last_active),
-            "bestShare": _number(best),
             "latestWork": max(0, int(_number(latest_work, 0))),
             "latestTargetWork": max(0, int(_number(latest_target, 0))),
             "lastObservedAt": int(last_observed),
@@ -1116,7 +1113,6 @@ def load_public_leaderboard(limit=100):
         "recentGraceMinutes": LEADERBOARD_RECENT_GRACE_SECONDS // 60,
         "ranking": "average-hashrate",
         "hashrateBasis": "average-over-all-observed-pool-minutes",
-        "bestShareBasis": "highest-one-minute-window-best-sample-in-24h",
         "privacy": "opaque-aliases-no-payout-addresses",
         "miners": miners,
     }
@@ -1303,9 +1299,6 @@ def load_admin_snapshot(reveal=False):
                     public_row.get("peakHashrateThs", 0)
                 ),
                 "activeMinutes": int(public_row.get("activeMinutes", 0)),
-                "sampledBestShare": _number(
-                    public_row.get("bestShare", 0)
-                ),
                 "lastActiveAt": int(public_row.get("lastActiveAt", 0)),
             } if public_row else None),
         })
@@ -4536,7 +4529,7 @@ html.stasis .neuralRain{opacity:0}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.72</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.73</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
@@ -5000,11 +4993,10 @@ html.stasis .neuralRain{opacity:0}
   </div>
   <div class="leaderboardTableWrap">
     <table class="leaderboardTable">
-      <thead><tr><th>24H RANK</th><th>PUBLIC ALIAS</th><th>24H STATE</th><th>24H AVG</th><th>24H PEAK</th><th>ACTIVE MIN</th><th title="Highest RATUM window-best value captured by the one-minute collector during this rolling 24-hour period">24H SAMPLED BEST</th><th>LAST ACTIVE</th></tr></thead>
-      <tbody id="leaderboardRows"><tr><td colspan="8" class="leaderboardEmpty">BUILDING 24H ACTIVITY WINDOW…</td></tr></tbody>
+      <thead><tr><th>24H RANK</th><th>PUBLIC ALIAS</th><th>24H STATE</th><th>24H AVG</th><th>24H PEAK</th><th>ACTIVE MIN</th><th>LAST ACTIVE</th></tr></thead>
+      <tbody id="leaderboardRows"><tr><td colspan="7" class="leaderboardEmpty">BUILDING 24H ACTIVITY WINDOW…</td></tr></tbody>
     </table>
   </div>
-  <div class="leaderboardBestNote"><strong>WHY ADMIN MAY DIFFER</strong> = THIS TABLE IS ROLLING 24H HISTORY. ADMIN SHOWS CURRENT PAYOUT-WINDOW ACCOUNTS, CURRENT HASHRATE, WINDOW BEST, AND TRACKED ALL-TIME BEST. <strong>24H SAMPLED BEST</strong> IS ONLY THE HIGHEST WINDOW-BEST SEEN BY THE 60-SECOND COLLECTOR DURING THIS PERIOD; IT IS NOT TRACKED ALL-TIME, AND A TRANSIENT SHARE BETWEEN SAMPLES — INCLUDING A BLOCK-WINNING SHARE — MAY NOT APPEAR.</div>
   <div class="leaderboardFoot"><span id="leaderboardFreshness">AWAITING ACTIVITY SAMPLES</span><span>SAMPLED ≤10 MIN // SAMPLED ≤60 MIN // SAMPLED WITHIN 24H</span></div>
 </section>
 
@@ -5652,14 +5644,13 @@ async function loadLeaderboard(){
         <td data-label="24H AVG">${num(miner.averageHashrateThs,3)} TH/s</td>
         <td data-label="24H PEAK">${num(miner.peakHashrateThs,3)} TH/s</td>
         <td data-label="ACTIVE MIN">${num(miner.activeMinutes,0)}</td>
-        <td data-label="24H SAMPLED BEST">${bestShareFmt(miner.bestShare)}</td>
         <td data-label="LAST ACTIVE">${relativeAge(miner.lastActiveAt)}</td>
-      </tr>`).join(""):`<tr><td colspan="8" class="leaderboardEmpty">BUILDING 24H ACTIVITY WINDOW // FIRST SAMPLE ARRIVES WITHIN ONE MINUTE</td></tr>`;
+      </tr>`).join(""):`<tr><td colspan="7" class="leaderboardEmpty">BUILDING 24H ACTIVITY WINDOW // FIRST SAMPLE ARRIVES WITHIN ONE MINUTE</td></tr>`;
     $("leaderboardFreshness").textContent=
       "UPDATED "+new Date(Number(data.generatedAt||0)*1000).toLocaleTimeString()+
       " // "+miners.length+" ACTIVE-IN-24H";
   }catch(error){
-    rows.innerHTML=`<tr><td colspan="8" class="leaderboardEmpty">LEADERBOARD TELEMETRY TEMPORARILY UNAVAILABLE</td></tr>`;
+    rows.innerHTML=`<tr><td colspan="7" class="leaderboardEmpty">LEADERBOARD TELEMETRY TEMPORARILY UNAVAILABLE</td></tr>`;
     $("leaderboardFreshness").textContent="LEADERBOARD DATA ERROR";
   }
 }
@@ -6702,7 +6693,6 @@ async function refresh(){
         historyMetric("24H PEAK",num(Number(personal.peakHashrateThs||0),3)+" TH/s")+
         historyMetric("ACTIVE MINUTES",num(Number(personal.activeMinutes||0),0))+
         historyMetric("ACTIVITY SIGNAL",num(Number(personal.activityPercent||0),2)+"%")+
-        historyMetric("24H SAMPLED BEST",bestShareFmt(personal.sampledBestShare))+
         historyMetric("TRACKED ALL-TIME BEST",bestShareFmt(personal.allTimeBestShare))+
         historyMetric("LAST ACTIVE",personal.lastActiveAt?new Date(Number(personal.lastActiveAt)*1000).toLocaleString():"NO ACTIVE SAMPLE")+
         historyMetric("TRACKED SAMPLES",num(Number(personal.trackedSamples||0),0));
@@ -6960,7 +6950,7 @@ ADMIN_HTML = r"""<!doctype html>
   </header>
   <section class="scopeGuide" aria-label="Telemetry scope comparison">
     <div class="scopeCard"><strong>ADMIN // CURRENT PAYOUT WINDOW</strong>Accounts held in RATUM now. Hashrate is current; Window Best, share, work, and conditional payout are current-window values. Tracked All-Time is the dashboard's durable maximum.</div>
-    <div class="scopeCard public"><strong>PUBLIC // ROLLING 24 HOURS</strong>Accounts active at least once during the last 24 hours. Rank and hashrate use 24H average; sampled best is the highest one-minute observation in that period.</div>
+    <div class="scopeCard public"><strong>PUBLIC // ROLLING 24 HOURS</strong>Accounts active at least once during the last 24 hours. Rank and hashrate use the rolling 24H average.</div>
   </section>
   <div class="toolbar">
     <label class="sr" for="search">Filter miners</label><input id="search" type="search" placeholder="Filter by address or worker tag" autocomplete="off">
@@ -6989,7 +6979,7 @@ const share=v=>{const n=Number(v||0);return n>0?compact(n):"WAITING"};
 function rewardBadges(reward){if(!reward)return"";const items=[];if(reward.cosmic)items.push({...reward.cosmic,special:false});for(const item of(reward.specials||[]))items.push({...item,special:true});return items.length?`<span class="tagRewards" aria-label="Work rewards">${items.map(item=>`<span class="tagReward${item.special?" special":""}" role="img" title="${esc(item.label)}" aria-label="${esc(item.label)}">${esc(item.emoji)}</span>`).join("")}</span>`:""}
 function rewardLegend(scale){const tiers=(scale&&scale.tiers)||[];const cosmic=tiers.map(t=>`<span class="legendTier" title="${esc(t.label)}">${esc(t.emoji)} ${num(t.thresholdPercent,2)}%</span>`).join("");return `<strong>WORK REWARDS</strong>${cosmic}<span class="legendTier">💎 ${num(scale?.diamondThresholdPercent,0)}%</span><span class="legendTier">👑 #1</span>`}
 function public24hState(status){const state=String(status||"seen").toLowerCase();return state==="live"?"SAMPLED ≤10M":state==="recent"?"SAMPLED ≤60M":"SAMPLED ≤24H"}
-function public24hCell(m){const p=m.public24h;if(!p)return`<div class="publicCompare">NOT ON 24H BOARD<span>No sampled activity in the rolling period</span></div>`;return`<div class="publicCompare"><strong>#${num(p.rank,0)} ${esc(p.alias)}</strong><span>${public24hState(p.status)} // AVG ${num(p.averageHashrateThs,3)} TH/s</span><span>SAMPLED BEST ${share(p.sampledBestShare)}</span></div>`}
+function public24hCell(m){const p=m.public24h;if(!p)return`<div class="publicCompare">NOT ON 24H BOARD<span>No sampled activity in the rolling period</span></div>`;return`<div class="publicCompare"><strong>#${num(p.rank,0)} ${esc(p.alias)}</strong><span>${public24hState(p.status)} // AVG ${num(p.averageHashrateThs,3)} TH/s</span></div>`}
 function render(){const q=$("search").value.trim().toLowerCase();const rows=all.filter(m=>!q||m.identity.toLowerCase().includes(q)||m.tag.toLowerCase().includes(q)||String(m.public24h?.alias||"").toLowerCase().includes(q));$("rows").innerHTML=rows.length?rows.map(m=>`<tr><td data-label="STATUS NOW"><span class="status ${esc(m.status)}">${esc(m.status.toUpperCase())}</span></td><td data-label="PAYOUT IDENTITY" class="identity">${esc(m.identity)}</td><td data-label="WORKER TAG" class="tag">${esc(m.tag)}${rewardBadges(m.reward)}</td><td data-label="HASHRATE NOW">${num(m.hashrateThs,3)} TH/s</td><td data-label="WINDOW SHARE">${num(m.sharePercent,2)}%</td><td data-label="WINDOW / ALL-TIME BEST"><div class="bestStack"><div class="bestPrimary">${share(m.windowBestShare)}<span>WINDOW BEST</span></div><div class="bestSecondary">TRACKED ALL-TIME ${share(m.allTimeBestShare)}</div></div></td><td data-label="WINDOW WORK">${compact(m.work)}</td><td data-label="IF BLOCK FOUND NOW">${num(m.projectedPayoutXbt,8)} XBT</td><td data-label="PUBLIC 24H COMPARISON">${public24hCell(m)}</td><td data-label="PAYOUT ADDRESS" class="payable">${m.payable?"VALID":esc(m.unpayableReason||"INVALID")}</td></tr>`).join(""):`<tr><td colspan="10" class="empty">NO MATCHING MINERS</td></tr>`}
 async function load(){try{const r=await fetch(`/api/admin/miners?reveal=${revealed?1:0}&ts=${Date.now()}`,{cache:"no-store",credentials:"same-origin"});if(!r.ok)throw new Error(`HTTP ${r.status}`);const d=await r.json();all=d.miners||[];const s=d.summary||{};$("rewardLegend").innerHTML=rewardLegend(d.rewardScale||{});$("accounts").textContent=s.accounts??0;$("active").textContent=s.active??0;$("idle").textContent=s.idle??0;$("hashrate").textContent=num(s.hashrateThs,3)+" TH/s";$("publicAccounts").textContent=s.leaderboard24hAccounts??0;$("payout").textContent=num(s.projectedPayoutXbt,8)+" XBT";const tracked=d.allTimeTrackingSince?new Date(d.allTimeTrackingSince*1000).toLocaleString():"STARTING NOW";$("freshness").textContent="UPDATED "+new Date(d.generatedAt*1000).toLocaleString()+" // ALL-TIME TRACKING SINCE "+tracked;$("freshness").className="";render()}catch(e){$("rows").innerHTML=`<tr><td colspan="10" class="empty error">ADMIN TELEMETRY UNAVAILABLE // ${esc(e.message)}</td></tr>`;$("freshness").textContent="DATA ERROR";$("freshness").className="error"}}
 $("search").addEventListener("input",render);$("refresh").addEventListener("click",load);$("reveal").addEventListener("click",()=>{revealed=!revealed;$("reveal").textContent=revealed?"MASK ADDRESSES":"REVEAL ADDRESSES";load()});load();setInterval(()=>{if(!document.hidden)load()},15000);

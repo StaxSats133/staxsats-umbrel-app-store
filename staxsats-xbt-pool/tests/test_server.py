@@ -33,7 +33,7 @@ class TerminusServerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.72")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.73")
         self.assertIn('<title>TERMINUS POOL // DATUM</title>', self.server.HTML)
         self.assertIn('content="Terminus Pool // DATUM"', self.server.HTML)
         self.assertIn(
@@ -162,9 +162,9 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('id="lastBlockHash"', self.server.HTML)
         self.assertIn('id="lastBlockDifficulty"', self.server.HTML)
         self.assertNotIn('id="lastBlockFinder"', self.server.HTML)
-        self.assertIn('24H SAMPLED BEST', self.server.HTML)
+        self.assertNotIn('24H SAMPLED BEST', self.server.HTML)
         self.assertIn('NOT THE CURRENT PAYOUT WINDOW', self.server.HTML)
-        self.assertIn('WHY ADMIN MAY DIFFER', self.server.HTML)
+        self.assertNotIn('WHY ADMIN MAY DIFFER', self.server.HTML)
         self.assertIn('function leaderboardStateLabel(status)', self.server.HTML)
         self.assertIn('SAMPLED ≤10 MIN', self.server.HTML)
         self.assertNotIn('LIVE ≤10 MIN // RECENT ≤60 MIN', self.server.HTML)
@@ -180,8 +180,8 @@ class TerminusServerTests(unittest.TestCase):
         leaderboard_table = self.server.HTML.index('class="leaderboardTableWrap"')
         self.assertLess(leaderboard_head, leaderboard_rewards)
         self.assertLess(leaderboard_rewards, leaderboard_table)
-        self.assertIn('IT IS NOT TRACKED ALL-TIME', self.server.HTML)
-        self.assertIn('A TRANSIENT SHARE BETWEEN SAMPLES', self.server.HTML)
+        self.assertNotIn('IT IS NOT TRACKED ALL-TIME', self.server.HTML)
+        self.assertNotIn('A TRANSIENT SHARE BETWEEN SAMPLES', self.server.HTML)
         self.assertNotIn('data-label="BEST SHARE"', self.server.HTML)
         self.assertNotIn('class="establishedBlock"', self.server.HTML)
         self.assertNotIn('<details class="advancedFold" open>', self.server.HTML)
@@ -512,7 +512,7 @@ class TerminusServerTests(unittest.TestCase):
         self.assertAlmostEqual(dashboard["activityPercent"], 100 / 3)
         self.assertEqual(dashboard["averageHashrateThs"], 1)
         self.assertEqual(dashboard["peakHashrateThs"], 3)
-        self.assertEqual(dashboard["sampledBestShare"], 50)
+        self.assertNotIn("sampledBestShare", dashboard)
         self.assertEqual(dashboard["allTimeBestShare"], 100)
         self.assertEqual(len(dashboard["points"]), 3)
         self.assertNotIn(identity, str(dashboard))
@@ -645,10 +645,8 @@ class TerminusServerTests(unittest.TestCase):
             "rolling-24h-activity-not-current-payout-window",
         )
         self.assertEqual(payload["ranking"], "average-hashrate")
-        self.assertEqual(
-            payload["bestShareBasis"],
-            "highest-one-minute-window-best-sample-in-24h",
-        )
+        self.assertNotIn("bestShareBasis", payload)
+        self.assertNotIn("bestShare", payload["miners"][0])
 
     def test_admin_reconciles_current_window_with_public_24h(self):
         identity = "bc1qexampleidentitythatmustneverleak"
@@ -679,7 +677,6 @@ class TerminusServerTests(unittest.TestCase):
                 "averageHashrateThs": 1.5,
                 "peakHashrateThs": 2.5,
                 "activeMinutes": 1200,
-                "bestShare": 9876,
                 "lastActiveAt": 1_800_000_000,
             }],
         }
@@ -704,7 +701,7 @@ class TerminusServerTests(unittest.TestCase):
         self.assertEqual(row["public24h"]["alias"], alias)
         self.assertEqual(row["public24h"]["rank"], 2)
         self.assertEqual(row["public24h"]["averageHashrateThs"], 1.5)
-        self.assertEqual(row["public24h"]["sampledBestShare"], 9876)
+        self.assertNotIn("sampledBestShare", row["public24h"])
 
     def test_admin_disabled_by_default(self):
         self.assertFalse(self.server.ADMIN_ENABLED)
