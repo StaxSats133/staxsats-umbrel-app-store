@@ -47,7 +47,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.76"
+RELEASE_VERSION = "0.2.77"
 RELIABILITY_WINDOWS = {
     "1h": 60 * 60,
     "24h": 24 * 60 * 60,
@@ -4661,14 +4661,163 @@ header .brand h1{font-size:clamp(31px,3.2vw,42px)!important;line-height:.9!impor
 .graphCard{margin-top:8px;padding:14px!important}
 .graphTop{
     margin:-14px -14px 10px!important;
-    padding:12px 14px 10px!important;
+    padding:13px 14px 11px!important;
     border-bottom-color:rgba(67,245,255,.12)!important;
 }
-.graphTitle{font-size:9px!important;letter-spacing:.15em!important}
+.graphTitleBlock{display:grid;gap:5px;min-width:0}
+.graphEyebrow{color:#ff72c4;font-size:7px;font-weight:900;letter-spacing:.18em}
+.graphTitle{font-size:10px!important;letter-spacing:.15em!important;color:#a8c8d0!important}
 .graphStats{gap:10px!important}
 .graphPill{padding:6px 9px!important;font-size:8px!important}
 #graphNow{font-size:17px!important}
-.poolHashrateGraph>svg{display:block;height:178px}
+.poolHashrateGraph{
+    position:relative;
+    overflow:hidden;
+    isolation:isolate;
+    background:
+      radial-gradient(circle at 83% 2%,rgba(170,114,255,.08),transparent 30%),
+      linear-gradient(145deg,var(--surface-raised),var(--surface))!important;
+}
+.poolHashrateGraph:before{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:-1;
+    pointer-events:none;
+    background:
+      linear-gradient(90deg,rgba(67,245,255,.24),transparent 18%) top left/120px 1px no-repeat,
+      linear-gradient(180deg,rgba(67,245,255,.24),transparent 18%) top left/1px 92px no-repeat,
+      linear-gradient(270deg,rgba(255,79,184,.20),transparent 18%) bottom right/120px 1px no-repeat,
+      linear-gradient(0deg,rgba(255,79,184,.20),transparent 18%) bottom right/1px 92px no-repeat;
+}
+.hashrateScope{
+    position:relative;
+    height:226px;
+    overflow:hidden;
+    border:1px solid rgba(67,245,255,.19);
+    border-radius:8px;
+    background:
+      radial-gradient(circle at 88% 22%,rgba(170,114,255,.14),transparent 27%),
+      radial-gradient(circle at 12% 100%,rgba(42,216,190,.09),transparent 34%),
+      linear-gradient(rgba(67,245,255,.045) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(67,245,255,.038) 1px,transparent 1px),
+      #030a11;
+    background-size:auto,auto,100% 25%,10% 100%,auto;
+    box-shadow:inset 0 0 46px rgba(0,0,0,.52),0 0 28px rgba(67,245,255,.035);
+}
+.hashrateScope:before{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:4;
+    pointer-events:none;
+    opacity:.32;
+    background:repeating-linear-gradient(180deg,transparent 0 3px,rgba(3,10,17,.45) 4px);
+    mix-blend-mode:multiply;
+}
+.hashrateScope:after{
+    content:"";
+    position:absolute;
+    top:30px;
+    bottom:20px;
+    left:-16%;
+    z-index:3;
+    width:16%;
+    pointer-events:none;
+    background:linear-gradient(90deg,transparent,rgba(67,245,255,.04),rgba(67,245,255,.17),transparent);
+    filter:blur(2px);
+    animation:scopeSweep 7s linear infinite;
+}
+@keyframes scopeSweep{to{left:104%}}
+.hashrateScope>svg{
+    position:absolute;
+    inset:25px 0 20px;
+    z-index:2;
+    width:100%;
+    height:181px;
+    border:0;
+    outline:0;
+    background:transparent;
+}
+.hashrateScope>svg:focus-visible{
+    outline:1px solid rgba(114,255,180,.72);
+    outline-offset:-3px;
+}
+.graphHud{
+    position:absolute;
+    z-index:5;
+    top:8px;
+    left:11px;
+    right:11px;
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    color:#6f9ba6;
+    font-size:7px;
+    font-weight:900;
+    letter-spacing:.14em;
+    pointer-events:none;
+}
+.graphHudMode{display:inline-flex;align-items:center;gap:7px}
+.graphHudMode i{
+    width:5px;
+    height:5px;
+    border-radius:50%;
+    background:var(--green);
+    box-shadow:0 0 8px var(--green);
+    animation:signalBlink 1.8s ease-in-out infinite;
+}
+@keyframes signalBlink{50%{opacity:.35;transform:scale(.72)}}
+.graphMomentum{color:#9ab0b8}
+.graphMomentum.rising{color:var(--green)}
+.graphMomentum.falling{color:#ff8bbf}
+.graphMomentum.steady{color:#8ccbd6}
+.graphTimeline{
+    position:absolute;
+    z-index:5;
+    left:10px;
+    right:10px;
+    bottom:5px;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    color:#50727c;
+    font-size:7px;
+    letter-spacing:.12em;
+    pointer-events:none;
+}
+.graphTimeline span:nth-child(2){text-align:center}
+.graphTimeline span:last-child{text-align:right;color:#7ce5e9}
+.graphProbe{
+    --probe-x:50%;
+    position:absolute;
+    z-index:7;
+    top:39px;
+    left:clamp(78px,var(--probe-x),calc(100% - 78px));
+    display:grid;
+    gap:3px;
+    min-width:156px;
+    padding:7px 9px;
+    border:1px solid rgba(67,245,255,.40);
+    border-radius:5px;
+    background:rgba(3,10,17,.94);
+    box-shadow:0 8px 26px rgba(0,0,0,.48),0 0 16px rgba(67,245,255,.08);
+    opacity:0;
+    transform:translate(-50%,-4px);
+    transition:opacity .12s ease,transform .12s ease;
+    pointer-events:none;
+}
+.graphProbe.show{opacity:1;transform:translate(-50%,0)}
+.graphProbe strong{color:var(--cyan);font-size:12px;letter-spacing:.07em}
+.graphProbe span{color:#83a5ae;font-size:7px;letter-spacing:.09em;white-space:nowrap}
+#graphLine{vector-effect:non-scaling-stroke}
+#graphTrail{vector-effect:non-scaling-stroke;opacity:.26}
+#graphDot{filter:drop-shadow(0 0 7px #43f5ff)}
+#graphPulse{transform-box:fill-box;transform-origin:center;animation:scopePulse 1.6s ease-out infinite}
+@keyframes scopePulse{0%{opacity:.9;transform:scale(.65)}75%,100%{opacity:0;transform:scale(2.7)}}
+#hashBars rect{transition:opacity .18s ease}
+#hashProbe{pointer-events:none}
+#hashScale text{font-size:13px;font-weight:800;letter-spacing:1px;fill:rgba(132,178,189,.52)}
+.historySummary{gap:8px;margin-top:8px}
 .historySummary{gap:8px;margin-top:8px}
 .historyMetric{padding:9px 10px;border-color:var(--line);border-radius:7px;background:#050c12}
 .historyMetric .value{font-size:12px}
@@ -4782,7 +4931,8 @@ header .brand h1{font-size:clamp(31px,3.2vw,42px)!important;line-height:.9!impor
     .tunerBtn{width:40px!important;height:40px!important}.tunerCollapse{min-height:24px!important;font-size:6px!important}
     .sectionTitle{margin:16px 0 7px!important;font-size:8px!important}
     .graphCard{padding:11px!important}.graphTop{margin:-11px -11px 8px!important;padding:10px 11px 9px!important}
-    .poolHashrateGraph>svg{height:142px}.graphTitle{max-width:52%;line-height:1.45}.graphStats{gap:7px!important}#graphNow{font-size:15px!important}
+    .graphTitleBlock{max-width:55%}.graphEyebrow{font-size:6px}.graphTitle{line-height:1.45}.graphStats{gap:7px!important}#graphNow{font-size:15px!important}
+    .hashrateScope{height:198px}.hashrateScope>svg{height:156px}.graphHud{font-size:6px}.graphProbe{top:34px;min-width:126px;padding:6px 8px}.graphProbe strong{font-size:11px}.graphProbe span{font-size:6px}
     .historySummary{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.historyMetric{padding:8px}.historyMetric .value{font-size:11px}
     .grid{gap:7px}.card{min-height:84px!important;padding:12px!important}.value{font-size:17px}
     .lastBlockPanel{padding:10px 11px!important}.lastBlockHead{margin:-10px -11px 9px!important;padding:10px 11px 8px!important}
@@ -4804,7 +4954,13 @@ header .brand h1{font-size:clamp(31px,3.2vw,42px)!important;line-height:.9!impor
     .nightwave{grid-template-columns:50px minmax(0,1fr)!important}
     .tunerScope{height:38px!important}.tunerControls{grid-template-columns:repeat(3,38px) minmax(64px,1fr)!important}.tunerBtn{width:38px!important;height:38px!important}
     .marketTicker{grid-template-columns:1fr auto!important}.marketPrice{font-size:24px}
+    .graphTop{align-items:flex-start!important}.graphStats{align-items:flex-end!important}.graphPill{font-size:7px!important}.graphHudMode{display:none}.graphHud{justify-content:flex-end}.hashrateScope{height:184px}.hashrateScope>svg{inset:25px 0 20px;height:139px}.graphTimeline{font-size:6px}.graphProbe{left:clamp(70px,var(--probe-x),calc(100% - 70px));min-width:126px}
     .routeHashPath{align-items:stretch!important;flex-direction:column!important}.routeHashBrand{flex-direction:row!important}.routeHashCta{width:100%!important}
+}
+@media(prefers-reduced-motion:reduce){
+    .hashrateScope:after,
+    #graphPulse,
+    .graphHudMode i{animation:none!important}
 }
 </style>
 </head>
@@ -4828,7 +4984,7 @@ header .brand h1{font-size:clamp(31px,3.2vw,42px)!important;line-height:.9!impor
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.76</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.77</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
@@ -5030,8 +5186,11 @@ header .brand h1{font-size:clamp(31px,3.2vw,42px)!important;line-height:.9!impor
 
 <div class="graphCard poolHashrateGraph">
   <div class="graphTop">
-    <div class="graphTitle">
-      TERMINUS POOL // ROLLING LIVE HASHRATE
+    <div class="graphTitleBlock">
+      <div class="graphEyebrow">HASHRATE VECTOR // 24H SIGNAL SCOPE</div>
+      <div class="graphTitle">
+        TERMINUS POOL // ROLLING LIVE HASHRATE
+      </div>
     </div>
 
     <div class="graphStats">
@@ -5040,10 +5199,27 @@ header .brand h1{font-size:clamp(31px,3.2vw,42px)!important;line-height:.9!impor
     </div>
   </div>
 
-  <svg viewBox="0 0 1000 220" preserveAspectRatio="none">
-    <path id="graphFill"></path>
-    <path id="graphLine"></path>
-  </svg>
+  <div class="hashrateScope">
+    <div class="graphHud" aria-hidden="true">
+      <span class="graphHudMode"><i></i> LIVE TELEMETRY TRACE</span>
+      <span id="graphMomentum" class="graphMomentum steady">1H MOMENTUM // CALCULATING</span>
+    </div>
+    <svg id="hashGraph" viewBox="0 0 1000 220" preserveAspectRatio="none"
+      role="img" tabindex="0" aria-labelledby="hashGraphTitle hashGraphDesc">
+      <title id="hashGraphTitle">Terminus Pool 24-hour hashrate chart</title>
+      <desc id="hashGraphDesc">Use the pointer or arrow keys to inspect exact hashrate samples.</desc>
+      <path id="graphFill"></path>
+      <path id="graphLine"></path>
+    </svg>
+    <div id="graphProbe" class="graphProbe" aria-hidden="true">
+      <strong>0.000 TH/s</strong><span>AWAITING SAMPLE</span>
+    </div>
+    <div class="graphTimeline" aria-hidden="true">
+      <span id="graphTimeStart">24H AGO</span>
+      <span id="graphTimeMid">12H AGO</span>
+      <span id="graphTimeEnd">NOW</span>
+    </div>
+  </div>
   <div id="historySummary" class="historySummary" aria-label="24-hour pool summary"></div>
 </div>
 
@@ -6226,11 +6402,15 @@ function injectVisualFx(){
         filter:drop-shadow(0 0 8px rgba(67,245,255,.9));
     }
     #graphPulse{
+        transform-box:fill-box;
         transform-origin:center;
-        animation:graphPulse 1.8s ease-out infinite;
+        animation:scopePulse 1.6s ease-out infinite;
     }
     .graphCard svg{
         overflow:visible;
+    }
+    .hashrateScope>svg{
+        overflow:hidden;
     }
 
     @keyframes starTwinkle{
@@ -6250,10 +6430,7 @@ function injectVisualFx(){
         0%,100%{opacity:.65; transform:scale(.98)}
         50%{opacity:1; transform:scale(1.03)}
     }
-    @keyframes graphPulse{
-        0%{opacity:.75; r:6}
-        100%{opacity:0; r:20}
-    }`;
+    `;
     document.head.appendChild(style);
 }
 
@@ -6347,9 +6524,10 @@ function ensureGraphFx(svg){
         fillGrad.setAttribute("x2","0%");
         fillGrad.setAttribute("y2","100%");
         fillGrad.innerHTML=`
-            <stop offset="0%" stop-color="rgba(67,245,255,.32)"/>
-            <stop offset="45%" stop-color="rgba(67,245,255,.15)"/>
-            <stop offset="100%" stop-color="rgba(67,245,255,0)"/>`;
+            <stop offset="0%" stop-color="#43f5ff" stop-opacity=".34"/>
+            <stop offset="38%" stop-color="#72ffb4" stop-opacity=".15"/>
+            <stop offset="78%" stop-color="#aa72ff" stop-opacity=".06"/>
+            <stop offset="100%" stop-color="#43f5ff" stop-opacity="0"/>`;
         defs.appendChild(fillGrad);
     }
 
@@ -6386,7 +6564,19 @@ function ensureGraphFx(svg){
         svg.appendChild(pulse);
     }
 
-    return {dot,pulse};
+    let trail=svg.querySelector("#graphTrail");
+    if(!trail){
+        trail=document.createElementNS("http://www.w3.org/2000/svg","path");
+        trail.setAttribute("id","graphTrail");
+        trail.setAttribute("fill","none");
+        trail.setAttribute("stroke","#43f5ff");
+        trail.setAttribute("stroke-width","10");
+        trail.setAttribute("filter","url(#graphGlowFilter)");
+        const line=svg.querySelector("#graphLine");
+        svg.insertBefore(trail,line || null);
+    }
+
+    return {dot,pulse,trail};
 }
 
 function smoothPath(points){
@@ -6406,6 +6596,144 @@ function smoothPath(points){
         d+=` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2[0]} ${p2[1]}`;
     }
     return d;
+}
+
+function graphClock(timestamp){
+    const value=Number(timestamp);
+    if(!Number.isFinite(value) || value<=0) return "SAMPLE";
+    return new Date(value*1000).toLocaleTimeString([],{
+        hour:"2-digit",
+        minute:"2-digit"
+    });
+}
+
+function graphStamp(timestamp){
+    const value=Number(timestamp);
+    if(!Number.isFinite(value) || value<=0) return "ROLLING SAMPLE";
+    return new Date(value*1000).toLocaleString([],{
+        month:"short",
+        day:"numeric",
+        hour:"2-digit",
+        minute:"2-digit"
+    }).toUpperCase();
+}
+
+function graphAverage(samples){
+    if(!samples.length) return 0;
+    return samples.reduce((sum,sample)=>sum+sample.value,0)/samples.length;
+}
+
+function updateGraphHud(samples){
+    const momentum=document.getElementById("graphMomentum");
+    const start=document.getElementById("graphTimeStart");
+    const middle=document.getElementById("graphTimeMid");
+    const end=document.getElementById("graphTimeEnd");
+    if(!samples.length) return;
+
+    const first=samples[0];
+    const midpoint=samples[Math.floor((samples.length-1)/2)];
+    const last=samples[samples.length-1];
+    if(start) start.textContent=first.ts?graphClock(first.ts):"24H AGO";
+    if(middle) middle.textContent=midpoint.ts?graphClock(midpoint.ts):"12H AGO";
+    if(end) end.textContent=last.ts?graphClock(last.ts)+" // NOW":"NOW";
+    if(!momentum) return;
+
+    const lastTs=Number(last.ts);
+    let current=[];
+    let previous=[];
+    if(Number.isFinite(lastTs) && lastTs>0){
+        current=samples.filter(sample=>sample.ts>lastTs-3600);
+        previous=samples.filter(sample=>sample.ts<=lastTs-3600 && sample.ts>lastTs-7200);
+    }else{
+        current=samples.slice(-12);
+        previous=samples.slice(-24,-12);
+    }
+
+    const currentAverage=graphAverage(current);
+    const previousAverage=graphAverage(previous);
+    if(!current.length || !previous.length || previousAverage<=0){
+        momentum.className="graphMomentum steady";
+        momentum.textContent="1H MOMENTUM // BASELINE PENDING";
+        return;
+    }
+
+    const change=(currentAverage-previousAverage)/previousAverage*100;
+    const state=change>1?"rising":change<-1?"falling":"steady";
+    const arrow=change>1?"↗":change<-1?"↘":"→";
+    momentum.className="graphMomentum "+state;
+    momentum.textContent=`${arrow} 1H MOMENTUM ${change>=0?"+":""}${change.toFixed(1)}%`;
+}
+
+function setGraphProbe(svg,index){
+    const samples=svg.__hashSamples||[];
+    const points=svg.__hashPoints||[];
+    if(!samples.length || !points.length) return;
+    const safeIndex=Math.max(0,Math.min(samples.length-1,index));
+    const sample=samples[safeIndex];
+    const point=points[safeIndex];
+    const group=svg.querySelector("#hashProbe");
+    const line=group&&group.querySelector("line");
+    const halo=group&&group.querySelector("circle:first-of-type");
+    const dot=group&&group.querySelector("circle:last-of-type");
+    if(group){
+        group.style.display="block";
+        line.setAttribute("x1",point[0]);
+        line.setAttribute("x2",point[0]);
+        halo.setAttribute("cx",point[0]);
+        halo.setAttribute("cy",point[1]);
+        dot.setAttribute("cx",point[0]);
+        dot.setAttribute("cy",point[1]);
+    }
+
+    const probe=document.getElementById("graphProbe");
+    if(probe){
+        probe.style.setProperty("--probe-x",(point[0]/10)+"%");
+        probe.querySelector("strong").textContent=sample.value.toFixed(3)+" TH/s";
+        probe.querySelector("span").textContent=
+            graphStamp(sample.ts)+(Number.isFinite(sample.miners)?" // "+sample.miners+" MINERS":"");
+        probe.classList.add("show");
+    }
+    svg.__hashProbeIndex=safeIndex;
+    svg.setAttribute(
+        "aria-label",
+        `Hashrate sample ${safeIndex+1} of ${samples.length}: ${sample.value.toFixed(3)} terahashes per second at ${graphStamp(sample.ts)}`
+    );
+}
+
+function hideGraphProbe(svg){
+    const group=svg.querySelector("#hashProbe");
+    const probe=document.getElementById("graphProbe");
+    if(group) group.style.display="none";
+    if(probe) probe.classList.remove("show");
+}
+
+function ensureGraphInteraction(svg){
+    if(svg.dataset.probeBound==="yes") return;
+    svg.dataset.probeBound="yes";
+    const indexFromEvent=event=>{
+        const rect=svg.getBoundingClientRect();
+        const fraction=Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width));
+        return Math.round(fraction*Math.max(0,(svg.__hashSamples||[]).length-1));
+    };
+    svg.addEventListener("pointermove",event=>setGraphProbe(svg,indexFromEvent(event)));
+    svg.addEventListener("pointerdown",event=>setGraphProbe(svg,indexFromEvent(event)));
+    svg.addEventListener("pointerleave",()=>{
+        if(document.activeElement!==svg) hideGraphProbe(svg);
+    });
+    svg.addEventListener("focus",()=>setGraphProbe(svg,(svg.__hashSamples||[]).length-1));
+    svg.addEventListener("blur",()=>hideGraphProbe(svg));
+    svg.addEventListener("keydown",event=>{
+        const samples=svg.__hashSamples||[];
+        if(!samples.length) return;
+        let index=Number.isFinite(svg.__hashProbeIndex)?svg.__hashProbeIndex:samples.length-1;
+        if(event.key==="ArrowLeft") index--;
+        else if(event.key==="ArrowRight") index++;
+        else if(event.key==="Home") index=0;
+        else if(event.key==="End") index=samples.length-1;
+        else return;
+        event.preventDefault();
+        setGraphProbe(svg,index);
+    });
 }
 
 function drawGraph(values){
@@ -6458,6 +6786,25 @@ function drawGraph(values){
         svg.insertBefore(avgGroup,line);
     }
 
+    let scaleGroup=svg.querySelector("#hashScale");
+
+    if(!scaleGroup){
+        scaleGroup=svgEl("g","hashScale");
+        svg.insertBefore(scaleGroup,line);
+    }
+
+    let probeGroup=svg.querySelector("#hashProbe");
+
+    if(!probeGroup){
+        probeGroup=svgEl("g","hashProbe");
+        probeGroup.style.display="none";
+        probeGroup.innerHTML=`
+          <line x1="0" x2="0" y1="10" y2="214" stroke="rgba(114,255,180,.5)" stroke-width="1" stroke-dasharray="5 5"/>
+          <circle cx="0" cy="0" r="10" fill="rgba(67,245,255,.10)" stroke="rgba(67,245,255,.32)" stroke-width="1"/>
+          <circle cx="0" cy="0" r="4" fill="#e8ffff" stroke="#43f5ff" stroke-width="2"/>`;
+        svg.appendChild(probeGroup);
+    }
+
     let peakDot=svg.querySelector("#graphPeakDot");
 
     if(!peakDot){
@@ -6485,6 +6832,8 @@ function drawGraph(values){
         grid.innerHTML="";
         bars.innerHTML="";
         avgGroup.innerHTML="";
+        scaleGroup.innerHTML="";
+        probeGroup.style.display="none";
 
         [fx.dot,fx.pulse,peakDot].forEach(el=>{
             if(el){
@@ -6497,9 +6846,20 @@ function drawGraph(values){
         return;
     }
 
-    const nums=values
-        .map(v=>Number(v))
-        .filter(Number.isFinite);
+    const samples=values
+        .map((entry,index)=>{
+            const object=entry&&typeof entry==="object"?entry:null;
+            const value=Number(object?object.hashrate:entry);
+            return {
+                value,
+                ts:Number(object&&object.ts)||0,
+                miners:Number(object&&object.miners),
+                sourceIndex:index
+            };
+        })
+        .filter(sample=>Number.isFinite(sample.value));
+
+    const nums=samples.map(sample=>sample.value);
 
     if(nums.length < 2) return;
 
@@ -6560,6 +6920,12 @@ function drawGraph(values){
         "url(#graphGlowFilter)"
     );
 
+    if(fx.trail){
+        fx.trail.setAttribute("d",path);
+        fx.trail.setAttribute("stroke-linecap","round");
+        fx.trail.setAttribute("stroke-linejoin","round");
+    }
+
     fill.setAttribute(
         "d",
         path+` L ${last[0]} 220 L 0 220 Z`
@@ -6576,6 +6942,7 @@ function drawGraph(values){
        DASHED GUIDE GRID
        ----------------------------- */
     grid.innerHTML="";
+    scaleGroup.innerHTML="";
 
     [25,50,75].forEach(percent=>{
         const y=205-(percent/100)*174;
@@ -6600,6 +6967,13 @@ function drawGraph(values){
         guide.setAttribute("stroke-width","1");
 
         grid.appendChild(guide);
+
+        const scale=svgEl("text");
+        scale.setAttribute("x","982");
+        scale.setAttribute("y",Math.max(16,y-6));
+        scale.setAttribute("text-anchor","end");
+        scale.textContent=(low+(displayRange*percent/100)).toFixed(1)+" TH/s";
+        scaleGroup.appendChild(scale);
     });
 
     /* -----------------------------
@@ -6616,10 +6990,10 @@ function drawGraph(values){
         Math.ceil(nums.length/48)
     );
 
-    const samples=[];
+    const barSamples=[];
 
     for(let i=0;i<nums.length;i+=step){
-        samples.push({
+        barSamples.push({
             i,
             value:nums[i]
         });
@@ -6627,10 +7001,10 @@ function drawGraph(values){
 
     const barWidth=Math.max(
         5,
-        (1000/samples.length)*.55
+        (1000/barSamples.length)*.58
     );
 
-    samples.forEach((sample,index)=>{
+    barSamples.forEach((sample,index)=>{
         const x=
             (sample.i/(nums.length-1))*1000;
 
@@ -6658,9 +7032,11 @@ function drawGraph(values){
 
         rect.setAttribute(
             "fill",
-            index===samples.length-1
-                ? "rgba(67,245,255,.23)"
-                : "rgba(114,255,180,.10)"
+            index===barSamples.length-1
+                ? "rgba(232,255,255,.34)"
+                : sample.value>=avg
+                    ? "rgba(67,245,255,.17)"
+                    : "rgba(170,114,255,.11)"
         );
 
         bars.appendChild(rect);
@@ -6739,9 +7115,15 @@ function drawGraph(values){
         peak[1]
     );
 
+    const peakNearLeft=peak[0]<120;
+    const peakNearRight=peak[0]>880;
     peakLabel.setAttribute(
         "x",
-        peak[0]
+        peakNearLeft?peak[0]+12:peakNearRight?peak[0]-12:peak[0]
+    );
+    peakLabel.setAttribute(
+        "text-anchor",
+        peakNearLeft?"start":peakNearRight?"end":"middle"
     );
 
     peakLabel.setAttribute(
@@ -6777,6 +7159,16 @@ function drawGraph(values){
             "cy",
             last[1]
         );
+    }
+
+    svg.__hashSamples=samples;
+    svg.__hashPoints=points;
+    updateGraphHud(samples);
+    ensureGraphInteraction(svg);
+    const description=document.getElementById("hashGraphDesc");
+    if(description){
+        description.textContent=
+            `${samples.length} persistent samples. Low ${min.toFixed(3)}, average ${avg.toFixed(3)}, peak ${max.toFixed(3)}, latest ${nums[nums.length-1].toFixed(3)} terahashes per second. Use the pointer or arrow keys to inspect exact samples.`;
     }
 }
 
@@ -7011,7 +7403,11 @@ async function refresh(){
     $("graphMiners").textContent=
       num(d.poolMiners,0)+" LIVE MINERS";
 
-    if(Array.isArray(d.hashHistory)) drawGraph(d.hashHistory);
+    if(Array.isArray(d.history24h)&&d.history24h.length){
+      drawGraph(d.history24h);
+    }else if(Array.isArray(d.hashHistory)&&d.hashHistory.length){
+      drawGraph(d.hashHistory);
+    }
 
     if(Number(d.blocks)>0){
       $("blockBanner").style.display="block";
@@ -7040,7 +7436,11 @@ async function loadHistory(){
     );
     if(!response.ok)throw new Error("HTTP "+response.status);
     const data=await response.json();
-    drawGraph(data.hashHistory||[]);
+    drawGraph(
+      Array.isArray(data.history24h)&&data.history24h.length
+        ? data.history24h
+        : (data.hashHistory||[])
+    );
     const summary=data.historySummary||{};
     $("historySummary").innerHTML=
       historyMetric("24H AVERAGE",num(summary.averageHashrate,3)+" TH/s")+

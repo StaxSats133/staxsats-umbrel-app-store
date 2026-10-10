@@ -61,7 +61,7 @@ class TerminusServerTests(unittest.TestCase):
         self.assertEqual(len(isolated.SOCIAL_CARD_PNG), 395887)
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.76")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.77")
         self.assertIn('<title>TERMINUS POOL // DATUM</title>', self.server.HTML)
         self.assertIn('content="Terminus Pool // DATUM"', self.server.HTML)
         self.assertIn(
@@ -141,6 +141,14 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('#telemetry{\n        grid-template-columns:repeat(3,minmax(0,1fr))!important', self.server.HTML)
         self.assertIn('#telemetry .value{\n        word-break:normal', self.server.HTML)
         self.assertIn('id="graphMiners" class="graphPill">0 LIVE MINERS', self.server.HTML)
+        self.assertIn('id="hashGraph" viewBox="0 0 1000 220"', self.server.HTML)
+        self.assertIn('HASHRATE VECTOR // 24H SIGNAL SCOPE', self.server.HTML)
+        self.assertIn('id="graphMomentum" class="graphMomentum steady"', self.server.HTML)
+        self.assertIn('id="graphProbe" class="graphProbe"', self.server.HTML)
+        self.assertIn('function ensureGraphInteraction(svg)', self.server.HTML)
+        self.assertIn('function setGraphProbe(svg,index)', self.server.HTML)
+        self.assertIn('Array.isArray(data.history24h)&&data.history24h.length', self.server.HTML)
+        self.assertIn('@media(prefers-reduced-motion:reduce)', self.server.HTML)
         self.assertIn('card("LIVE MINERS",num(d.poolMiners,0))', self.server.HTML)
         self.assertIn('id="routeHashTitle">NEED HASHRATE?', self.server.HTML)
         self.assertIn('Select Terminus as your segment pool to connect automatically.', self.server.HTML)
