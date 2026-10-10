@@ -61,7 +61,7 @@ class TerminusServerTests(unittest.TestCase):
         self.assertEqual(len(isolated.SOCIAL_CARD_PNG), 395887)
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.75")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.76")
         self.assertIn('<title>TERMINUS POOL // DATUM</title>', self.server.HTML)
         self.assertIn('content="Terminus Pool // DATUM"', self.server.HTML)
         self.assertIn(
@@ -135,6 +135,9 @@ class TerminusServerTests(unittest.TestCase):
         self.assertIn('@media(min-width:1101px)', self.server.HTML)
         self.assertIn('grid-template-columns:minmax(440px,1fr) minmax(0,560px)!important', self.server.HTML)
         self.assertIn('grid-template-areas:"brand controls" "boombox boombox"', self.server.HTML)
+        self.assertIn('width:min(100%,620px)!important', self.server.HTML)
+        self.assertIn('grid-template-columns:42px minmax(0,1fr) 42px!important', self.server.HTML)
+        self.assertIn('.headerBoombox.collapsed .boomboxSpeaker.right{grid-column:3!important}', self.server.HTML)
         self.assertIn('#telemetry{\n        grid-template-columns:repeat(3,minmax(0,1fr))!important', self.server.HTML)
         self.assertIn('#telemetry .value{\n        word-break:normal', self.server.HTML)
         self.assertIn('id="graphMiners" class="graphPill">0 LIVE MINERS', self.server.HTML)

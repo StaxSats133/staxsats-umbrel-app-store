@@ -47,7 +47,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.75"
+RELEASE_VERSION = "0.2.76"
 RELIABILITY_WINDOWS = {
     "1h": 60 * 60,
     "24h": 24 * 60 * 60,
@@ -4731,6 +4731,17 @@ header .brand h1{font-size:clamp(31px,3.2vw,42px)!important;line-height:.9!impor
     .headerBoombox .tunerBtn{width:31px!important;height:31px!important}
     .headerBoombox .tunerTitle{font-size:12px!important}
     .headerBoombox .tunerCredits{margin-left:49px!important}
+    .nightwave.headerBoombox.collapsed{
+        width:min(100%,620px)!important;
+        grid-template-columns:42px minmax(0,1fr) 42px!important;
+        gap:10px!important;
+        min-height:56px!important;
+        margin:0 0 0 auto!important;
+        padding:7px 9px!important;
+    }
+    .headerBoombox.collapsed .boomboxSpeaker.left{grid-column:1!important}
+    .headerBoombox.collapsed .tunerMeta{grid-column:2!important}
+    .headerBoombox.collapsed .boomboxSpeaker.right{grid-column:3!important}
 }
 
 @media(max-width:1100px){
@@ -4817,7 +4828,7 @@ header .brand h1{font-size:clamp(31px,3.2vw,42px)!important;line-height:.9!impor
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.75</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.76</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
