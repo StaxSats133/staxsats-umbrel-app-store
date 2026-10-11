@@ -61,7 +61,7 @@ class TerminusServerTests(unittest.TestCase):
         self.assertEqual(len(isolated.SOCIAL_CARD_PNG), 395887)
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.78")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.79")
         self.assertIn('<title>TERMINUS POOL // DATUM</title>', self.server.HTML)
         self.assertIn('content="Terminus Pool // DATUM"', self.server.HTML)
         self.assertIn(
@@ -274,12 +274,14 @@ class TerminusServerTests(unittest.TestCase):
         self.assertNotIn("WIFI TRASHERINO", self.server.HTML)
         self.assertEqual(self.server.HTML.count('https://opengameart.org/sites/default/files/'), 20)
         tuner_pos = self.server.HTML.index('id="nightwave"')
+        miner_accounting_pos = self.server.HTML.index('id="minerAccounting"')
         graph_pos = self.server.HTML.index('id="poolStats"')
         advanced_network_pos = self.server.HTML.index('ADVANCED NETWORK + POOL IDENTITY')
         last_block_pos = self.server.HTML.index('id="lastBlockFound"')
         market_pos = self.server.HTML.index('id="xbtMarket"')
         start_mining_pos = self.server.HTML.index('id="startMining"')
-        self.assertLess(tuner_pos, graph_pos)
+        self.assertLess(tuner_pos, miner_accounting_pos)
+        self.assertLess(miner_accounting_pos, graph_pos)
         self.assertLess(graph_pos, advanced_network_pos)
         self.assertLess(advanced_network_pos, last_block_pos)
         self.assertLess(graph_pos, market_pos)

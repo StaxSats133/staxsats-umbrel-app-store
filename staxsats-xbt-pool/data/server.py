@@ -47,7 +47,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.78"
+RELEASE_VERSION = "0.2.79"
 RELIABILITY_WINDOWS = {
     "1h": 60 * 60,
     "24h": 24 * 60 * 60,
@@ -5107,7 +5107,7 @@ html.maturityScreenOpen body{overflow:hidden!important}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.78</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.79</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
@@ -5303,6 +5303,43 @@ html.maturityScreenOpen body{overflow:hidden!important}
   </details>
   <audio id="nightwaveAudio" preload="none"></audio>
 </section>
+</div>
+
+<div class="sectionTitle" id="minerAccounting">MINER-ACCOUNTING</div>
+
+<div class="accountSearch">
+  <input
+    id="accountAddress"
+    type="text"
+    placeholder="SEARCH XBT PAYOUT ADDRESS // bc1..."
+    autocomplete="off"
+    autocapitalize="none"
+    spellcheck="false"
+    aria-label="XBT payout address"
+    aria-describedby="accountHint"
+  >
+  <button id="accountGo" type="button">LOOK UP</button>
+  <button id="accountClear" class="clear" type="button">CLEAR</button>
+</div>
+
+<div id="accountHint" class="accountHint" role="status" aria-live="polite">
+  SEARCH YOUR PAYOUT ADDRESS TO VIEW ACCOUNTING
+</div>
+
+<div id="miner" class="grid grid4" style="display:none"></div>
+
+<section id="personalMinerDashboard" class="personalMinerDashboard" aria-labelledby="personalMinerTitle">
+  <div class="sectionTitle" id="personalMinerTitle">MY MINER // ROLLING 24 HOURS</div>
+  <div id="personalMinerSummary" class="historySummary"></div>
+  <svg class="personalMinerGraph" viewBox="0 0 1000 150" role="img" aria-label="Personal miner 24-hour hashrate history">
+    <polyline id="personalMinerGraphLine" points=""></polyline>
+  </svg>
+  <div id="personalMinerFreshness" class="leaderboardBestNote"></div>
+</section>
+
+<div class="accountHint">
+  VALID CONFIRMS THE XBT PAYOUT ADDRESS FORMAT ONLY // IF BLOCK FOUND NOW IS
+  CONDITIONAL ON WORK STILL HELD IN THE CURRENT PAYOUT WINDOW
 </div>
 
 <div class="sectionTitle" id="poolStats">LIVE-POOL-HASHRATE</div>
@@ -5668,43 +5705,6 @@ html.maturityScreenOpen body{overflow:hidden!important}
     <div id="healthMatrix" class="healthMatrix" aria-live="polite"></div>
   </div>
 </details>
-
-<div class="sectionTitle" id="minerAccounting">MINER-ACCOUNTING</div>
-
-<div class="accountSearch">
-  <input
-    id="accountAddress"
-    type="text"
-    placeholder="SEARCH XBT PAYOUT ADDRESS // bc1..."
-    autocomplete="off"
-    autocapitalize="none"
-    spellcheck="false"
-    aria-label="XBT payout address"
-    aria-describedby="accountHint"
-  >
-  <button id="accountGo" type="button">LOOK UP</button>
-  <button id="accountClear" class="clear" type="button">CLEAR</button>
-</div>
-
-<div id="accountHint" class="accountHint" role="status" aria-live="polite">
-  SEARCH YOUR PAYOUT ADDRESS TO VIEW ACCOUNTING
-</div>
-
-<div id="miner" class="grid grid4" style="display:none"></div>
-
-<section id="personalMinerDashboard" class="personalMinerDashboard" aria-labelledby="personalMinerTitle">
-  <div class="sectionTitle" id="personalMinerTitle">MY MINER // ROLLING 24 HOURS</div>
-  <div id="personalMinerSummary" class="historySummary"></div>
-  <svg class="personalMinerGraph" viewBox="0 0 1000 150" role="img" aria-label="Personal miner 24-hour hashrate history">
-    <polyline id="personalMinerGraphLine" points=""></polyline>
-  </svg>
-  <div id="personalMinerFreshness" class="leaderboardBestNote"></div>
-</section>
-
-<div class="accountHint">
-  VALID CONFIRMS THE XBT PAYOUT ADDRESS FORMAT ONLY // IF BLOCK FOUND NOW IS
-  CONDITIONAL ON WORK STILL HELD IN THE CURRENT PAYOUT WINDOW
-</div>
 
 <div id="blockBanner" class="blockBanner"></div>
 </main>
