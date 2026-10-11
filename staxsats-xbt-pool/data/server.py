@@ -47,7 +47,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.77"
+RELEASE_VERSION = "0.2.78"
 RELIABILITY_WINDOWS = {
     "1h": 60 * 60,
     "24h": 24 * 60 * 60,
@@ -4661,166 +4661,287 @@ header .brand h1{font-size:clamp(31px,3.2vw,42px)!important;line-height:.9!impor
 .graphCard{margin-top:8px;padding:14px!important}
 .graphTop{
     margin:-14px -14px 10px!important;
-    padding:13px 14px 11px!important;
+    padding:12px 14px 10px!important;
     border-bottom-color:rgba(67,245,255,.12)!important;
 }
-.graphTitleBlock{display:grid;gap:5px;min-width:0}
-.graphEyebrow{color:#ff72c4;font-size:7px;font-weight:900;letter-spacing:.18em}
-.graphTitle{font-size:10px!important;letter-spacing:.15em!important;color:#a8c8d0!important}
+.graphTitle{font-size:9px!important;letter-spacing:.15em!important}
 .graphStats{gap:10px!important}
 .graphPill{padding:6px 9px!important;font-size:8px!important}
 #graphNow{font-size:17px!important}
-.poolHashrateGraph{
-    position:relative;
-    overflow:hidden;
-    isolation:isolate;
-    background:
-      radial-gradient(circle at 83% 2%,rgba(170,114,255,.08),transparent 30%),
-      linear-gradient(145deg,var(--surface-raised),var(--surface))!important;
-}
-.poolHashrateGraph:before{
-    content:"";
-    position:absolute;
-    inset:0;
-    z-index:-1;
-    pointer-events:none;
-    background:
-      linear-gradient(90deg,rgba(67,245,255,.24),transparent 18%) top left/120px 1px no-repeat,
-      linear-gradient(180deg,rgba(67,245,255,.24),transparent 18%) top left/1px 92px no-repeat,
-      linear-gradient(270deg,rgba(255,79,184,.20),transparent 18%) bottom right/120px 1px no-repeat,
-      linear-gradient(0deg,rgba(255,79,184,.20),transparent 18%) bottom right/1px 92px no-repeat;
-}
-.hashrateScope{
-    position:relative;
-    height:226px;
-    overflow:hidden;
-    border:1px solid rgba(67,245,255,.19);
-    border-radius:8px;
-    background:
-      radial-gradient(circle at 88% 22%,rgba(170,114,255,.14),transparent 27%),
-      radial-gradient(circle at 12% 100%,rgba(42,216,190,.09),transparent 34%),
-      linear-gradient(rgba(67,245,255,.045) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(67,245,255,.038) 1px,transparent 1px),
-      #030a11;
-    background-size:auto,auto,100% 25%,10% 100%,auto;
-    box-shadow:inset 0 0 46px rgba(0,0,0,.52),0 0 28px rgba(67,245,255,.035);
-}
-.hashrateScope:before{
-    content:"";
-    position:absolute;
-    inset:0;
-    z-index:4;
-    pointer-events:none;
-    opacity:.32;
-    background:repeating-linear-gradient(180deg,transparent 0 3px,rgba(3,10,17,.45) 4px);
-    mix-blend-mode:multiply;
-}
-.hashrateScope:after{
-    content:"";
-    position:absolute;
-    top:30px;
-    bottom:20px;
-    left:-16%;
-    z-index:3;
-    width:16%;
-    pointer-events:none;
-    background:linear-gradient(90deg,transparent,rgba(67,245,255,.04),rgba(67,245,255,.17),transparent);
-    filter:blur(2px);
-    animation:scopeSweep 7s linear infinite;
-}
-@keyframes scopeSweep{to{left:104%}}
-.hashrateScope>svg{
-    position:absolute;
-    inset:25px 0 20px;
-    z-index:2;
-    width:100%;
-    height:181px;
-    border:0;
-    outline:0;
-    background:transparent;
-}
-.hashrateScope>svg:focus-visible{
-    outline:1px solid rgba(114,255,180,.72);
-    outline-offset:-3px;
-}
-.graphHud{
-    position:absolute;
-    z-index:5;
-    top:8px;
-    left:11px;
-    right:11px;
-    display:flex;
-    justify-content:space-between;
-    gap:12px;
-    color:#6f9ba6;
-    font-size:7px;
-    font-weight:900;
-    letter-spacing:.14em;
-    pointer-events:none;
-}
-.graphHudMode{display:inline-flex;align-items:center;gap:7px}
-.graphHudMode i{
-    width:5px;
-    height:5px;
-    border-radius:50%;
-    background:var(--green);
-    box-shadow:0 0 8px var(--green);
-    animation:signalBlink 1.8s ease-in-out infinite;
-}
-@keyframes signalBlink{50%{opacity:.35;transform:scale(.72)}}
-.graphMomentum{color:#9ab0b8}
-.graphMomentum.rising{color:var(--green)}
-.graphMomentum.falling{color:#ff8bbf}
-.graphMomentum.steady{color:#8ccbd6}
-.graphTimeline{
-    position:absolute;
-    z-index:5;
-    left:10px;
-    right:10px;
-    bottom:5px;
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    color:#50727c;
-    font-size:7px;
-    letter-spacing:.12em;
-    pointer-events:none;
-}
-.graphTimeline span:nth-child(2){text-align:center}
-.graphTimeline span:last-child{text-align:right;color:#7ce5e9}
-.graphProbe{
-    --probe-x:50%;
-    position:absolute;
-    z-index:7;
-    top:39px;
-    left:clamp(78px,var(--probe-x),calc(100% - 78px));
-    display:grid;
-    gap:3px;
-    min-width:156px;
-    padding:7px 9px;
-    border:1px solid rgba(67,245,255,.40);
-    border-radius:5px;
-    background:rgba(3,10,17,.94);
-    box-shadow:0 8px 26px rgba(0,0,0,.48),0 0 16px rgba(67,245,255,.08);
-    opacity:0;
-    transform:translate(-50%,-4px);
-    transition:opacity .12s ease,transform .12s ease;
-    pointer-events:none;
-}
-.graphProbe.show{opacity:1;transform:translate(-50%,0)}
-.graphProbe strong{color:var(--cyan);font-size:12px;letter-spacing:.07em}
-.graphProbe span{color:#83a5ae;font-size:7px;letter-spacing:.09em;white-space:nowrap}
-#graphLine{vector-effect:non-scaling-stroke}
-#graphTrail{vector-effect:non-scaling-stroke;opacity:.26}
-#graphDot{filter:drop-shadow(0 0 7px #43f5ff)}
-#graphPulse{transform-box:fill-box;transform-origin:center;animation:scopePulse 1.6s ease-out infinite}
-@keyframes scopePulse{0%{opacity:.9;transform:scale(.65)}75%,100%{opacity:0;transform:scale(2.7)}}
-#hashBars rect{transition:opacity .18s ease}
-#hashProbe{pointer-events:none}
-#hashScale text{font-size:13px;font-weight:800;letter-spacing:1px;fill:rgba(132,178,189,.52)}
-.historySummary{gap:8px;margin-top:8px}
+.poolHashrateGraph>svg{display:block;height:178px}
 .historySummary{gap:8px;margin-top:8px}
 .historyMetric{padding:9px 10px;border-color:var(--line);border-radius:7px;background:#050c12}
 .historyMetric .value{font-size:12px}
+.windowGaugePanel{
+    position:relative;
+    display:grid;
+    grid-template-columns:minmax(0,1.2fr) 214px minmax(0,1fr);
+    align-items:center;
+    gap:22px;
+    min-height:246px;
+    margin-top:10px;
+    padding:20px 22px;
+    overflow:hidden;
+    border:1px solid rgba(67,245,255,.24);
+    border-radius:10px;
+    background:
+      radial-gradient(circle at 50% 50%,rgba(67,245,255,.08),transparent 22%),
+      radial-gradient(circle at 87% 12%,rgba(255,79,184,.10),transparent 28%),
+      linear-gradient(rgba(67,245,255,.035) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(67,245,255,.035) 1px,transparent 1px),
+      linear-gradient(145deg,#07131c,#040a11 68%);
+    background-size:auto,auto,28px 28px,28px 28px,auto;
+    box-shadow:0 12px 30px rgba(0,0,0,.28),inset 0 0 48px rgba(0,0,0,.32);
+}
+.windowGaugePanel:before,
+.windowGaugePanel:after{
+    content:"";
+    position:absolute;
+    width:82px;
+    height:42px;
+    pointer-events:none;
+}
+.windowGaugePanel:before{
+    top:8px;
+    left:8px;
+    border-top:2px solid var(--cyan);
+    border-left:2px solid var(--cyan);
+    box-shadow:-4px -4px 18px rgba(67,245,255,.10);
+}
+.windowGaugePanel:after{
+    right:8px;
+    bottom:8px;
+    border-right:2px solid var(--pink);
+    border-bottom:2px solid var(--pink);
+    box-shadow:4px 4px 18px rgba(255,79,184,.10);
+}
+.windowGaugeCopy{min-width:0}
+.windowGaugeKicker{
+    color:var(--pink);
+    font-size:8px;
+    font-weight:1000;
+    letter-spacing:.19em;
+}
+.windowGaugeTitle{
+    margin:8px 0 7px;
+    color:#e8fbff;
+    font-size:clamp(20px,2.3vw,29px);
+    line-height:1;
+    letter-spacing:.07em;
+}
+.windowGaugeText{
+    max-width:430px;
+    margin:0;
+    color:#7ea1aa;
+    font-size:10px;
+    line-height:1.65;
+}
+.windowGaugeFacts{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+    margin-top:14px;
+}
+.windowGaugeFact{
+    min-width:0;
+    padding:9px 10px;
+    border:1px solid rgba(67,245,255,.16);
+    border-radius:6px;
+    background:rgba(3,9,15,.72);
+}
+.windowGaugeFact span{
+    display:block;
+    color:#648893;
+    font-size:7px;
+    letter-spacing:.14em;
+}
+.windowGaugeFact strong{
+    display:block;
+    margin-top:5px;
+    color:var(--cyan);
+    font-size:12px;
+    overflow-wrap:anywhere;
+}
+.windowDonutWrap{display:grid;place-items:center}
+.windowDial{
+    position:relative;
+    width:204px;
+    aspect-ratio:1;
+    display:grid;
+    place-items:center;
+    filter:drop-shadow(0 0 18px rgba(67,245,255,.12));
+}
+.windowDial:before{
+    content:"";
+    position:absolute;
+    inset:1px;
+    border-radius:50%;
+    background:repeating-conic-gradient(from -90deg,rgba(114,255,180,.42) 0 1.4deg,transparent 1.4deg 9deg);
+    -webkit-mask:radial-gradient(circle,transparent 0 78%,#000 79% 84%,transparent 85%);
+    mask:radial-gradient(circle,transparent 0 78%,#000 79% 84%,transparent 85%);
+    opacity:.55;
+}
+.windowDial svg{
+    position:absolute;
+    inset:11px;
+    width:calc(100% - 22px);
+    height:calc(100% - 22px);
+    overflow:visible;
+    border:0;
+    background:transparent;
+}
+.windowDonutTrack{fill:none;stroke:rgba(83,121,131,.18);stroke-width:18}
+.windowDonutArc{
+    fill:none;
+    stroke:url(#windowGaugeGradient);
+    stroke-width:18;
+    stroke-linecap:round;
+    filter:url(#windowGaugeGlow);
+    transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1);
+}
+.windowDonutInner{fill:#050d14;stroke:rgba(67,245,255,.13);stroke-width:1}
+.windowDonutMarker{
+    fill:#efffff;
+    stroke:var(--cyan);
+    stroke-width:2;
+    filter:drop-shadow(0 0 7px var(--cyan));
+    transform-origin:90px 90px;
+    transition:transform .8s cubic-bezier(.2,.8,.2,1);
+    animation:windowMarkerPulse 1.8s ease-in-out infinite;
+}
+@keyframes windowMarkerPulse{50%{opacity:.52}}
+.windowDialCenter{
+    position:relative;
+    z-index:2;
+    display:grid;
+    place-items:center;
+    text-align:center;
+    pointer-events:none;
+}
+.windowDialCenter strong{
+    color:#e9ffff;
+    font-size:28px;
+    line-height:1;
+    letter-spacing:.02em;
+    text-shadow:0 0 14px rgba(67,245,255,.42);
+}
+.windowDialCenter span{
+    margin-top:7px;
+    color:var(--green);
+    font-size:7px;
+    font-weight:1000;
+    letter-spacing:.18em;
+}
+.windowGaugeStatus{min-width:0}
+.windowGaugeStatusHead{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    color:#6f939c;
+    font-size:7px;
+    letter-spacing:.14em;
+}
+.windowGaugeStatusHead strong{color:var(--green)}
+.windowCapacityRail{
+    position:relative;
+    height:9px;
+    margin:10px 0 14px;
+    overflow:hidden;
+    border:1px solid rgba(67,245,255,.24);
+    background:#02070c;
+}
+.windowCapacityRail span{
+    display:block;
+    width:0;
+    height:100%;
+    background:linear-gradient(90deg,var(--cyan),var(--green) 58%,var(--pink));
+    box-shadow:0 0 14px rgba(67,245,255,.45);
+    transition:width .8s cubic-bezier(.2,.8,.2,1);
+}
+.windowRemaining{
+    padding:12px;
+    border:1px solid rgba(255,79,184,.18);
+    border-left:3px solid var(--pink);
+    background:rgba(13,6,15,.68);
+}
+.windowRemaining span{display:block;color:#805f78;font-size:7px;letter-spacing:.14em}
+.windowRemaining strong{display:block;margin-top:6px;color:#ff9bd4;font-size:15px}
+.windowGaugeNote{
+    margin-top:12px;
+    color:#718e97;
+    font-size:8px;
+    line-height:1.55;
+    letter-spacing:.06em;
+}
+.windowGaugeNote strong{color:#ffc85c}
+.windowGaugePanel.full .windowDialCenter span,
+.windowGaugePanel.full .windowGaugeStatusHead strong{color:#ffc85c}
+.windowGaugePanel.full .windowDonutMarker{stroke:#ffc85c;filter:drop-shadow(0 0 8px #ffc85c)}
+.maturityPortal{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+    margin-top:14px;
+    padding:16px 18px;
+    border:1px solid rgba(255,200,92,.25);
+    border-left:3px solid #ffc85c;
+    border-radius:9px;
+    background:linear-gradient(100deg,rgba(26,19,7,.78),rgba(5,12,18,.96) 55%,rgba(67,245,255,.035));
+    box-shadow:0 10px 26px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,229,148,.035);
+}
+.maturityPortalKicker{color:#c99b45;font-size:7px;font-weight:1000;letter-spacing:.18em}
+.maturityPortal h2{margin:6px 0 4px;color:#fff0bc;font-size:17px;letter-spacing:.08em}
+.maturityPortal p{margin:0;color:#8299a0;font-size:9px;line-height:1.5}
+.maturityPortal button,
+.maturityScreenTop button{
+    flex:0 0 auto;
+    min-height:40px;
+    padding:10px 13px;
+    border:1px solid rgba(255,200,92,.48);
+    border-radius:6px;
+    background:#171105;
+    color:#ffd978;
+    font:900 8px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    letter-spacing:.12em;
+    cursor:pointer;
+    transition:border-color .16s ease,background .16s ease,transform .16s ease;
+}
+.maturityPortal button:hover,
+.maturityScreenTop button:hover{border-color:#43f5ff;background:#09202a;color:#dffcff;transform:translateY(-1px)}
+.maturityScreen[hidden]{display:none!important}
+.maturityScreen{
+    position:fixed;
+    inset:0;
+    z-index:10000;
+    overflow:auto;
+    overscroll-behavior:contain;
+    padding:32px 18px 60px;
+    background:
+      radial-gradient(circle at 20% 0,rgba(255,200,92,.10),transparent 30%),
+      radial-gradient(circle at 82% 8%,rgba(67,245,255,.09),transparent 27%),
+      linear-gradient(rgba(67,245,255,.03) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(67,245,255,.03) 1px,transparent 1px),
+      #02070c;
+    background-size:auto,auto,36px 36px,36px 36px,auto;
+}
+html.maturityScreenOpen,
+html.maturityScreenOpen body{overflow:hidden!important}
+.maturityScreenShell{
+    width:min(100%,980px);
+    margin:0 auto;
+    padding:22px;
+    border:1px solid rgba(255,200,92,.24);
+    border-radius:12px;
+    background:linear-gradient(145deg,rgba(9,20,28,.98),rgba(4,9,14,.99));
+    box-shadow:0 24px 80px rgba(0,0,0,.55),inset 0 0 54px rgba(255,200,92,.025);
+}
+.maturityScreenTop{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding-bottom:16px;border-bottom:1px solid rgba(255,200,92,.16)}
+.maturityScreenKicker{color:#d79f3c;font-size:8px;font-weight:1000;letter-spacing:.18em}
+.maturityScreenTop h2{margin:8px 0 0;color:#fff0bc;font-size:clamp(25px,4vw,42px);line-height:.94;letter-spacing:.07em;outline:0}
+.maturityScreenIntro{margin:16px 0 12px;color:#73949c;font-size:8px;letter-spacing:.13em}
+.maturityScreen .historySummary{margin-top:0}
+.maturityScreen .maturityGrid{margin-top:12px}
 .lastBlockPanel{margin:9px 0 11px;padding:12px 14px!important}
 .lastBlockHead{margin:-12px -14px 10px!important;padding:11px 14px 9px!important}
 .lastBlockGrid{gap:8px 14px}.lastBlockValue{font-size:13px}.lastBlockHash{font-size:9px}
@@ -4931,9 +5052,10 @@ header .brand h1{font-size:clamp(31px,3.2vw,42px)!important;line-height:.9!impor
     .tunerBtn{width:40px!important;height:40px!important}.tunerCollapse{min-height:24px!important;font-size:6px!important}
     .sectionTitle{margin:16px 0 7px!important;font-size:8px!important}
     .graphCard{padding:11px!important}.graphTop{margin:-11px -11px 8px!important;padding:10px 11px 9px!important}
-    .graphTitleBlock{max-width:55%}.graphEyebrow{font-size:6px}.graphTitle{line-height:1.45}.graphStats{gap:7px!important}#graphNow{font-size:15px!important}
-    .hashrateScope{height:198px}.hashrateScope>svg{height:156px}.graphHud{font-size:6px}.graphProbe{top:34px;min-width:126px;padding:6px 8px}.graphProbe strong{font-size:11px}.graphProbe span{font-size:6px}
+    .poolHashrateGraph>svg{height:142px}.graphTitle{max-width:52%;line-height:1.45}.graphStats{gap:7px!important}#graphNow{font-size:15px!important}
     .historySummary{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.historyMetric{padding:8px}.historyMetric .value{font-size:11px}
+    .windowGaugePanel{grid-template-columns:minmax(0,1fr) 174px;gap:14px;min-height:0;padding:17px}.windowGaugeStatus{grid-column:1/-1}.windowDial{width:170px}.windowGaugeTitle{font-size:22px}.windowGaugeText{font-size:9px}.windowDialCenter strong{font-size:24px}
+    .maturityPortal{padding:14px}.maturityPortal h2{font-size:15px}.maturityScreen{padding:16px 10px 40px}.maturityScreenShell{padding:16px}.maturityScreenTop{align-items:stretch;flex-direction:column}.maturityScreenTop button{width:100%}
     .grid{gap:7px}.card{min-height:84px!important;padding:12px!important}.value{font-size:17px}
     .lastBlockPanel{padding:10px 11px!important}.lastBlockHead{margin:-10px -11px 9px!important;padding:10px 11px 8px!important}
     .marketTicker{padding:11px!important;gap:10px!important}.marketStats{gap:0!important}
@@ -4954,13 +5076,14 @@ header .brand h1{font-size:clamp(31px,3.2vw,42px)!important;line-height:.9!impor
     .nightwave{grid-template-columns:50px minmax(0,1fr)!important}
     .tunerScope{height:38px!important}.tunerControls{grid-template-columns:repeat(3,38px) minmax(64px,1fr)!important}.tunerBtn{width:38px!important;height:38px!important}
     .marketTicker{grid-template-columns:1fr auto!important}.marketPrice{font-size:24px}
-    .graphTop{align-items:flex-start!important}.graphStats{align-items:flex-end!important}.graphPill{font-size:7px!important}.graphHudMode{display:none}.graphHud{justify-content:flex-end}.hashrateScope{height:184px}.hashrateScope>svg{inset:25px 0 20px;height:139px}.graphTimeline{font-size:6px}.graphProbe{left:clamp(70px,var(--probe-x),calc(100% - 70px));min-width:126px}
+    .windowGaugePanel{grid-template-columns:1fr;gap:14px;padding:16px 14px}.windowGaugeCopy{text-align:center}.windowGaugeText{margin-inline:auto}.windowGaugeFacts{text-align:left}.windowDonutWrap{order:2}.windowGaugeStatus{order:3}.windowDial{width:184px}
+    .maturityPortal{align-items:stretch;flex-direction:column;text-align:center}.maturityPortal button{width:100%}
     .routeHashPath{align-items:stretch!important;flex-direction:column!important}.routeHashBrand{flex-direction:row!important}.routeHashCta{width:100%!important}
 }
 @media(prefers-reduced-motion:reduce){
-    .hashrateScope:after,
-    #graphPulse,
-    .graphHudMode i{animation:none!important}
+    .windowDonutArc,
+    .windowDonutMarker,
+    .windowCapacityRail span{transition:none!important;animation:none!important}
 }
 </style>
 </head>
@@ -4984,7 +5107,7 @@ header .brand h1{font-size:clamp(31px,3.2vw,42px)!important;line-height:.9!impor
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.77</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.78</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
@@ -5186,11 +5309,8 @@ header .brand h1{font-size:clamp(31px,3.2vw,42px)!important;line-height:.9!impor
 
 <div class="graphCard poolHashrateGraph">
   <div class="graphTop">
-    <div class="graphTitleBlock">
-      <div class="graphEyebrow">HASHRATE VECTOR // 24H SIGNAL SCOPE</div>
-      <div class="graphTitle">
-        TERMINUS POOL // ROLLING LIVE HASHRATE
-      </div>
+    <div class="graphTitle">
+      TERMINUS POOL // ROLLING LIVE HASHRATE
     </div>
 
     <div class="graphStats">
@@ -5199,29 +5319,62 @@ header .brand h1{font-size:clamp(31px,3.2vw,42px)!important;line-height:.9!impor
     </div>
   </div>
 
-  <div class="hashrateScope">
-    <div class="graphHud" aria-hidden="true">
-      <span class="graphHudMode"><i></i> LIVE TELEMETRY TRACE</span>
-      <span id="graphMomentum" class="graphMomentum steady">1H MOMENTUM // CALCULATING</span>
-    </div>
-    <svg id="hashGraph" viewBox="0 0 1000 220" preserveAspectRatio="none"
-      role="img" tabindex="0" aria-labelledby="hashGraphTitle hashGraphDesc">
-      <title id="hashGraphTitle">Terminus Pool 24-hour hashrate chart</title>
-      <desc id="hashGraphDesc">Use the pointer or arrow keys to inspect exact hashrate samples.</desc>
-      <path id="graphFill"></path>
-      <path id="graphLine"></path>
-    </svg>
-    <div id="graphProbe" class="graphProbe" aria-hidden="true">
-      <strong>0.000 TH/s</strong><span>AWAITING SAMPLE</span>
-    </div>
-    <div class="graphTimeline" aria-hidden="true">
-      <span id="graphTimeStart">24H AGO</span>
-      <span id="graphTimeMid">12H AGO</span>
-      <span id="graphTimeEnd">NOW</span>
-    </div>
-  </div>
+  <svg viewBox="0 0 1000 220" preserveAspectRatio="none">
+    <path id="graphFill"></path>
+    <path id="graphLine"></path>
+  </svg>
   <div id="historySummary" class="historySummary" aria-label="24-hour pool summary"></div>
 </div>
+
+<section class="windowGaugePanel" id="windowGaugePanel" aria-labelledby="windowGaugeTitle">
+  <div class="windowGaugeCopy">
+    <div class="windowGaugeKicker">TIDES TELEMETRY // LIVE PAYOUT WINDOW</div>
+    <h2 class="windowGaugeTitle" id="windowGaugeTitle">WINDOW CAPACITY</h2>
+    <p class="windowGaugeText">
+      Pool work currently retained in RATUM’s rolling payout window.
+      When capacity is reached, the window rolls and older work ages out.
+    </p>
+    <div class="windowGaugeFacts">
+      <div class="windowGaugeFact"><span>WORK RETAINED</span><strong id="windowWorkValue">0</strong></div>
+      <div class="windowGaugeFact"><span>FULL WINDOW TARGET</span><strong id="windowTargetValue">0</strong></div>
+    </div>
+  </div>
+
+  <div class="windowDonutWrap">
+    <div class="windowDial">
+      <svg viewBox="0 0 180 180" role="img" aria-labelledby="windowDonutTitle windowDonutDesc">
+        <title id="windowDonutTitle">Current payout-window fill</title>
+        <desc id="windowDonutDesc">Rolling payout-window work as a percentage of the reported target. This is not block progress.</desc>
+        <defs>
+          <linearGradient id="windowGaugeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#43f5ff"></stop>
+            <stop offset="58%" stop-color="#72ffb4"></stop>
+            <stop offset="100%" stop-color="#ff4fb8"></stop>
+          </linearGradient>
+          <filter id="windowGaugeGlow" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="2.8" result="blur"></feGaussianBlur>
+            <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+          </filter>
+        </defs>
+        <circle class="windowDonutTrack" cx="90" cy="90" r="67" pathLength="100"></circle>
+        <circle id="windowDonutArc" class="windowDonutArc" cx="90" cy="90" r="67" pathLength="100" stroke-dasharray="0 100" transform="rotate(-90 90 90)"></circle>
+        <circle class="windowDonutInner" cx="90" cy="90" r="51"></circle>
+        <circle id="windowDonutMarker" class="windowDonutMarker" cx="90" cy="23" r="5"></circle>
+      </svg>
+      <div class="windowDialCenter">
+        <strong id="windowGaugePercent">0.00%</strong>
+        <span id="windowGaugeState">AWAITING WINDOW</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="windowGaugeStatus">
+    <div class="windowGaugeStatusHead"><span>CAPACITY SIGNAL</span><strong id="windowCapacityState">INITIALIZING</strong></div>
+    <div class="windowCapacityRail" aria-hidden="true"><span id="windowCapacityBar"></span></div>
+    <div class="windowRemaining"><span>WORK UNTIL FULL WINDOW</span><strong id="windowRemainingValue">0</strong></div>
+    <div class="windowGaugeNote"><strong>ROLLING PAYOUT WINDOW</strong> // NOT BLOCK PROGRESS OR A BLOCK-PROBABILITY METER</div>
+  </div>
+</section>
 
 <details class="advancedFold">
   <summary>ADVANCED NETWORK + POOL IDENTITY</summary>
@@ -5400,7 +5553,6 @@ header .brand h1{font-size:clamp(31px,3.2vw,42px)!important;line-height:.9!impor
       <h2 id="startMiningTitle">START MINING IN 60 SECONDS</h2>
       <p>Use your XBT payout address as the username. Add <strong>.worker</strong> if you want a worker name.</p>
     </div>
-    <a href="#connectionDetails">FULL CONNECTION DETAILS ↓</a>
   </div>
   <div class="quickConnectGrid">
     <div class="quickEndpoint recommended">
@@ -5484,11 +5636,29 @@ header .brand h1{font-size:clamp(31px,3.2vw,42px)!important;line-height:.9!impor
   <div class="leaderboardBestNote"><strong>OBSERVATION BASIS</strong> = ONE-MINUTE COLLECTOR SAMPLES. COVERAGE MEASURES TELEMETRY AVAILABILITY; MINING SIGNAL MEASURES SAMPLES WITH LIVE MINERS AND NON-ZERO HASHRATE. MISSING SAMPLES ARE UNKNOWN — NOT CLAIMED AS POOL DOWNTIME.</div>
 </section>
 
-<section class="maturitySection" aria-labelledby="maturityTitle">
-  <div class="sectionTitle" id="maturityTitle">45-DAY BLOCK REWARD MATURITY // FROM MINED TIMESTAMP</div>
-  <div id="maturitySummary" class="historySummary" aria-live="polite"></div>
-  <div id="coinMaturityMatrix" class="maturityGrid" aria-live="polite"></div>
-  <div class="leaderboardBestNote"><strong>MATURITY BASIS</strong> = EACH REPORTED BLOCK’S MINED TIMESTAMP + 45 DAYS. THIS CLOCK IS INDEPENDENT OF DASHBOARD TELEMETRY HISTORY AND SURVIVES RESTARTS BECAUSE RATUM PRIME REMAINS THE READ-ONLY BLOCK SOURCE.</div>
+<section class="maturityPortal" aria-labelledby="maturityPortalTitle">
+  <div>
+    <div class="maturityPortalKicker">BLOCK REWARD ARCHIVE // SEPARATE SCREEN</div>
+    <h2 id="maturityPortalTitle">45-DAY MATURITY TRACKER</h2>
+    <p>Open the dedicated maturity console for mined timestamps, countdowns, and confirmation state.</p>
+  </div>
+  <button type="button" id="openMaturityScreen" aria-controls="maturityScreen" aria-expanded="false">OPEN BLOCK MATURITY →</button>
+</section>
+
+<section class="maturityScreen" id="maturityScreen" aria-labelledby="maturityScreenTitle" aria-hidden="true" hidden>
+  <div class="maturityScreenShell">
+    <div class="maturityScreenTop">
+      <div>
+        <div class="maturityScreenKicker">TERMINUS ARCHIVE // BLOCK REWARD CLOCK</div>
+        <h2 id="maturityScreenTitle" tabindex="-1">45-DAY BLOCK MATURITY</h2>
+      </div>
+      <button type="button" id="closeMaturityScreen" aria-label="Return to the Terminus Pool dashboard">← RETURN TO DASHBOARD</button>
+    </div>
+    <div class="maturityScreenIntro">EACH REPORTED BLOCK’S MINED TIMESTAMP + 45 DAYS // READ-ONLY RATUM PRIME SOURCE</div>
+    <div id="maturitySummary" class="historySummary" aria-live="polite"></div>
+    <div id="coinMaturityMatrix" class="maturityGrid" aria-live="polite"></div>
+    <div class="leaderboardBestNote"><strong>MATURITY BASIS</strong> = EACH REPORTED BLOCK’S MINED TIMESTAMP + 45 DAYS. THIS CLOCK IS INDEPENDENT OF DASHBOARD TELEMETRY HISTORY AND SURVIVES RESTARTS BECAUSE RATUM PRIME REMAINS THE READ-ONLY BLOCK SOURCE.</div>
+  </div>
 </section>
 
 <details class="advancedFold">
@@ -5534,37 +5704,6 @@ header .brand h1{font-size:clamp(31px,3.2vw,42px)!important;line-height:.9!impor
 <div class="accountHint">
   VALID CONFIRMS THE XBT PAYOUT ADDRESS FORMAT ONLY // IF BLOCK FOUND NOW IS
   CONDITIONAL ON WORK STILL HELD IN THE CURRENT PAYOUT WINDOW
-</div>
-
-<div class="sectionTitle" id="connectionDetails">PUBLIC-ACCESS</div>
-
-<div class="twoCol">
-
-  <div class="access primary">
-    <h3>NATIVE DATUM</h3>
-    <div class="mode">DATUM-COMPATIBLE CLIENTS // RECOMMENDED</div>
-
-    <div class="accessLabel">PUBLIC DATUM ENDPOINT</div>
-    <div class="copyRow">
-      <div class="copyText">datum.terminuspool.xyz:28915</div>
-      <button
-        type="button"
-        class="copyBtn"
-        aria-label="Copy DATUM endpoint"
-        data-copy="datum.terminuspool.xyz:28915"
-        onclick="copyField(this)"
-      >COPY</button>
-    </div>
-
-    <div class="note">
-      For <strong>DATUM-compatible clients</strong> connecting natively.<br>
-      Username: <strong>payout_address.worker</strong><br>
-      Grand Opening DATUM fee: <strong>0%</strong><br>
-      Promo through <strong>November 5, 2026</strong><br>
-      Standard DATUM operational fee after promo: <strong>1%</strong>.
-    </div>
-  </div>
-
 </div>
 
 <div id="blockBanner" class="blockBanner"></div>
@@ -6013,6 +6152,49 @@ function compact(v){
   return num(n,0);
 }
 
+function renderWindowGauge(data){
+  const panel=$("windowGaugePanel");
+  const arc=$("windowDonutArc");
+  const marker=$("windowDonutMarker");
+  if(!panel||!arc||!marker)return;
+
+  const work=Math.max(0,Number(data.windowWork)||0);
+  const target=Math.max(0,Number(data.workTarget)||0);
+  const reported=Number(data.windowProgressPercent);
+  const exact=Number.isFinite(reported)
+    ? reported
+    : (target>0?work/target*100:0);
+  const visual=Math.max(0,Math.min(100,exact));
+  const remaining=Math.max(0,target-work);
+  const state=target<=0
+    ? "AWAITING TARGET"
+    : visual>=100
+      ? "FULL // ROLLING"
+      : visual>=85
+        ? "NEAR CAPACITY"
+        : visual>=35
+          ? "WINDOW FILLING"
+          : "EARLY WINDOW";
+
+  $("windowWorkValue").textContent=compact(work);
+  $("windowTargetValue").textContent=compact(target);
+  $("windowRemainingValue").textContent=target>0?compact(remaining):"UNAVAILABLE";
+  $("windowGaugePercent").textContent=num(exact,2)+"%";
+  $("windowGaugeState").textContent=state;
+  $("windowCapacityState").textContent=state;
+  $("windowCapacityBar").style.width=visual+"%";
+  arc.setAttribute("stroke-dasharray",`${visual} ${100-visual}`);
+  marker.style.transform=`rotate(${visual*3.6}deg)`;
+  marker.style.display=target>0?"block":"none";
+  panel.classList.toggle("full",visual>=100);
+  const label=target>0
+    ? `Payout window ${exact.toFixed(2)} percent full. ${compact(work)} work retained of ${compact(target)} target. ${compact(remaining)} work remains. This is a rolling payout window, not block progress.`
+    : "Payout-window target is currently unavailable.";
+  panel.setAttribute("aria-label",label);
+  const description=$("windowDonutDesc");
+  if(description)description.textContent=label;
+}
+
 function marketMoney(v){
   const n=Number(v);
   if(!Number.isFinite(n)||n<=0)return "$—";
@@ -6402,15 +6584,11 @@ function injectVisualFx(){
         filter:drop-shadow(0 0 8px rgba(67,245,255,.9));
     }
     #graphPulse{
-        transform-box:fill-box;
         transform-origin:center;
-        animation:scopePulse 1.6s ease-out infinite;
+        animation:graphPulse 1.8s ease-out infinite;
     }
     .graphCard svg{
         overflow:visible;
-    }
-    .hashrateScope>svg{
-        overflow:hidden;
     }
 
     @keyframes starTwinkle{
@@ -6430,7 +6608,10 @@ function injectVisualFx(){
         0%,100%{opacity:.65; transform:scale(.98)}
         50%{opacity:1; transform:scale(1.03)}
     }
-    `;
+    @keyframes graphPulse{
+        0%{opacity:.75; r:6}
+        100%{opacity:0; r:20}
+    }`;
     document.head.appendChild(style);
 }
 
@@ -6524,10 +6705,9 @@ function ensureGraphFx(svg){
         fillGrad.setAttribute("x2","0%");
         fillGrad.setAttribute("y2","100%");
         fillGrad.innerHTML=`
-            <stop offset="0%" stop-color="#43f5ff" stop-opacity=".34"/>
-            <stop offset="38%" stop-color="#72ffb4" stop-opacity=".15"/>
-            <stop offset="78%" stop-color="#aa72ff" stop-opacity=".06"/>
-            <stop offset="100%" stop-color="#43f5ff" stop-opacity="0"/>`;
+            <stop offset="0%" stop-color="rgba(67,245,255,.32)"/>
+            <stop offset="45%" stop-color="rgba(67,245,255,.15)"/>
+            <stop offset="100%" stop-color="rgba(67,245,255,0)"/>`;
         defs.appendChild(fillGrad);
     }
 
@@ -6564,19 +6744,7 @@ function ensureGraphFx(svg){
         svg.appendChild(pulse);
     }
 
-    let trail=svg.querySelector("#graphTrail");
-    if(!trail){
-        trail=document.createElementNS("http://www.w3.org/2000/svg","path");
-        trail.setAttribute("id","graphTrail");
-        trail.setAttribute("fill","none");
-        trail.setAttribute("stroke","#43f5ff");
-        trail.setAttribute("stroke-width","10");
-        trail.setAttribute("filter","url(#graphGlowFilter)");
-        const line=svg.querySelector("#graphLine");
-        svg.insertBefore(trail,line || null);
-    }
-
-    return {dot,pulse,trail};
+    return {dot,pulse};
 }
 
 function smoothPath(points){
@@ -6596,144 +6764,6 @@ function smoothPath(points){
         d+=` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2[0]} ${p2[1]}`;
     }
     return d;
-}
-
-function graphClock(timestamp){
-    const value=Number(timestamp);
-    if(!Number.isFinite(value) || value<=0) return "SAMPLE";
-    return new Date(value*1000).toLocaleTimeString([],{
-        hour:"2-digit",
-        minute:"2-digit"
-    });
-}
-
-function graphStamp(timestamp){
-    const value=Number(timestamp);
-    if(!Number.isFinite(value) || value<=0) return "ROLLING SAMPLE";
-    return new Date(value*1000).toLocaleString([],{
-        month:"short",
-        day:"numeric",
-        hour:"2-digit",
-        minute:"2-digit"
-    }).toUpperCase();
-}
-
-function graphAverage(samples){
-    if(!samples.length) return 0;
-    return samples.reduce((sum,sample)=>sum+sample.value,0)/samples.length;
-}
-
-function updateGraphHud(samples){
-    const momentum=document.getElementById("graphMomentum");
-    const start=document.getElementById("graphTimeStart");
-    const middle=document.getElementById("graphTimeMid");
-    const end=document.getElementById("graphTimeEnd");
-    if(!samples.length) return;
-
-    const first=samples[0];
-    const midpoint=samples[Math.floor((samples.length-1)/2)];
-    const last=samples[samples.length-1];
-    if(start) start.textContent=first.ts?graphClock(first.ts):"24H AGO";
-    if(middle) middle.textContent=midpoint.ts?graphClock(midpoint.ts):"12H AGO";
-    if(end) end.textContent=last.ts?graphClock(last.ts)+" // NOW":"NOW";
-    if(!momentum) return;
-
-    const lastTs=Number(last.ts);
-    let current=[];
-    let previous=[];
-    if(Number.isFinite(lastTs) && lastTs>0){
-        current=samples.filter(sample=>sample.ts>lastTs-3600);
-        previous=samples.filter(sample=>sample.ts<=lastTs-3600 && sample.ts>lastTs-7200);
-    }else{
-        current=samples.slice(-12);
-        previous=samples.slice(-24,-12);
-    }
-
-    const currentAverage=graphAverage(current);
-    const previousAverage=graphAverage(previous);
-    if(!current.length || !previous.length || previousAverage<=0){
-        momentum.className="graphMomentum steady";
-        momentum.textContent="1H MOMENTUM // BASELINE PENDING";
-        return;
-    }
-
-    const change=(currentAverage-previousAverage)/previousAverage*100;
-    const state=change>1?"rising":change<-1?"falling":"steady";
-    const arrow=change>1?"↗":change<-1?"↘":"→";
-    momentum.className="graphMomentum "+state;
-    momentum.textContent=`${arrow} 1H MOMENTUM ${change>=0?"+":""}${change.toFixed(1)}%`;
-}
-
-function setGraphProbe(svg,index){
-    const samples=svg.__hashSamples||[];
-    const points=svg.__hashPoints||[];
-    if(!samples.length || !points.length) return;
-    const safeIndex=Math.max(0,Math.min(samples.length-1,index));
-    const sample=samples[safeIndex];
-    const point=points[safeIndex];
-    const group=svg.querySelector("#hashProbe");
-    const line=group&&group.querySelector("line");
-    const halo=group&&group.querySelector("circle:first-of-type");
-    const dot=group&&group.querySelector("circle:last-of-type");
-    if(group){
-        group.style.display="block";
-        line.setAttribute("x1",point[0]);
-        line.setAttribute("x2",point[0]);
-        halo.setAttribute("cx",point[0]);
-        halo.setAttribute("cy",point[1]);
-        dot.setAttribute("cx",point[0]);
-        dot.setAttribute("cy",point[1]);
-    }
-
-    const probe=document.getElementById("graphProbe");
-    if(probe){
-        probe.style.setProperty("--probe-x",(point[0]/10)+"%");
-        probe.querySelector("strong").textContent=sample.value.toFixed(3)+" TH/s";
-        probe.querySelector("span").textContent=
-            graphStamp(sample.ts)+(Number.isFinite(sample.miners)?" // "+sample.miners+" MINERS":"");
-        probe.classList.add("show");
-    }
-    svg.__hashProbeIndex=safeIndex;
-    svg.setAttribute(
-        "aria-label",
-        `Hashrate sample ${safeIndex+1} of ${samples.length}: ${sample.value.toFixed(3)} terahashes per second at ${graphStamp(sample.ts)}`
-    );
-}
-
-function hideGraphProbe(svg){
-    const group=svg.querySelector("#hashProbe");
-    const probe=document.getElementById("graphProbe");
-    if(group) group.style.display="none";
-    if(probe) probe.classList.remove("show");
-}
-
-function ensureGraphInteraction(svg){
-    if(svg.dataset.probeBound==="yes") return;
-    svg.dataset.probeBound="yes";
-    const indexFromEvent=event=>{
-        const rect=svg.getBoundingClientRect();
-        const fraction=Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width));
-        return Math.round(fraction*Math.max(0,(svg.__hashSamples||[]).length-1));
-    };
-    svg.addEventListener("pointermove",event=>setGraphProbe(svg,indexFromEvent(event)));
-    svg.addEventListener("pointerdown",event=>setGraphProbe(svg,indexFromEvent(event)));
-    svg.addEventListener("pointerleave",()=>{
-        if(document.activeElement!==svg) hideGraphProbe(svg);
-    });
-    svg.addEventListener("focus",()=>setGraphProbe(svg,(svg.__hashSamples||[]).length-1));
-    svg.addEventListener("blur",()=>hideGraphProbe(svg));
-    svg.addEventListener("keydown",event=>{
-        const samples=svg.__hashSamples||[];
-        if(!samples.length) return;
-        let index=Number.isFinite(svg.__hashProbeIndex)?svg.__hashProbeIndex:samples.length-1;
-        if(event.key==="ArrowLeft") index--;
-        else if(event.key==="ArrowRight") index++;
-        else if(event.key==="Home") index=0;
-        else if(event.key==="End") index=samples.length-1;
-        else return;
-        event.preventDefault();
-        setGraphProbe(svg,index);
-    });
 }
 
 function drawGraph(values){
@@ -6786,25 +6816,6 @@ function drawGraph(values){
         svg.insertBefore(avgGroup,line);
     }
 
-    let scaleGroup=svg.querySelector("#hashScale");
-
-    if(!scaleGroup){
-        scaleGroup=svgEl("g","hashScale");
-        svg.insertBefore(scaleGroup,line);
-    }
-
-    let probeGroup=svg.querySelector("#hashProbe");
-
-    if(!probeGroup){
-        probeGroup=svgEl("g","hashProbe");
-        probeGroup.style.display="none";
-        probeGroup.innerHTML=`
-          <line x1="0" x2="0" y1="10" y2="214" stroke="rgba(114,255,180,.5)" stroke-width="1" stroke-dasharray="5 5"/>
-          <circle cx="0" cy="0" r="10" fill="rgba(67,245,255,.10)" stroke="rgba(67,245,255,.32)" stroke-width="1"/>
-          <circle cx="0" cy="0" r="4" fill="#e8ffff" stroke="#43f5ff" stroke-width="2"/>`;
-        svg.appendChild(probeGroup);
-    }
-
     let peakDot=svg.querySelector("#graphPeakDot");
 
     if(!peakDot){
@@ -6832,8 +6843,6 @@ function drawGraph(values){
         grid.innerHTML="";
         bars.innerHTML="";
         avgGroup.innerHTML="";
-        scaleGroup.innerHTML="";
-        probeGroup.style.display="none";
 
         [fx.dot,fx.pulse,peakDot].forEach(el=>{
             if(el){
@@ -6846,20 +6855,9 @@ function drawGraph(values){
         return;
     }
 
-    const samples=values
-        .map((entry,index)=>{
-            const object=entry&&typeof entry==="object"?entry:null;
-            const value=Number(object?object.hashrate:entry);
-            return {
-                value,
-                ts:Number(object&&object.ts)||0,
-                miners:Number(object&&object.miners),
-                sourceIndex:index
-            };
-        })
-        .filter(sample=>Number.isFinite(sample.value));
-
-    const nums=samples.map(sample=>sample.value);
+    const nums=values
+        .map(v=>Number(v))
+        .filter(Number.isFinite);
 
     if(nums.length < 2) return;
 
@@ -6920,12 +6918,6 @@ function drawGraph(values){
         "url(#graphGlowFilter)"
     );
 
-    if(fx.trail){
-        fx.trail.setAttribute("d",path);
-        fx.trail.setAttribute("stroke-linecap","round");
-        fx.trail.setAttribute("stroke-linejoin","round");
-    }
-
     fill.setAttribute(
         "d",
         path+` L ${last[0]} 220 L 0 220 Z`
@@ -6942,7 +6934,6 @@ function drawGraph(values){
        DASHED GUIDE GRID
        ----------------------------- */
     grid.innerHTML="";
-    scaleGroup.innerHTML="";
 
     [25,50,75].forEach(percent=>{
         const y=205-(percent/100)*174;
@@ -6967,13 +6958,6 @@ function drawGraph(values){
         guide.setAttribute("stroke-width","1");
 
         grid.appendChild(guide);
-
-        const scale=svgEl("text");
-        scale.setAttribute("x","982");
-        scale.setAttribute("y",Math.max(16,y-6));
-        scale.setAttribute("text-anchor","end");
-        scale.textContent=(low+(displayRange*percent/100)).toFixed(1)+" TH/s";
-        scaleGroup.appendChild(scale);
     });
 
     /* -----------------------------
@@ -6990,10 +6974,10 @@ function drawGraph(values){
         Math.ceil(nums.length/48)
     );
 
-    const barSamples=[];
+    const samples=[];
 
     for(let i=0;i<nums.length;i+=step){
-        barSamples.push({
+        samples.push({
             i,
             value:nums[i]
         });
@@ -7001,10 +6985,10 @@ function drawGraph(values){
 
     const barWidth=Math.max(
         5,
-        (1000/barSamples.length)*.58
+        (1000/samples.length)*.55
     );
 
-    barSamples.forEach((sample,index)=>{
+    samples.forEach((sample,index)=>{
         const x=
             (sample.i/(nums.length-1))*1000;
 
@@ -7032,11 +7016,9 @@ function drawGraph(values){
 
         rect.setAttribute(
             "fill",
-            index===barSamples.length-1
-                ? "rgba(232,255,255,.34)"
-                : sample.value>=avg
-                    ? "rgba(67,245,255,.17)"
-                    : "rgba(170,114,255,.11)"
+            index===samples.length-1
+                ? "rgba(67,245,255,.23)"
+                : "rgba(114,255,180,.10)"
         );
 
         bars.appendChild(rect);
@@ -7115,15 +7097,9 @@ function drawGraph(values){
         peak[1]
     );
 
-    const peakNearLeft=peak[0]<120;
-    const peakNearRight=peak[0]>880;
     peakLabel.setAttribute(
         "x",
-        peakNearLeft?peak[0]+12:peakNearRight?peak[0]-12:peak[0]
-    );
-    peakLabel.setAttribute(
-        "text-anchor",
-        peakNearLeft?"start":peakNearRight?"end":"middle"
+        peak[0]
     );
 
     peakLabel.setAttribute(
@@ -7159,16 +7135,6 @@ function drawGraph(values){
             "cy",
             last[1]
         );
-    }
-
-    svg.__hashSamples=samples;
-    svg.__hashPoints=points;
-    updateGraphHud(samples);
-    ensureGraphInteraction(svg);
-    const description=document.getElementById("hashGraphDesc");
-    if(description){
-        description.textContent=
-            `${samples.length} persistent samples. Low ${min.toFixed(3)}, average ${avg.toFixed(3)}, peak ${max.toFixed(3)}, latest ${nums[nums.length-1].toFixed(3)} terahashes per second. Use the pointer or arrow keys to inspect exact samples.`;
     }
 }
 
@@ -7265,6 +7231,8 @@ async function refresh(){
       card("WINDOW SHARES",num(d.windowShares,0),"purple")+
       card("POOL SHARE FLOOR",compact(Number(d.shareDifficulty)||1024),"cyan")+
       card("BLOCKS FOUND",num(d.blocks,0),Number(d.blocks)>0?"gold":"");
+
+    renderWindowGauge(d);
 
     $("healthMatrix").innerHTML=(d.health||[])
       .map(healthItem)
@@ -7403,11 +7371,7 @@ async function refresh(){
     $("graphMiners").textContent=
       num(d.poolMiners,0)+" LIVE MINERS";
 
-    if(Array.isArray(d.history24h)&&d.history24h.length){
-      drawGraph(d.history24h);
-    }else if(Array.isArray(d.hashHistory)&&d.hashHistory.length){
-      drawGraph(d.hashHistory);
-    }
+    if(Array.isArray(d.hashHistory)) drawGraph(d.hashHistory);
 
     if(Number(d.blocks)>0){
       $("blockBanner").style.display="block";
@@ -7436,11 +7400,7 @@ async function loadHistory(){
     );
     if(!response.ok)throw new Error("HTTP "+response.status);
     const data=await response.json();
-    drawGraph(
-      Array.isArray(data.history24h)&&data.history24h.length
-        ? data.history24h
-        : (data.hashHistory||[])
-    );
+    drawGraph(data.hashHistory||[]);
     const summary=data.historySummary||{};
     $("historySummary").innerHTML=
       historyMetric("24H AVERAGE",num(summary.averageHashrate,3)+" TH/s")+
@@ -7459,6 +7419,51 @@ function initAdvancedFolds(){
   document.querySelectorAll(".advancedFold").forEach(fold=>{
     fold.removeAttribute("open");
   });
+}
+
+function initMaturityScreen(){
+  const screen=$("maturityScreen");
+  const openButton=$("openMaturityScreen");
+  const closeButton=$("closeMaturityScreen");
+  const title=$("maturityScreenTitle");
+  if(!screen||!openButton||!closeButton)return;
+  let wasOpen=false;
+
+  function sync(){
+    const active=location.hash==="#block-maturity";
+    screen.hidden=!active;
+    screen.setAttribute("aria-hidden",String(!active));
+    openButton.setAttribute("aria-expanded",String(active));
+    document.documentElement.classList.toggle("maturityScreenOpen",active);
+    if(active&&!wasOpen){
+      requestAnimationFrame(()=>title&&title.focus());
+    }else if(!active&&wasOpen){
+      openButton.focus();
+    }
+    wasOpen=active;
+  }
+
+  openButton.addEventListener("click",()=>{
+    history.pushState({terminusMaturity:true},"","#block-maturity");
+    sync();
+  });
+  closeButton.addEventListener("click",()=>{
+    if(history.state&&history.state.terminusMaturity){
+      history.back();
+    }else{
+      history.replaceState(null,"",location.pathname+location.search);
+      sync();
+    }
+  });
+  document.addEventListener("keydown",event=>{
+    if(event.key==="Escape"&&!screen.hidden){
+      event.preventDefault();
+      closeButton.click();
+    }
+  });
+  window.addEventListener("popstate",sync);
+  window.addEventListener("hashchange",sync);
+  sync();
 }
 
 function initAirplaneFlybys(){
@@ -7548,6 +7553,7 @@ initNightwave();
 initSkyFx();
 initAirplaneFlybys();
 initAdvancedFolds();
+initMaturityScreen();
 refresh();
 loadHistory();
 loadLeaderboard();
