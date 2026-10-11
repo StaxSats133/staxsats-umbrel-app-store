@@ -61,7 +61,7 @@ class TerminusServerTests(unittest.TestCase):
         self.assertEqual(len(isolated.SOCIAL_CARD_PNG), 395887)
 
     def test_release_version_and_static_assets(self):
-        self.assertEqual(self.server.RELEASE_VERSION, "0.2.79")
+        self.assertEqual(self.server.RELEASE_VERSION, "0.2.80")
         self.assertIn('<title>TERMINUS POOL // DATUM</title>', self.server.HTML)
         self.assertIn('content="Terminus Pool // DATUM"', self.server.HTML)
         self.assertIn(
@@ -268,6 +268,13 @@ class TerminusServerTests(unittest.TestCase):
         self.assertNotIn('IT IS NOT TRACKED ALL-TIME', self.server.HTML)
         self.assertNotIn('A TRANSIENT SHARE BETWEEN SAMPLES', self.server.HTML)
         self.assertNotIn('data-label="BEST SHARE"', self.server.HTML)
+        self.assertNotIn('card("BEST SHARE"', self.server.HTML)
+        self.assertNotIn('TRACKED ALL-TIME BEST', self.server.HTML)
+        self.assertIn('24H HASHRATE TREND', self.server.HTML)
+        self.assertIn('id="personalMinerGraphLine"', self.server.HTML)
+        self.assertIn('id="personalMinerAverage"', self.server.HTML)
+        self.assertIn('id="personalMinerAxisPeak"', self.server.HTML)
+        self.assertIn('function drawPersonalMinerHistory(points)', self.server.HTML)
         self.assertNotIn('class="establishedBlock"', self.server.HTML)
         self.assertNotIn('<details class="advancedFold" open>', self.server.HTML)
         self.assertIn('title:"CHILL LOOP",artist:"PRO SENSORY"', self.server.HTML)

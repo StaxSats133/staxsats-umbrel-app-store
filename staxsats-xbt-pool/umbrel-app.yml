@@ -4,7 +4,7 @@ name: Terminus Pool
 tagline: The last word in mining
 icon: https://raw.githubusercontent.com/StaxSats133/staxsats-umbrel-app-store/main/staxsats-xbt-pool/icon-v0264.png
 category: bitcoin
-version: "0.2.79"
+version: "0.2.80"
 port: 8081
 description: >-
   Terminus Pool is an XBT BLAKE2b mining pool dashboard for DATUM.
@@ -19,8 +19,8 @@ repo: https://github.com/StaxSats133/staxsats-umbrel-app-store
 support: https://github.com/StaxSats133/staxsats-umbrel-app-store/issues
 gallery: []
 releaseNotes: >-
-  Terminus Pool v0.2.79 moves Miner Accounting to the top of the dashboard so payout
-  address lookup and personal rolling-24-hour telemetry are immediately accessible.
+  Terminus Pool v0.2.80 upgrades the personal 24-hour hashrate chart with labeled axes,
+  current and average signals, and cyberpunk visuals while removing best-share readouts.
 dependencies: []
 path: ""
 defaultUsername: ""

@@ -47,7 +47,7 @@ TAG_SWITCH_MIN_SAMPLES = 5
 TAG_SWITCH_RATIO = 1.25
 LEADERBOARD_LIVE_GRACE_SECONDS = 10 * 60
 LEADERBOARD_RECENT_GRACE_SECONDS = 60 * 60
-RELEASE_VERSION = "0.2.79"
+RELEASE_VERSION = "0.2.80"
 RELIABILITY_WINDOWS = {
     "1h": 60 * 60,
     "24h": 24 * 60 * 60,
@@ -2196,19 +2196,31 @@ h1{
   background:linear-gradient(145deg,#07131b,#050b11);
   padding:16px
 }
-.personalMinerGraph{
-  width:100%;
-  height:150px;
-  margin-top:12px;
-  border:1px solid #143842;
-  background:#040a10
+.personalMinerChart{
+  margin-top:12px;overflow:hidden;border:1px solid #174654;
+  background:radial-gradient(circle at 82% 15%,rgba(67,245,255,.08),transparent 30%),linear-gradient(145deg,#06121b,#040a10);
+  box-shadow:inset 0 0 38px rgba(67,245,255,.025)
 }
-.personalMinerGraph polyline{
-  fill:none;
-  stroke:var(--cyan);
-  stroke-width:3;
-  vector-effect:non-scaling-stroke
-}
+.personalMinerChartHead{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding:13px 15px 11px;border-bottom:1px solid #123540}
+.personalMinerChartTitle{color:var(--cyan);font-size:11px;font-weight:1000;letter-spacing:.14em}
+.personalMinerChartTitle span{display:block;margin-top:5px;color:#6f919a;font-size:7px;font-weight:500;letter-spacing:.09em}
+.personalMinerChartReadout{text-align:right}.personalMinerChartReadout span{display:block;color:#7895a0;font-size:7px;letter-spacing:.14em}
+.personalMinerChartReadout strong{display:block;margin-top:3px;color:var(--cyan);font-size:16px;letter-spacing:.04em}
+.personalMinerChartSignal{margin-top:3px;color:var(--green)!important;font-weight:900}.personalMinerChartSignal.below{color:var(--pink)!important}.personalMinerChartSignal.near{color:var(--gold)!important}
+.personalMinerPlot{position:relative;height:210px;padding:12px 14px 28px 58px}.personalMinerPlot svg{display:block;width:100%;height:100%;overflow:visible}
+.personalMinerGridLine{stroke:#17414c;stroke-width:1;stroke-dasharray:4 10;vector-effect:non-scaling-stroke}
+.personalMinerArea{fill:url(#personalMinerAreaGradient)}
+.personalMinerAverage{stroke:var(--pink);stroke-width:1.4;stroke-dasharray:8 8;opacity:.85;vector-effect:non-scaling-stroke}
+.personalMinerLine{fill:none;stroke:var(--cyan);stroke-width:3;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 5px rgba(67,245,255,.72))}
+.personalMinerLiveDot{fill:#fff6b0;stroke:var(--cyan);stroke-width:2;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 7px #43f5ff)}
+.personalMinerLivePulse{fill:none;stroke:var(--cyan);stroke-width:2;vector-effect:non-scaling-stroke;transform-box:fill-box;transform-origin:center;animation:personalMinerPulse 1.8s ease-out infinite}
+.personalMinerAxisY{position:absolute;left:10px;top:13px;bottom:29px;width:42px;display:flex;flex-direction:column;justify-content:space-between;color:#6f919a;font-size:7px;text-align:right}
+.personalMinerAxisY strong{color:#9fc1c8;font-weight:800}.personalMinerAxisY em{font-style:normal;color:#56747d}
+.personalMinerAxisX{position:absolute;left:58px;right:14px;bottom:9px;display:flex;justify-content:space-between;color:#688993;font-size:7px;letter-spacing:.1em}
+.personalMinerLegend{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:9px 15px;border-top:1px solid #123540;color:#6f919a;font-size:7px;letter-spacing:.1em}
+.personalMinerLegend span{display:inline-flex;align-items:center;gap:6px}.personalMinerLegend i{display:inline-block;width:18px;height:2px;background:var(--cyan);box-shadow:0 0 5px rgba(67,245,255,.6)}
+.personalMinerLegend .average i{height:0;border-top:1px dashed var(--pink);background:transparent;box-shadow:none}
+@keyframes personalMinerPulse{0%{opacity:.85;transform:scale(.55)}100%{opacity:0;transform:scale(2.3)}}
 .poolHashrateGraph{
   margin-top:0;
   box-shadow:inset 0 0 35px #43f5ff08
@@ -5083,7 +5095,8 @@ html.maturityScreenOpen body{overflow:hidden!important}
 @media(prefers-reduced-motion:reduce){
     .windowDonutArc,
     .windowDonutMarker,
-    .windowCapacityRail span{transition:none!important;animation:none!important}
+    .windowCapacityRail span,
+    .personalMinerLivePulse{transition:none!important;animation:none!important}
 }
 </style>
 </head>
@@ -5107,7 +5120,7 @@ html.maturityScreenOpen body{overflow:hidden!important}
       </h1>
       <div class="tagline">THE LAST WORD IN MINING</div>
       <div class="stackline">RATUM PRIME // DATUM // BLAKE2B NODE LINK</div>
-      <div class="versionBadge">TERMINUSPOOL v0.2.79</div>
+      <div class="versionBadge">TERMINUSPOOL v0.2.80</div>
     </div>
   </div>
   <div class="headerControls" role="group" aria-label="Terminus Command Deck">
@@ -5331,9 +5344,25 @@ html.maturityScreenOpen body{overflow:hidden!important}
 <section id="personalMinerDashboard" class="personalMinerDashboard" aria-labelledby="personalMinerTitle">
   <div class="sectionTitle" id="personalMinerTitle">MY MINER // ROLLING 24 HOURS</div>
   <div id="personalMinerSummary" class="historySummary"></div>
-  <svg class="personalMinerGraph" viewBox="0 0 1000 150" role="img" aria-label="Personal miner 24-hour hashrate history">
-    <polyline id="personalMinerGraphLine" points=""></polyline>
-  </svg>
+  <div id="personalMinerChart" class="personalMinerChart" role="img" aria-label="Personal miner 24-hour hashrate trend awaiting account telemetry">
+    <div class="personalMinerChartHead">
+      <div class="personalMinerChartTitle">24H HASHRATE TREND<span>ONE-MINUTE ACCOUNT OBSERVATIONS // TH/s</span></div>
+      <div class="personalMinerChartReadout"><span>CURRENT</span><strong id="personalMinerCurrent">0.000 TH/s</strong><span id="personalMinerSignal" class="personalMinerChartSignal near">AWAITING SIGNAL</span></div>
+    </div>
+    <div class="personalMinerPlot">
+      <div class="personalMinerAxisY" aria-hidden="true"><strong id="personalMinerAxisPeak">0 TH/s</strong><span id="personalMinerAxisMid">0 TH/s</span><em>0 TH/s</em></div>
+      <svg viewBox="0 0 1000 180" preserveAspectRatio="none" aria-hidden="true">
+        <defs><linearGradient id="personalMinerAreaGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#43f5ff" stop-opacity=".34"></stop><stop offset="58%" stop-color="#43f5ff" stop-opacity=".10"></stop><stop offset="100%" stop-color="#ff4fb8" stop-opacity=".02"></stop></linearGradient></defs>
+        <line class="personalMinerGridLine" x1="0" y1="10" x2="1000" y2="10"></line><line class="personalMinerGridLine" x1="0" y1="90" x2="1000" y2="90"></line><line class="personalMinerGridLine" x1="0" y1="170" x2="1000" y2="170"></line>
+        <path id="personalMinerArea" class="personalMinerArea"></path>
+        <line id="personalMinerAverage" class="personalMinerAverage" x1="0" x2="1000" y1="170" y2="170"></line>
+        <polyline id="personalMinerGraphLine" class="personalMinerLine" points=""></polyline>
+        <circle id="personalMinerGraphPulse" class="personalMinerLivePulse" cx="0" cy="170" r="7"></circle><circle id="personalMinerGraphDot" class="personalMinerLiveDot" cx="0" cy="170" r="4"></circle>
+      </svg>
+      <div class="personalMinerAxisX" aria-hidden="true"><span>24H AGO</span><span>12H AGO</span><span>NOW</span></div>
+    </div>
+    <div class="personalMinerLegend"><span><i></i>OBSERVED HASHRATE</span><span class="average"><i></i>24H AVERAGE</span><span>ZERO = NO ACCOUNT SAMPLE</span></div>
+  </div>
   <div id="personalMinerFreshness" class="leaderboardBestNote"></div>
 </section>
 
@@ -6253,19 +6282,6 @@ function minerTagMarkup(tag,reward){
     workRewardMarkup(reward);
 }
 
-function bestShareFmt(v){
-    const n=Number(v)||0;
-
-    if(n<=0) return "WAITING FOR SHARE";
-    if(n>=1e15) return (n/1e15).toFixed(2)+"P";
-    if(n>=1e12) return (n/1e12).toFixed(2)+"T";
-    if(n>=1e9)  return (n/1e9).toFixed(2)+"G";
-    if(n>=1e6)  return (n/1e6).toFixed(2)+"M";
-    if(n>=1e3)  return (n/1e3).toFixed(2)+"K";
-
-    return n.toFixed(2);
-}
-
 function relativeAge(timestamp){
   const seconds=Math.max(0,Math.floor(Date.now()/1000-Number(timestamp||0)));
   if(seconds<60)return "JUST NOW";
@@ -6377,19 +6393,56 @@ function historyMetric(label,value){
 }
 
 function drawPersonalMinerHistory(points){
+  const chart=$("personalMinerChart");
   const line=$("personalMinerGraphLine");
-  if(!line)return;
+  const area=$("personalMinerArea");
+  const averageLine=$("personalMinerAverage");
+  const dot=$("personalMinerGraphDot");
+  const pulse=$("personalMinerGraphPulse");
   const samples=Array.isArray(points)?points:[];
-  const peak=Math.max(0,...samples.map(point=>Number(point.hashrateThs||0)));
-  if(!samples.length||peak<=0){
-    line.setAttribute("points","");
-    return;
+  const values=samples.map(point=>Math.max(0,Number(point.hashrateThs||0)));
+  const peak=Math.max(0,...values);
+  const current=values.length?values[values.length-1]:0;
+  const average=values.length?values.reduce((sum,value)=>sum+value,0)/values.length:0;
+  const ceiling=peak>0?peak:1;
+  const top=10;
+  const bottom=170;
+  const height=bottom-top;
+  const coords=values.map((value,index)=>{
+    const x=values.length===1?1000:index*1000/(values.length-1);
+    const y=bottom-(value/ceiling)*height;
+    return [x,y];
+  });
+  line.setAttribute("points",coords.map(([x,y])=>`${x.toFixed(2)},${y.toFixed(2)}`).join(" "));
+  area.setAttribute("d",coords.length
+    ? `M ${coords[0][0].toFixed(2)} ${bottom} L ${coords.map(([x,y])=>`${x.toFixed(2)} ${y.toFixed(2)}`).join(" L ")} L ${coords[coords.length-1][0].toFixed(2)} ${bottom} Z`
+    : "");
+  const averageY=bottom-(average/ceiling)*height;
+  averageLine.setAttribute("y1",averageY.toFixed(2));
+  averageLine.setAttribute("y2",averageY.toFixed(2));
+  const last=coords.length?coords[coords.length-1]:[0,bottom];
+  for(const marker of [dot,pulse]){
+    marker.setAttribute("cx",last[0].toFixed(2));
+    marker.setAttribute("cy",last[1].toFixed(2));
   }
-  line.setAttribute("points",samples.map((point,index)=>{
-    const x=samples.length===1?500:index*1000/(samples.length-1);
-    const y=140-(Number(point.hashrateThs||0)/peak)*130;
-    return `${x.toFixed(2)},${y.toFixed(2)}`;
-  }).join(" "));
+  $("personalMinerAxisPeak").textContent=num(peak,2)+" TH/s";
+  $("personalMinerAxisMid").textContent=num(peak/2,2)+" TH/s";
+  $("personalMinerCurrent").textContent=num(current,3)+" TH/s";
+  const signal=$("personalMinerSignal");
+  if(!values.length||peak<=0){
+    signal.textContent="AWAITING SIGNAL";
+    signal.className="personalMinerChartSignal near";
+  }else if(current>average*1.1){
+    signal.textContent="ABOVE 24H AVG";
+    signal.className="personalMinerChartSignal";
+  }else if(current<average*.9){
+    signal.textContent="BELOW 24H AVG";
+    signal.className="personalMinerChartSignal below";
+  }else{
+    signal.textContent="NEAR 24H AVG";
+    signal.className="personalMinerChartSignal near";
+  }
+  chart.setAttribute("aria-label",`Personal miner 24-hour hashrate trend. Current ${num(current,3)} terahashes per second. Average ${num(average,3)}. Peak ${num(peak,3)}.`);
 }
 
 let windowBitcoinProgress=0;
@@ -7325,12 +7378,6 @@ async function refresh(){
         card("MINER TAG",minerTagMarkup(d.minerTag,d.workReward),"cyan")+
         card("PRIME HASHRATE",num(d.primeHashrate,3)+" TH/s","cyan")+
         card("WINDOW WORK",compact(d.minerWork||0))+
-
-        card(
-            "BEST SHARE",
-            bestShareFmt(d.bestShare)
-        )+
-
         card("WINDOW OWNERSHIP",num(d.sharePercent,2)+"%","purple")+
         card(
           "IF BLOCK FOUND NOW",
@@ -7352,13 +7399,11 @@ async function refresh(){
         historyMetric("24H PEAK",num(Number(personal.peakHashrateThs||0),3)+" TH/s")+
         historyMetric("ACTIVE MINUTES",num(Number(personal.activeMinutes||0),0))+
         historyMetric("ACTIVITY SIGNAL",num(Number(personal.activityPercent||0),2)+"%")+
-        historyMetric("TRACKED ALL-TIME BEST",bestShareFmt(personal.allTimeBestShare))+
         historyMetric("LAST ACTIVE",personal.lastActiveAt?new Date(Number(personal.lastActiveAt)*1000).toLocaleString():"NO ACTIVE SAMPLE")+
         historyMetric("TRACKED SAMPLES",num(Number(personal.trackedSamples||0),0));
       drawPersonalMinerHistory(personal.points||[]);
       $("personalMinerFreshness").textContent=
-        "PERSONAL HISTORY IS DERIVED FROM ONE-MINUTE POOL OBSERVATIONS // MISSING ACCOUNT SAMPLES COUNT AS ZERO // ALL-TIME BEST TRACKING SINCE "+
-        (personal.allTimeTrackingSince?new Date(Number(personal.allTimeTrackingSince)*1000).toLocaleString():"FIRST OBSERVATION");
+        "PERSONAL SUMMARY IS DERIVED FROM ONE-MINUTE POOL OBSERVATIONS // MISSING ACCOUNT SAMPLES COUNT AS ZERO";
     }
 
     $("network").innerHTML=
